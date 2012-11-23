@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<targets>
+
+  <finrocplugin name="data_ports">
+    <sources>
+      tBounds.h
+      tUnit.cpp
+      type_traits.h
+      common/*
+      numeric/*
+      standard/*
+      optimized/*
+    </sources>
+  </finrocplugin>
+
+  <finrocplugin name="port_api">
+    <sources>
+      tGenericPort.h
+      tPort.cpp
+      tPortBuffers.h
+      tPortCreationInfo.h
+      tPortDataPointer.h
+      tPortListener.h
+      tPortWrapperBase.h
+      tPullRequestHandler.h
+      tThreadLocalBufferManagement.h
+      api/*
+    </sources>
+  </finrocplugin>
+
+  <testprogram name="benchmark_simple">
+    <sources>
+      test/benchmark_simple.cpp
+    </sources>
+  </testprogram>
+  
+  <testprogram name="port_queues">
+    <sources>
+      test/port_queues.cpp
+    </sources>
+  </testprogram>
+
+  <testprogram name="initial_pushing">
+    <sources>
+      test/initial_pushing.cpp
+    </sources>
+  </testprogram>
+  
+  <testprogram name="basic_realtime">
+    <sources>
+      test/basic_realtime.cpp
+    </sources>
+  </testprogram>
+
+  <testprogram name="configuration">
+    <sources>
+      test/configuration.cpp
+    </sources>
+  </testprogram>
+
+</targets>
