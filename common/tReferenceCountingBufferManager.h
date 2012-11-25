@@ -131,12 +131,12 @@ public:
    * Releases locks
    *
    * \param locks_to_release number of locks to release
-   * \return Previous number of locks
+   * \return Previous reference_and_reuse_counter value (only meant for class-internal use)
    */
   template <typename TDeleterType, typename TThis = tReferenceCountingBufferManager>
   inline int ReleaseLocks(int locks_to_release)
   {
-    int old_value = reference_and_reuse_counter.fetch_sub(locks_to_release << 16) >> 16;
+    int old_value = reference_and_reuse_counter.fetch_sub(locks_to_release << 16);
     assert(old_value - locks_to_release >= 0 && "negative reference counter detected");
     if (old_value - locks_to_release == 0)
     {

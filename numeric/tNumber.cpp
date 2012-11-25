@@ -260,6 +260,14 @@ rrlib::serialization::tStringInputStream &operator >> (rrlib::serialization::tSt
   return stream;
 }
 
+std::ostream &operator << (std::ostream &stream, const tNumber& number)
+{
+  rrlib::serialization::tStringOutputStream sos;
+  sos << number;
+  stream << sos.ToString();
+  return stream;
+}
+
 //----------------------------------------------------------------------
 // End of namespace declaration
 //----------------------------------------------------------------------

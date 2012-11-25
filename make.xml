@@ -16,12 +16,15 @@
   <finrocplugin name="port_api">
     <sources>
       tGenericPort.h
+      tInputPort.h
+      tOutputPort.h
       tPort.cpp
       tPortBuffers.h
       tPortCreationInfo.h
       tPortDataPointer.h
       tPortListener.h
       tPortWrapperBase.h
+      tProxyPort.h
       tPullRequestHandler.h
       tThreadLocalBufferManagement.h
       api/*

@@ -36,7 +36,7 @@
 //----------------------------------------------------------------------
 // Internal includes with ""
 //----------------------------------------------------------------------
-#include "plugins/data_ports/tPort.h"
+#include "plugins/data_ports/tOutputPort.h"
 
 //----------------------------------------------------------------------
 // Debugging
@@ -73,9 +73,11 @@ class tGenericPortImplementationTyped : public tGenericPortImplementation
 {
 public:
   tPort<T> port;
+  tOutputPort<T> output_port;
 
-  tGenericPortImplementationTyped(const common::tAbstractDataPortCreationInfo& pci) :
-    port(pci)
+  tGenericPortImplementationTyped(const common::tAbstractDataPortCreationInfo& creation_info) :
+    port(creation_info),
+    output_port()
   {}
 
   virtual void Get(rrlib::rtti::tGenericObject& result, rrlib::time::tTimestamp& timestamp)
@@ -90,7 +92,11 @@ public:
 
   virtual void Publish(const rrlib::rtti::tGenericObject& data, const rrlib::time::tTimestamp& timestamp)
   {
-    port.Publish(data.GetData<T>(), timestamp);
+    if (!output_port.GetWrapped())
+    {
+      output_port = tOutputPort<T>::Wrap(*port.GetWrapped());
+    }
+    output_port.Publish(data.GetData<T>(), timestamp);
   }
 
   virtual void SetBounds(const rrlib::rtti::tGenericObject& min, const rrlib::rtti::tGenericObject& max)

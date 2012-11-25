@@ -91,15 +91,16 @@ static rrlib::rtti::tGenericObject* CreateDefaultValue(const common::tAbstractDa
 
 } // namespace internal
 
-tCheapCopyPort::tCheapCopyPort(common::tAbstractDataPortCreationInfo pci) :
-  common::tAbstractDataPort(pci),
-  cheaply_copyable_type_index(RegisterPort(pci.data_type)),
-  default_value(internal::CreateDefaultValue(pci)),
+tCheapCopyPort::tCheapCopyPort(common::tAbstractDataPortCreationInfo creation_info) :
+  common::tAbstractDataPort(creation_info),
+  cheaply_copyable_type_index(RegisterPort(creation_info.data_type)),
+  default_value(internal::CreateDefaultValue(creation_info)),
   current_value(0),
   standard_assign(!GetFlag(tFlag::NON_STANDARD_ASSIGN) && (!GetFlag(tFlag::HAS_QUEUE))),
+  queue_fifo(NULL),
   pull_request_handler(NULL),
   port_listeners(),
-  unit(pci.unit)
+  unit(creation_info.unit)
 {
   if ((!IsDataFlowType(GetDataType())) || (!IsCheaplyCopiedType(GetDataType())))
   {
@@ -114,7 +115,7 @@ tCheapCopyPort::tCheapCopyPort(common::tAbstractDataPortCreationInfo pci) :
   current_value.store(tTaggedBufferPointer(initial, pointer_tag));
 
   // set initial value to default?
-  if (pci.DefaultValueSet())
+  if (creation_info.DefaultValueSet())
   {
     initial->GetObject().DeepCopyFrom(*default_value);
   }

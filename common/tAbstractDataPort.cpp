@@ -81,8 +81,10 @@ tAbstractDataPort::tAbstractDataPort(const tAbstractDataPortCreationInfo& create
   custom_changed_flag(tChangeStatus::NO_CHANGE),
   strategy(-1),
   min_net_update_time(create_info.min_net_update_interval)
-{
-}
+{}
+
+tAbstractDataPort::~tAbstractDataPort()
+{}
 
 core::tAbstractPortCreationInfo tAbstractDataPort::AdjustPortCreationInfo(const tAbstractDataPortCreationInfo& create_info)
 {

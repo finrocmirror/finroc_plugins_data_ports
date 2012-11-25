@@ -68,13 +68,33 @@ namespace optimized
 // Implementation
 //----------------------------------------------------------------------
 
-tGlobalBufferPools tGlobalBufferPools::instance;
+typedef rrlib::design_patterns::tSingletonHolder<tGlobalBufferPools, rrlib::design_patterns::singleton::Longevity> tGlobalBufferPoolsInstance;
+static inline unsigned int GetLongevity(tGlobalBufferPools*)
+{
+  return 0xFE000000; // should be deleted before tGarbageFromDeletedBufferPools
+}
+
+struct tGlobalBufferPoolsInit
+{
+  tGlobalBufferPoolsInit()
+  {
+    tGlobalBufferPoolsInstance::Instance();
+  }
+};
+
+static tGlobalBufferPoolsInit init_global_buffer_pools;
+
+tGlobalBufferPools* tGlobalBufferPools::instance = NULL;
 
 tGlobalBufferPools::tGlobalBufferPools()
-{}
+{
+  instance = this;
+}
 
 tGlobalBufferPools::~tGlobalBufferPools()
-{}
+{
+  instance = NULL;
+}
 
 //----------------------------------------------------------------------
 // End of namespace declaration

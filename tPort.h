@@ -30,7 +30,7 @@
  * \b tPort
  *
  * This port class is used in applications.
- * It provides a convenient API for the type-less tPortBase backend.
+ * It provides a convenient API for the type-less port implementation classes.
  */
 //----------------------------------------------------------------------
 #ifndef __plugins__data_ports__tPort_h__
@@ -67,7 +67,7 @@ namespace data_ports
 //! Data port
 /*!
  * This port class is used in applications.
- * It provides a convenient API for the type-less tPortBase backend.
+ * It provides a convenient API for the type-less port implementation classes.
  *
  * \tparam T T is the data type of the port.
  *           Any data type that is binary serializable by rrlib_serialization
@@ -89,6 +89,8 @@ namespace data_ports
 template<typename T>
 class tPort : public tPortWrapperBase
 {
+protected:
+
   static_assert(rrlib::serialization::tIsBinarySerializable<T>::value, "Type T needs to be binary serializable for use in ports.");
 
   /*! Class that contains actual implementation of most functionality */
@@ -141,7 +143,7 @@ public:
   tPort(const ARGS&... args)
   {
     tPortCreationInfo<T> creation_info(args...);
-    creation_info.data_type = rrlib::rtti::tDataType<T>();
+    creation_info.data_type = rrlib::rtti::tDataType<tPortBuffer>();
     SetWrapped(tImplementation::CreatePort(creation_info));
     GetWrapped()->SetWrapperDataType(rrlib::rtti::tDataType<T>());
     if (creation_info.DefaultValueSet())
@@ -150,97 +152,6 @@ public:
       creation_info.GetDefault(t);
       SetDefault(t);
     }
-  }
-
-  /*!
-   * Wraps raw port
-   */
-  tPort(core::tAbstractPort& wrap)
-  {
-    if (wrap.GetDataType().GetRttiName() != typeid(tPortBuffer).name())
-    {
-      FINROC_LOG_PRINT(ERROR, "tPort<", rrlib::rtti::Demangle(typeid(T).name()), "> cannot wrap port with buffer type '", wrap.GetDataType().GetName(), "'.");
-      return;
-    }
-    SetWrapped(&wrap);
-  }
-
-  /*!
-   * \param listener Listener to add
-   */
-  void AddPortListener(tPortListener<tPortDataPointer<const T>>& listener)
-  {
-    GetWrapped()->AddPortListenerRaw(listener);
-  }
-  void AddPortListener(tPortListener<const void*>& listener)
-  {
-    GetWrapped()->AddPortListenerRaw(listener);
-  }
-  inline void AddPortListener(tPortListener<T>& listener)
-  {
-    GetWrapped()->AddPortListenerRaw(listener);
-  }
-
-  /*!
-   * Dequeue first/oldest element in queue.
-   * Because queue is bounded, continuous dequeueing may skip some values.
-   * Use DequeueAll if a continuous set of values is required.
-   *
-   * (Use only with ports that have an appropriate input queue)
-   *
-   * \return Dequeued first/oldest element in queue (NULL if no element is left in queue)
-   */
-  inline tPortDataPointer<const T> Dequeue()
-  {
-    auto buffer_pointer = GetWrapped()->DequeueSingleRaw();
-    return tPortDataPointer<const T>(buffer_pointer, *GetWrapped());
-  }
-
-  /*!
-   * Dequeue first/oldest element in queue.
-   * Because queue is bounded, continuous dequeueing may skip some values.
-   * Use DequeueAll if a continuous set of values is required.
-   *
-   * (Use only with ports that have a appropriate input queue)
-   * (only available for 'cheaply copied' types)
-   *
-   * \param result Buffer to (deep) copy dequeued value to
-   * \param timestamp Buffer to store time stamp of data in (optional)
-   * \return true if element was dequeued - false if queue was empty
-   */
-  template <bool AVAILABLE = cPASS_BY_VALUE>
-  inline typename std::enable_if<AVAILABLE, bool>::type Dequeue(T& result)
-  {
-    rrlib::time::tTimestamp unused;
-    return Dequeue(result, unused);
-  }
-
-  template <bool AVAILABLE = cPASS_BY_VALUE>
-  inline typename std::enable_if<AVAILABLE, bool>::type Dequeue(T& result, rrlib::time::tTimestamp& timestamp)
-  {
-    typename tImplementation::tLockingManagerPointer buffer = GetWrapped()->DequeueSingleRaw();
-    if (buffer)
-    {
-      result = tImplementation::ToValue(buffer->GetObject().template GetData<tPortBuffer>(), GetWrapped()->GetUnit());
-    }
-    return buffer;
-  }
-
-  /*!
-   * Dequeue all elements currently in input queue
-   * (The variant that returns buffers by-value is only available for 'cheaply copied' types.)
-   *
-   * \return Set of dequeued buffers.
-   */
-  template <bool AVAILABLE = cPASS_BY_VALUE>
-  inline typename std::enable_if<AVAILABLE, tPortBuffers<T>>::type DequeueAll()
-  {
-    return tPortBuffers<T>(GetWrapped()->DequeueAllRaw(), *GetWrapped());
-  }
-
-  inline tPortBuffers<tPortDataPointer<const T>> DequeueAllBuffers()
-  {
-    return tPortBuffers<tPortDataPointer<const T>>(GetWrapped()->DequeueAllRaw(), *GetWrapped());
   }
 
   /*!
@@ -326,7 +237,6 @@ public:
 
   /*!
    * Pulls port data (regardless of strategy)
-   * (careful: no auto-release of lock in Java)
    *
    * \param intermediate_assign Assign pulled value to ports in between?
    *
@@ -339,18 +249,6 @@ public:
   }
 
   /*!
-   * \return Unused buffer of type T.
-   * Buffers to be published using this port (non-CC-types),
-   * should be acquired using this function. The buffer might contain old data, so it should
-   * be cleared prior to using. Using this method with CC-types is not required and less
-   * efficient than publishing values directly (factor 2, shouldn't matter usually).
-   */
-  inline tPortDataPointer<T> GetUnusedBuffer()
-  {
-    return tImplementation::GetUnusedBuffer(*GetWrapped());
-  }
-
-  /*!
    * \return Wrapped port. For rare case that someone really needs to access ports.
    */
   inline tPortBackend* GetWrapped() const
@@ -359,98 +257,11 @@ public:
   }
 
   /*!
-   * (relevant for input ports only)
-   *
-   * \return Has port changed since last changed-flag-reset?
-   */
-  inline bool HasChanged() const
-  {
-    return GetWrapped()->HasChanged();
-  }
-
-  /*!
    * \return Does port have "cheaply copied" type?
    */
   inline bool HasCheaplyCopiedType() const
   {
     return tIsCheaplyCopiedType<T>::value;
-  }
-
-  /*!
-   * Publish Data Buffer. This data will be forwarded to any connected ports.
-   * Should only be called on output ports.
-   *
-   * (This pass-by-value Publish()-variant is efficient when using 'cheaply copied' types,
-   *  but can be computationally expensive with large data types)
-   *
-   * \param data Data to publish. It will be deep-copied.
-   * \param teimstamp Timestamp for attached data (optional)
-   */
-  inline void Publish(const T& data, const rrlib::time::tTimestamp& timestamp = rrlib::time::cNO_TIME)
-  {
-    tImplementation::CopyAndPublish(*GetWrapped(), data, timestamp);
-  }
-
-  /*!
-   * Publish Data Buffer. This data will be forwarded to any connected ports.
-   * It should not be modified thereafter (tPortDataPointer will be reset).
-   * Should only be called on output ports.
-   *
-   * \param data Data buffer acquired from a port using getUnusedBuffer (or locked data received from another port)
-   */
-  inline void Publish(tPortDataPointer<T> && data)
-  {
-    tImplementation::Publish(*GetWrapped(), std::forward<tPortDataPointer<T>>(data));
-  }
-  inline void Publish(tPortDataPointer<const T> && data)
-  {
-    tImplementation::PublishConstBuffer(*GetWrapped(), std::forward<tPortDataPointer<const T>>(data));
-  }
-
-  /*!
-   * Is data to this port pushed or pulled?
-   *
-   * \return Answer
-   */
-  inline bool PushStrategy() const
-  {
-    return GetWrapped()->PushStrategy();
-  }
-
-  /*!
-   * \param listener Listener to remove
-   */
-  void RemovePortListener(tPortListener<tPortDataPointer<const T>>& listener)
-  {
-    GetWrapped()->RemovePortListenerRaw(listener);
-  }
-  inline void RemovePortListener(tPortListener<T>& listener)
-  {
-    GetWrapped()->RemovePortListenerRaw(listener);
-  }
-  inline void RemovePortListener(tPortListener<const void*>& listener)
-  {
-    GetWrapped()->RemovePortListenerRaw(listener);
-  }
-
-  /*!
-   * (relevant for input ports only)
-   *
-   * Reset changed flag.
-   */
-  inline void ResetChanged()
-  {
-    GetWrapped()->ResetChanged();
-  }
-
-  /*!
-   * Is data to this port pushed in reverse direction?
-   *
-   * \return Answer
-   */
-  inline bool ReversePushStrategy() const
-  {
-    return GetWrapped()->ReversePushStrategy();
   }
 
   /*!
@@ -489,26 +300,6 @@ public:
     GetWrapped()->SetMinNetUpdateInterval(new_interval);
   }
 
-  /*!
-   * Set whether data should be pushed or pulled
-   *
-   * \param push Push data?
-   */
-  inline void SetPushStrategy(bool push)
-  {
-    GetWrapped()->SetPushStrategy(push);
-  }
-
-  /*!
-   * Set whether data should be pushed or pulled in reverse direction
-   *
-   * \param push Push data?
-   */
-  inline void SetReversePushStrategy(bool push)
-  {
-    GetWrapped()->SetReversePushStrategy(push);
-  }
-
 //  /*!
 //   * Set default value
 //   * This must be done before the port is used/initialized.
@@ -521,6 +312,24 @@ public:
 //    rrlib::serialization::tInputStream is(&source);
 //    tPortUtil<T>::SetDefault(static_cast<tPortBackend*>(wrapped), is);
 //  }
+
+  /*!
+   * Wraps raw port
+   * Throws std::runtime_error if port to wrap has invalid type.
+   *
+   * \param wrap Type-less port to wrap as tPort<T>
+   */
+  static tPort Wrap(core::tAbstractPort& wrap)
+  {
+    if (wrap.GetDataType().GetRttiName() != typeid(tPortBuffer).name())
+    {
+      //FINROC_LOG_PRINT(ERROR, "tPort<", rrlib::rtti::Demangle(typeid(T).name()), "> cannot wrap port with buffer type '", wrap.GetDataType().GetName(), "'.");
+      throw std::runtime_error("tPort<" + rrlib::rtti::Demangle(typeid(T).name()) + "> cannot wrap port with buffer type '" + wrap.GetDataType().GetName() + "'.");
+    }
+    tPort port;
+    port.SetWrapped(&wrap);
+    return port;
+  }
 
 //----------------------------------------------------------------------
 // Protected methods

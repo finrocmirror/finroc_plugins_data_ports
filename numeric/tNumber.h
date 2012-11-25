@@ -174,6 +174,16 @@ public:
     }
   }
 
+  bool operator==(const tNumber& other) const
+  {
+    return integer_value == other.integer_value && number_type == other.number_type && unit == other.unit;
+  }
+
+  bool operator!=(const tNumber& other) const
+  {
+    return !operator==(other);
+  }
+
   bool operator<(const tNumber& other) const;
 
 //----------------------------------------------------------------------
@@ -207,6 +217,7 @@ rrlib::serialization::tOutputStream& operator << (rrlib::serialization::tOutputS
 rrlib::serialization::tInputStream& operator >> (rrlib::serialization::tInputStream& stream, tNumber& number);
 rrlib::serialization::tStringOutputStream &operator << (rrlib::serialization::tStringOutputStream& stream, const tNumber& number);
 rrlib::serialization::tStringInputStream &operator >> (rrlib::serialization::tStringInputStream& stream, tNumber& number);
+std::ostream &operator << (std::ostream &stream, const tNumber& number);
 
 //----------------------------------------------------------------------
 // End of namespace declaration

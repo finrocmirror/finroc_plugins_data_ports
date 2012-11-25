@@ -97,11 +97,11 @@ tDataPortFactory default_data_port_factory;
 } // namespace internal
 
 
-tStandardPort::tStandardPort(common::tAbstractDataPortCreationInfo pci) :
-  common::tAbstractDataPort(pci),
+tStandardPort::tStandardPort(common::tAbstractDataPortCreationInfo creation_info) :
+  common::tAbstractDataPort(creation_info),
   buffer_pool(this->GetDataType(), IsOutputPort() ? 2 : 0),
   multi_type_buffer_pool(GetFlag(tFlag::MULTI_TYPE_BUFFER_POOL) ? new tMultiTypePortBufferPool(buffer_pool, GetDataType()) : NULL),
-  default_value(CreateDefaultValue(pci, buffer_pool)),
+  default_value(CreateDefaultValue(creation_info, buffer_pool)),
   current_value(0),
   standard_assign(!GetFlag(tFlag::NON_STANDARD_ASSIGN) && (!GetFlag(tFlag::HAS_QUEUE))),
   queue_fifo(NULL),

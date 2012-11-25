@@ -121,9 +121,9 @@ public:
   typedef typename tBufferPool::tPointer tUnusedManagerPointer;
 
   /*!
-   * \param pci PortCreationInformation
+   * \param creation_info PortCreationInformation
    */
-  tStandardPort(common::tAbstractDataPortCreationInfo pci);
+  tStandardPort(common::tAbstractDataPortCreationInfo creation_info);
 
   virtual ~tStandardPort();
 

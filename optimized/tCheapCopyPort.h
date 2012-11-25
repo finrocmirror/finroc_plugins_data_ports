@@ -151,9 +151,9 @@ public:
 
 
   /*!
-   * \param pci PortCreationInformation
+   * \param creation_info PortCreationInformation
    */
-  tCheapCopyPort(common::tAbstractDataPortCreationInfo pci);
+  tCheapCopyPort(common::tAbstractDataPortCreationInfo creation_info);
 
   virtual ~tCheapCopyPort();
 
