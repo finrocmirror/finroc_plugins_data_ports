@@ -86,6 +86,8 @@ public:
    */
   enum { cTAG_MASK = 0x7 };
 
+  ~tThreadLocalBufferManager();
+
   /*!
    * Adds Locks from owner thread
    *

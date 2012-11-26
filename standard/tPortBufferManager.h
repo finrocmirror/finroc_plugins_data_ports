@@ -87,6 +87,8 @@ class tPortBufferManager : public common::tReferenceCountingBufferManager
 //----------------------------------------------------------------------
 public:
 
+  ~tPortBufferManager();
+
   /*!
    * Creates instance of tPortBufferManager containing a buffer
    * of the specified type

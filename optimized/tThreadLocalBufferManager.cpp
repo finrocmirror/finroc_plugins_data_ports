@@ -73,6 +73,11 @@ tThreadLocalBufferManager::tThreadLocalBufferManager() :
   reuse_counter(0)
 {}
 
+tThreadLocalBufferManager::~tThreadLocalBufferManager()
+{
+  GetObject().~tGenericObject();
+}
+
 tThreadLocalBufferManager* tThreadLocalBufferManager::CreateInstance(const rrlib::rtti::tType& type)
 {
   static_assert(sizeof(tThreadLocalBufferManager) % 8 == 0, "Port Data manager must be aligned to 8 byte boundary");

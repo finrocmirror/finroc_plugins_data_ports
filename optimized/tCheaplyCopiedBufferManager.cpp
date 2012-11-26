@@ -72,6 +72,11 @@ tCheaplyCopiedBufferManager::tCheaplyCopiedBufferManager(tThreadId owner_thread_
   owner_thread_id(owner_thread_id)
 {}
 
+tCheaplyCopiedBufferManager::~tCheaplyCopiedBufferManager()
+{
+  GetObject().~tGenericObject();
+}
+
 tCheaplyCopiedBufferManager* tCheaplyCopiedBufferManager::CreateInstance(const rrlib::rtti::tType& type)
 {
   static_assert(sizeof(tCheaplyCopiedBufferManager) % 8 == 0, "Port Data manager must be aligned to 8 byte boundary");

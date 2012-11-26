@@ -79,6 +79,8 @@ public:
 
   typedef typename rrlib::thread::tThread::tThreadId tThreadId;
 
+  ~tCheaplyCopiedBufferManager();
+
   /*!
    * Creates instance of tCheaplyCopiedBufferManager containing a buffer
    * of the specified type

@@ -74,6 +74,11 @@ tPortBufferManager::tPortBufferManager() :
   lock_id(0)
 {}
 
+tPortBufferManager::~tPortBufferManager()
+{
+  GetObject().~tGenericObject();
+}
+
 tPortBufferManager* tPortBufferManager::CreateInstance(const rrlib::rtti::tType& type)
 {
   static_assert(sizeof(tPortBufferManager) % 8 == 0, "Port Data manager must be aligned to 8 byte boundary");

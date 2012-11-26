@@ -333,7 +333,7 @@ protected:
     tPublishingData(tLockingManagerPointer& published, int add_locks) :
       added_locks(add_locks),
       used_locks(0),
-      pointer_tag(published->AddLocks(added_locks)),
+      pointer_tag(published->AddLocks(added_locks - 1)), // 1 was already added by/for "tLockingManagerPointer& published"
       published_buffer(published.get()),
       published_buffer_tagged_pointer(published.release(), pointer_tag)
     {
