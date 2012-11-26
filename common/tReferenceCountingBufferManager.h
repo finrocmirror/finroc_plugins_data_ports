@@ -137,8 +137,9 @@ public:
   inline int ReleaseLocks(int locks_to_release)
   {
     int old_value = reference_and_reuse_counter.fetch_sub(locks_to_release << 16);
-    assert(old_value - locks_to_release >= 0 && "negative reference counter detected");
-    if (old_value - locks_to_release == 0)
+    int old_counter = old_value >> 16;
+    assert(old_counter - locks_to_release >= 0 && "negative reference counter detected");
+    if (old_counter - locks_to_release == 0)
     {
       TDeleterType deleter;
       deleter(static_cast<TThis*>(this));

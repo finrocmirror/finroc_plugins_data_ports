@@ -146,7 +146,8 @@ tStandardPort::~tStandardPort()
 {
   tLock lock(*this);
   tTaggedBufferPointer cur_pointer = current_value.load();
-  cur_pointer->ReleaseLocks<tPortBufferUnlocker, tPortBufferManager>(1, cur_pointer.GetStamp()); // thread safe, since nobody should publish to port anymore
+  tPortBufferUnlocker unlocker;
+  unlocker(cur_pointer.GetPointer()); // thread safe, since nobody should publish to port anymore
 
   delete multi_type_buffer_pool;
 
