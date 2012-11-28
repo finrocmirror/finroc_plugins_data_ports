@@ -37,11 +37,11 @@
     </sources>
   </testprogram>
   
-  <testprogram name="port_queues">
+  <!--testprogram name="port_queues">
     <sources>
       test/port_queues.cpp
     </sources>
-  </testprogram>
+  </testprogram-->
 
   <testprogram name="initial_pushing">
     <sources>

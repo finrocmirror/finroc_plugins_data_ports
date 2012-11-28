@@ -157,13 +157,13 @@ int main(int argc, char** argv)
     }
   }
 
-  FINROC_LOG_PRINT(USER, "\nBenchmarking cheap copy port with global buffers...");
+  FINROC_LOG_PRINT(USER, "\nBenchmarking cheap copy ports with global buffers...");
   BenchmarkCheapCopyPort();
   tThreadLocalBufferManagement thread_local_buffers;
-  FINROC_LOG_PRINT(USER, "Benchmarking cheap copy port with thread local buffers...");
+  FINROC_LOG_PRINT(USER, "Benchmarking cheap copy ports with thread-local buffers...");
   BenchmarkCheapCopyPort();
 
-  FINROC_LOG_PRINT(USER, "Benchmarking standard port...");
+  FINROC_LOG_PRINT(USER, "Benchmarking standard ports...");
   BenchmarkStandardPort();
 
   return 0;
