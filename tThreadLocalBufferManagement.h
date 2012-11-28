@@ -44,6 +44,7 @@
 //----------------------------------------------------------------------
 // Internal includes with ""
 //----------------------------------------------------------------------
+#include "plugins/data_ports/optimized/tThreadLocalBufferPools.h"
 
 //----------------------------------------------------------------------
 // Namespace declaration
@@ -78,6 +79,7 @@ namespace data_ports
  */
 class tThreadLocalBufferManagement : boost::noncopyable
 {
+public:
 
   tThreadLocalBufferManagement() :
     pools(new optimized::tThreadLocalBufferPools())
@@ -85,7 +87,7 @@ class tThreadLocalBufferManagement : boost::noncopyable
 
   ~tThreadLocalBufferManagement()
   {
-    pools.SafeDelete();
+    pools->SafeDelete();
   }
 
 private:

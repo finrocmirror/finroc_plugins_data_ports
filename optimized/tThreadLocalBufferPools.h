@@ -53,12 +53,14 @@ namespace finroc
 {
 namespace data_ports
 {
-namespace optimized
-{
 
 //----------------------------------------------------------------------
 // Forward declarations / typedefs / enums
 //----------------------------------------------------------------------
+class tThreadLocalBufferManagement;
+
+namespace optimized
+{
 namespace internal
 {
 struct tDeletionList;
@@ -117,20 +119,17 @@ public:
   void SafeDelete();
 
 //----------------------------------------------------------------------
-// Protected construction
-//----------------------------------------------------------------------
-protected:
-
-  tThreadLocalBufferPools();
-
-  virtual ~tThreadLocalBufferPools();
-
-//----------------------------------------------------------------------
 // Private fields and methods
 //----------------------------------------------------------------------
 private:
 
   friend struct internal::tDeletionList;
+  friend class finroc::data_ports::tThreadLocalBufferManagement;
+
+  tThreadLocalBufferPools();
+
+  virtual ~tThreadLocalBufferPools();
+
 
   /*! Buffer pools of current thread */
   static __thread tThreadLocalBufferPools* thread_local_instance;

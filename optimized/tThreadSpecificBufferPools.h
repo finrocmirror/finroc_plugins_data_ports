@@ -98,7 +98,10 @@ public:
   tThreadSpecificBufferPools() :
     pools()
   {
-    AddMissingPools();
+    if (SHARED)
+    {
+      AddMissingPools();
+    }
   }
 
   /*!

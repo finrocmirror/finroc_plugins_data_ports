@@ -145,9 +145,17 @@ public:
   {
     tImplementation::Publish(*this->GetWrapped(), std::forward<tPortDataPointer<T>>(data));
   }
+  inline void Publish(tPortDataPointer<T> & data)
+  {
+    tImplementation::Publish(*this->GetWrapped(), data);
+  }
   inline void Publish(tPortDataPointer<const T> && data)
   {
     tImplementation::PublishConstBuffer(*this->GetWrapped(), std::forward<tPortDataPointer<const T>>(data));
+  }
+  inline void Publish(tPortDataPointer<const T> & data)
+  {
+    tImplementation::PublishConstBuffer(*this->GetWrapped(), data);
   }
 
   /*!

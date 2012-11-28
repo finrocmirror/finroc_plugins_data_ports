@@ -233,12 +233,14 @@ struct tPortImplementation : public tCheapCopyPortImplementation<T, TYPE>
     return tPortDataPointerImplementation<T, true>();
   }
 
-  static inline void Publish(optimized::tCheapCopyPort& port, tPortDataPointer<T> && data)
+  template <typename TPointer>
+  static inline void Publish(optimized::tCheapCopyPort& port, TPointer && data)
   {
     CopyAndPublish(port, *data, data.GetTimestamp());
   }
 
-  static inline void PublishConstBuffer(optimized::tCheapCopyPort& port, tPortDataPointer<const T> && data)
+  template <typename TPointer>
+  static inline void PublishConstBuffer(optimized::tCheapCopyPort& port, TPointer && data)
   {
     CopyAndPublish(port, *data, data.GetTimestamp());
   }
@@ -295,13 +297,15 @@ struct tPortImplementation<T, tPortImplementationType::STANDARD>
     return tPortDataPointerImplementation<T, false>(buffer_pointer);
   }
 
-  static inline void Publish(standard::tStandardPort& port, tPortDataPointer<T> && data)
+  template <typename TPointer>
+  static inline void Publish(standard::tStandardPort& port, TPointer && data)
   {
     typename tPortBase::tUnusedManagerPointer buffer(data.implementation.Release());
     port.Publish(buffer);
   }
 
-  static inline void PublishConstBuffer(standard::tStandardPort& port, tPortDataPointer<const T> && data)
+  template <typename TPointer>
+  static inline void PublishConstBuffer(standard::tStandardPort& port, TPointer && data)
   {
     typename tPortBase::tLockingManagerPointer buffer(data.implementation.Release());
     port.Publish(buffer);

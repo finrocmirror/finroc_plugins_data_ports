@@ -60,6 +60,7 @@ namespace optimized
 //----------------------------------------------------------------------
 // Forward declarations / typedefs / enums
 //----------------------------------------------------------------------
+class tThreadLocalBufferPools;
 
 //----------------------------------------------------------------------
 // Class declaration
@@ -95,24 +96,17 @@ public:
    */
   inline rrlib::rtti::tGenericObject& GetObject()
   {
+    assert((!origin) && "Please call GetObject() on subclass");
     return reinterpret_cast<rrlib::rtti::tGenericObject&>(*(this + 1));
   }
 
   /*!
-   * \return True, if the current thread is the owner of this buffer
+   * \return Buffer pools, this buffer originates from. Null if it's a global buffer.
+   * Non-NULL indicates that this is actually an object of the subclass tThreadLocalBufferManager
    */
-  bool IsOwnerThread() const
+  tThreadLocalBufferPools* GetThreadLocalOrigin() const
   {
-    return owner_thread_id == rrlib::thread::tThread::CurrentThreadId();
-  }
-
-  /*!
-   * \return Id of owner thread - zero if there's no owner thread - otherwise this
-   * indicates that this is actually an object of the subclass tThreadLocalBufferManager
-   */
-  tThreadId GetOwnerThreadId() const
-  {
-    return owner_thread_id;
+    return origin;
   }
 
 //----------------------------------------------------------------------
@@ -120,14 +114,15 @@ public:
 //----------------------------------------------------------------------
 protected:
 
-  tCheaplyCopiedBufferManager(tThreadId owner_thread_id = 0);
+  tCheaplyCopiedBufferManager(tThreadLocalBufferPools* origin = NULL);
 
 //----------------------------------------------------------------------
 // Private fields and methods
 //----------------------------------------------------------------------
 private:
 
-  const tThreadId owner_thread_id;
+  /*! Buffer pools, this buffer originates from. Null if it's a global buffer. */
+  tThreadLocalBufferPools* const origin;
 
   virtual rrlib::rtti::tGenericObject& GetObjectImplementation();
 };

@@ -149,8 +149,9 @@ public:
   template <typename TDeleterType>
   inline void ProcessLockReleasesFromOtherThreads()
   {
-    int old_value = reference_and_reuse_counter.exchange(0);
-    ReleaseThreadLocalLocks<TDeleterType>(old_value);
+    int old_value = reference_and_reuse_counter.exchange(0) >> 16;
+    assert(old_value < 0);
+    ReleaseThreadLocalLocks<TDeleterType>(-old_value);
   }
 
   /*!
@@ -164,7 +165,7 @@ public:
     int old_value = reference_and_reuse_counter.fetch_sub(locks_to_release << 16) >> 16;
     if (old_value == 0)
     {
-      TThreadLocalBufferPools::Get()->ReturnBufferFromOtherThread(this);
+      static_cast<TThreadLocalBufferPools*>(this->GetThreadLocalOrigin())->ReturnBufferFromOtherThread(this);
     }
   }
 

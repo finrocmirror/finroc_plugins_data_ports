@@ -136,6 +136,7 @@ tThreadLocalBufferPools::tThreadLocalBufferPools() :
     abort();
   }
   thread_local_instance = this;
+  AddMissingPools();
 }
 
 tThreadLocalBufferPools::~tThreadLocalBufferPools()
@@ -153,7 +154,11 @@ bool tThreadLocalBufferPools::DeleteAllGarbage(bool initial_call)
       missing += it->InternalBufferManagement().DeleteGarbage();
     }
   }
-  return missing > 0;
+  else
+  {
+    return false;
+  }
+  return missing == 0;
 }
 
 bool tThreadLocalBufferPools::ProcessReturnedBuffers()
@@ -178,6 +183,10 @@ void tThreadLocalBufferPools::SafeDelete()
     internal::tDeletionList& list = internal::tDeletionListInstance::Instance();
     rrlib::thread::tLock lock(list.mutex);
     list.garbage_pools.push_back(this);
+  }
+  else
+  {
+    delete this;
   }
 }
 

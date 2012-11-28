@@ -36,6 +36,7 @@
 //----------------------------------------------------------------------
 // Internal includes with ""
 //----------------------------------------------------------------------
+#include "plugins/data_ports/optimized/tThreadLocalBufferPools.h"
 
 //----------------------------------------------------------------------
 // Debugging
@@ -69,9 +70,12 @@ namespace optimized
 //----------------------------------------------------------------------
 
 tThreadLocalBufferManager::tThreadLocalBufferManager() :
+  tCheaplyCopiedBufferManager(tThreadLocalBufferPools::Get()),
   reference_counter(0),
   reuse_counter(0)
-{}
+{
+  assert(GetThreadLocalOrigin());
+}
 
 tThreadLocalBufferManager::~tThreadLocalBufferManager()
 {

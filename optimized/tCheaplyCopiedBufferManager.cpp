@@ -68,13 +68,16 @@ namespace optimized
 // Implementation
 //----------------------------------------------------------------------
 
-tCheaplyCopiedBufferManager::tCheaplyCopiedBufferManager(tThreadId owner_thread_id) :
-  owner_thread_id(owner_thread_id)
+tCheaplyCopiedBufferManager::tCheaplyCopiedBufferManager(tThreadLocalBufferPools* origin) :
+  origin(origin)
 {}
 
 tCheaplyCopiedBufferManager::~tCheaplyCopiedBufferManager()
 {
-  GetObject().~tGenericObject();
+  if (!GetThreadLocalOrigin())
+  {
+    GetObject().~tGenericObject();
+  }
 }
 
 tCheaplyCopiedBufferManager* tCheaplyCopiedBufferManager::CreateInstance(const rrlib::rtti::tType& type)

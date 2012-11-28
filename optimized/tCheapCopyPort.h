@@ -94,20 +94,28 @@ class tCheapCopyPort : public common::tAbstractDataPort
   {
     void operator()(tCheaplyCopiedBufferManager* p) const
     {
-      if (p->IsOwnerThread())
+      tThreadLocalBufferPools* origin = p->GetThreadLocalOrigin();
+      if (origin)
       {
-        static_cast<tThreadLocalBufferManager*>(p)->ReleaseThreadLocalLocks<tThreadSpecificBufferPools<false>::tBufferPointer::deleter_type>(1);
+        if (origin == tThreadLocalBufferPools::Get()) // Is current thread the owner?
+        {
+          static_cast<tThreadLocalBufferManager*>(p)->ReleaseThreadLocalLocks<tThreadSpecificBufferPools<false>::tBufferPointer::deleter_type>(1);
+        }
+        else
+        {
+          static_cast<tThreadLocalBufferManager*>(p)->ReleaseLocksFromOtherThread(1);
+        }
       }
-      else if (p->GetOwnerThreadId())
+      else
       {
-        static_cast<tThreadLocalBufferManager*>(p)->ReleaseLocksFromOtherThread(1);
+        p->ReleaseLocks<typename tGlobalBufferPools::tBufferPointer::deleter_type, tCheaplyCopiedBufferManager>(1);
       }
-      p->ReleaseLocks<typename tGlobalBufferPools::tBufferPointer::deleter_type, tCheaplyCopiedBufferManager>(1);
     }
 
     void operator()(tThreadLocalBufferManager* p) const
     {
-      if (p->IsOwnerThread())
+      assert(tThreadLocalBufferPools::Get());
+      if (p->GetThreadLocalOrigin() == tThreadLocalBufferPools::Get()) // Is current thread the owner?
       {
         p->ReleaseThreadLocalLocks<typename tThreadLocalBufferPools::tBufferPointer::deleter_type>(1);
       }
@@ -122,9 +130,9 @@ class tCheapCopyPort : public common::tAbstractDataPort
   {
     void operator()(tCheaplyCopiedBufferManager* p) const
     {
-      if (p->GetOwnerThreadId())
+      if (p->GetThreadLocalOrigin())
       {
-        operator()(p);
+        operator()(static_cast<tThreadLocalBufferManager*>(p));
         return;
       }
       typename tGlobalBufferPools::tBufferPointer::deleter_type deleter;
@@ -222,7 +230,7 @@ public:
       for (; ;)
       {
         tTaggedBufferPointer current = current_value.load();
-        buffer = current.GetPointer()->GetObject().GetData<T>();
+        buffer = GetObject(*current).GetData<T>();
         tTaggedBufferPointer::tStorage current_raw = current;
         if (current_raw == current_value.load())    // still valid??
         {
@@ -252,7 +260,7 @@ public:
       for (; ;)
       {
         tTaggedBufferPointer current = current_value.load();
-        buffer = current.GetPointer()->GetObject().GetData<T>();
+        buffer = GetObject(*current).GetData<T>();
         timestamp = current.GetPointer()->GetTimestamp();
         tTaggedBufferPointer::tStorage current_raw = current;
         if (current_raw == current_value.load())    // still valid??
@@ -427,9 +435,6 @@ protected:
   {
     enum { cCOPY_ON_RECEIVE = 1 };
 
-    /*! Pointer to port data used in current publishing operation */
-    tCheaplyCopiedBufferManager* published_buffer;
-
     /*! Tagged pointer to port data used in current publishing operation */
     tTaggedBufferPointer published_buffer_tagged_pointer;
   };
@@ -443,6 +448,9 @@ protected:
     /*! Number of locks already added to reference counter for current publishing operation */
     enum { cADD_LOCKS = 1000 };
 
+    /*! Pointer to port data used in current publishing operation */
+    tCheaplyCopiedBufferManager* published_buffer;
+
     /*! Number of locks that were required for assignments etc. */
     int used_locks;
 
@@ -450,19 +458,19 @@ protected:
     int* used_locks_counter_to_use;
 
     tPublishingDataGlobalBuffer(tUnusedManagerPointer& published) :
+      published_buffer(published.get()),
       used_locks(0),
       used_locks_counter_to_use(&used_locks)
     {
-      published_buffer = published.get();
       int pointer_tag = published->InitReferenceCounter(cADD_LOCKS);
       published_buffer_tagged_pointer = tTaggedBufferPointer(published.release(), pointer_tag);
     }
 
     tPublishingDataGlobalBuffer() :
+      published_buffer(NULL),
       used_locks(0),
       used_locks_counter_to_use(&used_locks)
     {
-      published_buffer = NULL;
       published_buffer_tagged_pointer = 0;
     }
 
@@ -528,23 +536,25 @@ protected:
    */
   struct tPublishingDataThreadLocalBuffer : public tPublishingDataCommon
   {
-    tPublishingDataThreadLocalBuffer(tUnusedManagerPointer& published)
+    /*! Pointer to port data used in current publishing operation */
+    tThreadLocalBufferManager* published_buffer;
+
+    tPublishingDataThreadLocalBuffer(tUnusedManagerPointer& published) :
+      published_buffer(static_cast<tThreadLocalBufferManager*>(published.get()))
     {
-      published_buffer = published.get();
-      int pointer_tag = static_cast<tThreadLocalBufferManager*>(published_buffer)->IncrementReuseCounter();
+      int pointer_tag = published_buffer->IncrementReuseCounter();
       published_buffer_tagged_pointer = tTaggedBufferPointer(published.release(), pointer_tag);
     }
 
-    tPublishingDataThreadLocalBuffer(tThreadLocalBufferManager* published, bool unused)
+    tPublishingDataThreadLocalBuffer(tThreadLocalBufferManager* published, bool unused) :
+      published_buffer(published)
     {
-      published_buffer = published;
       int pointer_tag = unused ? published->IncrementReuseCounter() : published->GetPointerTag();
       published_buffer_tagged_pointer = tTaggedBufferPointer(published, pointer_tag);
     }
 
-    tPublishingDataThreadLocalBuffer()
+    tPublishingDataThreadLocalBuffer() : published_buffer(NULL)
     {
-      published_buffer = NULL;
       published_buffer_tagged_pointer = 0;
     }
 
@@ -555,12 +565,12 @@ protected:
 
     inline void AddLock()
     {
-      static_cast<tThreadLocalBufferManager*>(published_buffer)->AddThreadLocalLocks(1);
+      published_buffer->AddThreadLocalLocks(1);
     }
 
     inline bool AlreadyAssigned() const
     {
-      return static_cast<tThreadLocalBufferManager*>(published_buffer)->GetThreadLocalReferenceCounter();
+      return published_buffer->GetThreadLocalReferenceCounter();
     }
 
     inline void CheckRecycle()
@@ -568,7 +578,7 @@ protected:
       if (published_buffer && (!AlreadyAssigned()))
       {
         tUnusedBufferRecycler recycler;
-        recycler(static_cast<tThreadLocalBufferManager*>(published_buffer));
+        recycler(published_buffer);
       }
     }
 
@@ -578,8 +588,8 @@ protected:
     void Init(tUnusedManagerPointer& published)
     {
       CheckRecycle();
-      published_buffer = published.get();
-      int pointer_tag = static_cast<tThreadLocalBufferManager*>(published_buffer)->IncrementReuseCounter();
+      published_buffer = static_cast<tThreadLocalBufferManager*>(published.get());
+      int pointer_tag = published_buffer->IncrementReuseCounter();
       published_buffer_tagged_pointer = tTaggedBufferPointer(published.release(), pointer_tag);
     }
   };
@@ -799,6 +809,15 @@ private:
 
   virtual int GetMaxQueueLengthImplementation() const;
 
+  /*!
+   * \param manager Generic object manager (works for both tCheaplyCopiedBufferManager and tThreadLlocalBufferManager classes)
+   * \return Object managed with this manager
+   */
+  static rrlib::rtti::tGenericObject& GetObject(tCheaplyCopiedBufferManager& manager)
+  {
+    return manager.GetThreadLocalOrigin() ? static_cast<tThreadLocalBufferManager&>(manager).GetObject() : manager.GetObject();
+  }
+
 //  /*!
 //   * (Meant for internal use)
 //   *
@@ -817,7 +836,9 @@ private:
    *
    * \param publishing_data Info on current publishing operation
    */
-  inline void NotifyListeners(tPublishingDataCommon& publishing_data)
+  template <typename TPublishingData>
+  __attribute__((always_inline))
+  inline void NotifyListeners(TPublishingData& publishing_data)
   {
     for (auto it = port_listeners.Begin(); it != port_listeners.End(); ++it)
     {
@@ -944,7 +965,8 @@ private:
    * \param source Source port
    * \param target Target Port
    */
-  inline void UpdateStatistics(tPublishingDataCommon& publishing_data, tCheapCopyPort& source, tCheapCopyPort& target)
+  template <typename TPublishingData>
+  inline void UpdateStatistics(TPublishingData& publishing_data, tCheapCopyPort& source, tCheapCopyPort& target)
   {
     if (definitions::cCOLLECT_EDGE_STATISTICS)    // const, so method can be optimized away completely
     {

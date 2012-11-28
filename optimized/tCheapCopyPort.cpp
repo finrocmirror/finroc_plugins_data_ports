@@ -169,7 +169,7 @@ void tCheapCopyPort::ApplyDefaultValue()
 
 std::string tCheapCopyPort::BrowserPublishRaw(tUnusedManagerPointer& buffer)
 {
-  if (buffer->IsOwnerThread())
+  if (buffer->GetThreadLocalOrigin() && buffer->GetThreadLocalOrigin() == tThreadLocalBufferPools::Get()) // Is current thread the owner?
   {
     common::tPublishOperation<tCheapCopyPort, tPublishingDataThreadLocalBuffer> data(buffer);
     data.Execute<false, tChangeStatus::CHANGED, true>(*this);
@@ -215,7 +215,7 @@ void tCheapCopyPort::CopyCurrentValueToGenericObject(rrlib::rtti::tGenericObject
     for (; ;)
     {
       tTaggedBufferPointer current = current_value.load();
-      buffer.DeepCopyFrom(current->GetObject());
+      buffer.DeepCopyFrom(GetObject(*current));
       timestamp = current->GetTimestamp();
       tTaggedBufferPointer::tStorage current_raw = current;
       if (current_raw == current_value.load())    // still valid??
@@ -239,7 +239,7 @@ void tCheapCopyPort::ForwardData(tAbstractPort& other)
   if (tThreadLocalBufferPools::Get())
   {
     tTaggedBufferPointer current_buffer = current_value.load();
-    if (current_buffer->IsOwnerThread())
+    if (tThreadLocalBufferPools::Get() == current_buffer->GetThreadLocalOrigin()) // Is current thread the owner thread?
     {
       common::tPublishOperation<tCheapCopyPort, tPublishingDataThreadLocalBuffer> data(static_cast<tThreadLocalBufferManager*>(current_buffer.GetPointer()), false);
       data.Execute<false, tChangeStatus::CHANGED, false>(static_cast<tCheapCopyPort&>(other));
@@ -251,7 +251,7 @@ void tCheapCopyPort::ForwardData(tAbstractPort& other)
     auto unused_manager = tThreadLocalBufferPools::Get()->GetUnusedBuffer(cheaply_copyable_type_index);
     for (; ;)
     {
-      unused_manager->GetObject().DeepCopyFrom(current_buffer->GetObject());
+      unused_manager->GetObject().DeepCopyFrom(GetObject(*current_buffer));
       unused_manager->SetTimestamp(current_buffer->GetTimestamp());
       typename tTaggedBufferPointer::tStorage current_raw = current_buffer;
       typename tTaggedBufferPointer::tStorage current_raw_2 = current_value.load();
@@ -376,7 +376,7 @@ void tCheapCopyPort::LockCurrentValueForPublishing(tPublishingDataGlobalBuffer& 
   while (true)
   {
     tTaggedBufferPointer current_buffer = current_value.load();
-    if (current_buffer->GetOwnerThreadId())
+    if (current_buffer->GetThreadLocalOrigin())
     {
       tUnusedManagerPointer unused_manager = tUnusedManagerPointer(tGlobalBufferPools::Instance().GetUnusedBuffer(cheaply_copyable_type_index).release());
       CopyCurrentValueToManager(*unused_manager, true);
@@ -397,8 +397,9 @@ void tCheapCopyPort::LockCurrentValueForPublishing(tPublishingDataGlobalBuffer& 
 
 void tCheapCopyPort::LockCurrentValueForPublishing(tPublishingDataThreadLocalBuffer& publishing_data)
 {
+  assert(tThreadLocalBufferPools::Get());
   tTaggedBufferPointer current_buffer = current_value.load();
-  if (current_buffer->IsOwnerThread())
+  if (tThreadLocalBufferPools::Get() == current_buffer->GetThreadLocalOrigin()) // Is current thread the owner thread?
   {
     publishing_data = tPublishingDataThreadLocalBuffer(static_cast<tThreadLocalBufferManager*>(current_buffer.GetPointer()), false);
     return;
@@ -409,7 +410,7 @@ void tCheapCopyPort::LockCurrentValueForPublishing(tPublishingDataThreadLocalBuf
   auto unused_manager = tThreadLocalBufferPools::Get()->GetUnusedBuffer(cheaply_copyable_type_index);
   for (; ;)
   {
-    unused_manager->GetObject().DeepCopyFrom(current_buffer->GetObject());
+    unused_manager->GetObject().DeepCopyFrom(GetObject(*current_buffer));
     unused_manager->SetTimestamp(current_buffer->GetTimestamp());
     typename tTaggedBufferPointer::tStorage current_raw = current_buffer;
     typename tTaggedBufferPointer::tStorage current_raw_2 = current_value.load();
