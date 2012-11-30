@@ -45,6 +45,7 @@
 //----------------------------------------------------------------------
 // Internal includes with ""
 //----------------------------------------------------------------------
+#include "plugins/data_ports/tPortWrapperBase.h"
 #include "plugins/data_ports/api/tGenericPortImplementation.h"
 
 //----------------------------------------------------------------------
@@ -100,14 +101,38 @@ public:
   tGenericPort(const ARGS&... args)
   {
     common::tAbstractDataPortCreationInfo creation_info(args...);
-    implementation.reset(tGenericPortImplementation::CreatePortImplementation(creation_info));
-    wrapped = implementation->GetWrapped();
+    if ((creation_info.data_type.GetTypeTraits() & rrlib::rtti::trait_flags::cIS_BINARY_SERIALIZABLE) == 0)
+    {
+      throw std::runtime_error("Only binary serializable types may be used in data ports");
+    }
+    implementation = api::tGenericPortImplementation::GetImplementation(creation_info.data_type);
+    SetWrapped(implementation->CreatePort(creation_info));
+  }
+
+  /*!
+   * Publish buffer through port
+   * (not in normal operation, but from browser; difference: listeners on this port will be notified)
+   *
+   * \param buffer Buffer with data
+   * \return Error message if something did not work
+   */
+  inline std::string BrowserPublish(tPortDataPointer<rrlib::rtti::tGenericObject>& pointer)
+  {
+    if (IsCheaplyCopiedType(pointer->GetType()))
+    {
+      typename optimized::tCheapCopyPort::tUnusedManagerPointer pointer2(static_cast<optimized::tCheaplyCopiedBufferManager*>(pointer.implementation.Release()));
+      return static_cast<optimized::tCheapCopyPort*>(GetWrapped())->BrowserPublishRaw(pointer2);
+    }
+    else
+    {
+      typename standard::tStandardPort::tUnusedManagerPointer pointer2(static_cast<standard::tPortBufferManager*>(pointer.implementation.Release()));
+      static_cast<standard::tStandardPort*>(GetWrapped())->BrowserPublish(pointer2);
+    }
+    return "";
   }
 
   /*!
    * Gets Port's current value
-   *
-   * (Using this get()-variant is more efficient when using CC types, but can be extremely costly with large data types)
    *
    * \param result Buffer to (deep) copy port's current value to
    * \param timestamp Buffer to copy timestamp attached to data to (optional)
@@ -119,21 +144,40 @@ public:
   }
   inline const void Get(rrlib::rtti::tGenericObject& result, rrlib::time::tTimestamp& timestamp)
   {
-    implementation->Get(result, timestamp);
+    implementation->Get(*GetWrapped(), result, timestamp);
+  }
+
+  /*!
+   * \return Port's default value (NULL if none has been set)
+   */
+  const rrlib::rtti::tGenericObject* GetDefaultValue()
+  {
+    return implementation->GetDefaultValue(*GetWrapped());
+  }
+
+  /*!
+   * Note: Buffer always has data type of port backend (e.g. tNumber instead of double)
+   * If this is not desired, use pass-by-value-Publish Operation below.
+   *
+   * \return Unused buffer.
+   * Buffers to be published using this port should be acquired using this function.
+   * The buffer might contain old data, so it should be cleared prior to using.
+   */
+  inline tPortDataPointer<rrlib::rtti::tGenericObject> GetUnusedBuffer()
+  {
+    return implementation->GetUnusedBuffer(*GetWrapped());
   }
 
   /*!
    * Publish Data Buffer. This data will be forwarded to any connected ports.
    * Should only be called on output ports.
    *
-   * (This publish() method is efficient when using CC types, but can be extremely costly with large data types)
-   *
    * \param data Data to publish. It will be deep-copied.
    * \param timestamp Timestamp to attach to data.
    */
   inline void Publish(const rrlib::rtti::tGenericObject& data, const rrlib::time::tTimestamp& timestamp = rrlib::time::cNO_TIME)
   {
-    implementation->Publish(data, timestamp);
+    implementation->Publish(*GetWrapped(), data, timestamp);
   }
 
   /*!
@@ -144,7 +188,25 @@ public:
    */
   inline void SetBounds(const rrlib::rtti::tGenericObject& min, const rrlib::rtti::tGenericObject& max)
   {
-    implementation->SetBounds(min, max);
+    implementation->SetBounds(*GetWrapped(), min, max);
+  }
+
+  /*!
+   * Wraps raw port
+   * Throws std::runtime_error if port to wrap has invalid type.
+   *
+   * \param wrap Type-less tAbstractPort to wrap as tGenericPort
+   */
+  static tGenericPort Wrap(core::tAbstractPort& wrap)
+  {
+    if (!IsDataFlowType(wrap.GetDataType()))
+    {
+      throw std::runtime_error(wrap.GetDataType().GetName() + " is no data flow type and cannot be wrapped.");
+    }
+    tGenericPort port;
+    port.SetWrapped(&wrap);
+    port.implementation = api::tGenericPortImplementation::GetImplementation(wrap.GetDataType());
+    return port;
   }
 
 //----------------------------------------------------------------------
@@ -152,8 +214,8 @@ public:
 //----------------------------------------------------------------------
 private:
 
-  /** Port implementation */
-  std::shared_ptr<api::tGenericPortImplementation> implementation;
+  /** Implementation of port functionality */
+  api::tGenericPortImplementation* implementation;
 
 };
 

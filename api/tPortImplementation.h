@@ -77,37 +77,39 @@ struct tPortImplementation;
 /*!
  * Common implementation for all ports derived from tCheapCopyPort
  */
-template <typename T, tPortImplementationType TYPE, bool BOUNDABLE>
+template <typename TWrapper, typename TBuffer, tPortImplementationType TYPE, bool BOUNDABLE>
 struct tCheapCopyPortBaseImplementation
 {
   typedef optimized::tCheapCopyPort tPortBase;
 
-  static core::tAbstractPort* CreatePort(tPortCreationInfo<T>& pci)
+  static core::tAbstractPort* CreatePort(tPortCreationInfo<TWrapper> creation_info)
   {
-    if (pci.BoundsSet())
+    creation_info.UnsetDefaultValue(); // TBuffer might differ from TWrapper => corrupts default value (it is set later in tPort)
+    if (creation_info.BoundsSet())
     {
-      return new tBoundedPort<T, tPortImplementationType::CHEAP_COPY>(pci);
+      return new tBoundedPort<TWrapper, tPortImplementationType::CHEAP_COPY>(creation_info);
     }
     else
     {
-      return new optimized::tCheapCopyPort(pci);
+      return new optimized::tCheapCopyPort(creation_info);
     }
   }
 };
 
 // for non-boundable types
-template <typename T, tPortImplementationType TYPE>
-struct tCheapCopyPortBaseImplementation<T, TYPE, false>
+template <typename TWrapper, typename TBuffer, tPortImplementationType TYPE>
+struct tCheapCopyPortBaseImplementation<TWrapper, TBuffer, TYPE, false>
 {
   typedef optimized::tCheapCopyPort tPortBase;
 
-  static core::tAbstractPort* CreatePort(tPortCreationInfo<T>& pci)
+  static core::tAbstractPort* CreatePort(tPortCreationInfo<TWrapper> creation_info)
   {
-    if (pci.BoundsSet())
+    creation_info.UnsetDefaultValue(); // TBuffer might differ from TWrapper => corrupts default value (it is set later in tPort)
+    if (creation_info.BoundsSet())
     {
-      FINROC_LOG_PRINT(WARNING, "Bounds are not supported for type '", pci.data_type.GetName(), "'. Ignoring.");
+      FINROC_LOG_PRINT(WARNING, "Bounds are not supported for type '", creation_info.data_type.GetName(), "'. Ignoring.");
     }
-    return new optimized::tCheapCopyPort(pci);
+    return new optimized::tCheapCopyPort(creation_info);
   }
 };
 
@@ -115,7 +117,7 @@ struct tCheapCopyPortBaseImplementation<T, TYPE, false>
 // standard cheap-copy implementation
 template <typename T, tPortImplementationType TYPE>
 struct tCheapCopyPortImplementation :
-  public tCheapCopyPortBaseImplementation<T, tPortImplementationType::CHEAP_COPY, tIsBoundable<T>::value>
+  public tCheapCopyPortBaseImplementation<T, T, tPortImplementationType::CHEAP_COPY, tIsBoundable<T>::value>
 {
   typedef T tPortBuffer;
 
@@ -133,7 +135,7 @@ struct tCheapCopyPortImplementation :
 // numeric cheap-copy implementation
 template <typename T>
 struct tCheapCopyPortImplementation<T, tPortImplementationType::NUMERIC> :
-  public tCheapCopyPortBaseImplementation<T, tPortImplementationType::CHEAP_COPY, true>
+  public tCheapCopyPortBaseImplementation<T, numeric::tNumber, tPortImplementationType::CHEAP_COPY, true>
 {
   typedef numeric::tNumber tPortBuffer;
 
@@ -161,7 +163,7 @@ struct tCheapCopyPortImplementation<T, tPortImplementationType::NUMERIC> :
 // tNumber cheap-copy implementation
 template <>
 struct tCheapCopyPortImplementation<numeric::tNumber, tPortImplementationType::NUMERIC> :
-  public tCheapCopyPortBaseImplementation<numeric::tNumber, tPortImplementationType::CHEAP_COPY, true>
+  public tCheapCopyPortBaseImplementation<numeric::tNumber, numeric::tNumber, tPortImplementationType::CHEAP_COPY, true>
 {
   typedef numeric::tNumber tPortBuffer;
 
@@ -191,6 +193,14 @@ template <typename T, tPortImplementationType TYPE>
 struct tPortImplementation : public tCheapCopyPortImplementation<T, TYPE>
 {
   typedef tCheapCopyPortImplementation<T, TYPE> tBase;
+
+  static inline void BrowserPublish(optimized::tCheapCopyPort& port, const T& data, const rrlib::time::tTimestamp& timestamp)
+  {
+    typename optimized::tCheapCopyPort::tUnusedManagerPointer buffer(optimized::tGlobalBufferPools::Instance().GetUnusedBuffer(port.GetCheaplyCopyableTypeIndex()).release());
+    buffer->SetTimestamp(timestamp);
+    Assign(buffer->GetObject().GetData<typename tBase::tPortBuffer>(), data, port.GetUnit());
+    port.BrowserPublishRaw(buffer);
+  }
 
   static inline void CopyAndPublish(optimized::tCheapCopyPort& port, const T& data, const rrlib::time::tTimestamp& timestamp)
   {
@@ -260,6 +270,14 @@ struct tPortImplementation<T, tPortImplementationType::STANDARD>
 {
   typedef standard::tStandardPort tPortBase;
   typedef T tPortBuffer;
+
+  static inline void BrowserPublish(tPortBase& port, const T& data, const rrlib::time::tTimestamp& timestamp)
+  {
+    typename tPortBase::tUnusedManagerPointer buffer = port.GetUnusedBufferRaw();
+    buffer->SetTimestamp(timestamp);
+    rrlib::rtti::sStaticTypeInfo<T>::DeepCopy(data, buffer->GetObject().GetData<T>());
+    port.BrowserPublish(buffer);
+  }
 
   static inline void CopyAndPublish(tPortBase& port, const T& data, const rrlib::time::tTimestamp& timestamp)
   {

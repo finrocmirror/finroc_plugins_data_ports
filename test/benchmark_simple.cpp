@@ -95,7 +95,8 @@ inline rrlib::serialization::tInputStream& operator >> (rrlib::serialization::tI
 void BenchmarkCheapCopyPort()
 {
   tFrameworkElement* parent = new tFrameworkElement(&tRuntimeEnvironment::GetInstance(), "Test");
-  tOutputPort<int> output_port("Output Port", parent);
+  tOutputPort<int> output_port("Output Port", parent, 32);
+  FINROC_LOG_PRINT(USER, "Port default value (expected 32): ", output_port.Get());
   tInputPort<int> input_port("Input Port", parent);
   output_port.ConnectTo(input_port);
   parent->Init();

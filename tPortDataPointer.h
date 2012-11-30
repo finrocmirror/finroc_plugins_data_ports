@@ -168,6 +168,7 @@ public:
 private:
 
   friend struct api::tPortImplementation<tPortData, api::tPortImplementationTypeTrait<tPortData>::type>;
+  friend class tGenericPort;
 
   /*! Actual implementation of smart pointer class */
   tImplementation implementation;

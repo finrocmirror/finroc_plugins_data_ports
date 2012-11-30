@@ -150,15 +150,6 @@ public:
   void BrowserPublish(tUnusedManagerPointer& data);
 
   /*!
-   * \return Does port contain default value?
-   */
-  inline bool ContainsDefaultValue()
-  {
-    tTaggedBufferPointer current_buffer = current_value.load();
-    return current_buffer.GetPointer() == default_value.get();
-  }
-
-  /*!
    * Dequeue all elements currently in port's input queue
    * (use only with ports that have input queue with tDequeueMode::ALL)
    *
@@ -210,6 +201,14 @@ public:
    * \return Buffer with default value. Can be used to change default value for port.
    */
   rrlib::rtti::tGenericObject& GetDefaultBufferRaw();
+
+  /*!
+   * \return Default value that has been assigned to port (NULL if no default value set)
+   */
+  const rrlib::rtti::tGenericObject* GetDefaultValue() const
+  {
+    return default_value ? &(default_value->GetObject()) : NULL;
+  }
 
   /*!
    * Pulls port data (regardless of strategy)

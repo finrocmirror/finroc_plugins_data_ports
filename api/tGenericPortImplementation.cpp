@@ -36,7 +36,7 @@
 //----------------------------------------------------------------------
 // Internal includes with ""
 //----------------------------------------------------------------------
-#include "plugins/data_ports/tOutputPort.h"
+#include "plugins/data_ports/tPort.h"
 
 //----------------------------------------------------------------------
 // Debugging
@@ -68,235 +68,197 @@ namespace api
 //----------------------------------------------------------------------
 // Implementation
 //----------------------------------------------------------------------
+namespace internal
+{
+
+template <typename T>
+struct tBoundsSetter
+{
+  static void SetBounds(core::tAbstractPort& port, const rrlib::rtti::tGenericObject& min, const rrlib::rtti::tGenericObject& max)
+  {
+    typedef api::tBoundedPort<T, api::tPortImplementationTypeTrait<T>::type> tBoundedPort;
+    if (typeid(port) != typeid(tBoundedPort))
+    {
+      FINROC_LOG_PRINT(ERROR, "Cannot set bounds for port ", rrlib::rtti::tDataType<T>().GetName(), ". It is not a bounded port.");
+      return;
+    }
+    static_cast<tBoundedPort&>(port).SetBounds(tBounds<T>(min.GetData<T>(), max.GetData<T>()));
+  }
+};
+
+struct tNoBoundsSetter
+{
+  static void SetBounds(core::tAbstractPort& port, const rrlib::rtti::tGenericObject& min, const rrlib::rtti::tGenericObject& max)
+  {
+    FINROC_LOG_PRINT(ERROR, "Cannot set bounds for type ", port.GetDataType().GetName());
+  }
+};
+
+
 template <typename T>
 class tGenericPortImplementationTyped : public tGenericPortImplementation
 {
 public:
-  tPort<T> port;
-  tOutputPort<T> output_port;
 
-  tGenericPortImplementationTyped(const common::tAbstractDataPortCreationInfo& creation_info) :
-    port(creation_info),
-    output_port()
-  {}
+  /*! Should methods dealing with bounds be available? */
+  enum { cBOUNDABLE = tIsBoundable<T>::value };
 
-  virtual void Get(rrlib::rtti::tGenericObject& result, rrlib::time::tTimestamp& timestamp)
+  /*! Class that contains actual implementation of most functionality */
+  typedef api::tPortImplementation<T, api::tPortImplementationTypeTrait<T>::type> tImplementation;
+
+  typedef optimized::tCheapCopyPort tPortBase;
+
+  virtual core::tAbstractPort* CreatePort(const common::tAbstractDataPortCreationInfo& creation_info)
   {
-    port.Get(result.GetData<T>(), timestamp);
-  }
-
-  virtual common::tAbstractDataPort* GetWrapped()
-  {
+    tPort<T> port(creation_info);
     return port.GetWrapped();
   }
 
-  virtual void Publish(const rrlib::rtti::tGenericObject& data, const rrlib::time::tTimestamp& timestamp)
+  virtual void Get(core::tAbstractPort& port, rrlib::rtti::tGenericObject& result, rrlib::time::tTimestamp& timestamp)
   {
-    if (!output_port.GetWrapped())
-    {
-      output_port = tOutputPort<T>::Wrap(*port.GetWrapped());
-    }
-    output_port.Publish(data.GetData<T>(), timestamp);
+    tImplementation::CopyCurrentPortValue(static_cast<tPortBase&>(port), result.GetData<T>(), timestamp);
   }
 
-  virtual void SetBounds(const rrlib::rtti::tGenericObject& min, const rrlib::rtti::tGenericObject& max)
+  virtual void Publish(core::tAbstractPort& port, const rrlib::rtti::tGenericObject& data, const rrlib::time::tTimestamp& timestamp)
   {
-    FINROC_LOG_PRINT(ERROR, "Cannot set bounds for type ", rrlib::rtti::tDataType<T>().GetName());
+    tImplementation::CopyAndPublish(static_cast<tPortBase&>(port), data.GetData<T>(), timestamp);
   }
-};
 
-template <typename T>
-class tGenericPortImplementationNumeric : public tGenericPortImplementationTyped<T>
-{
-public:
-
-  tGenericPortImplementationNumeric(const common::tAbstractDataPortCreationInfo& pci) :
-    tGenericPortImplementationTyped<T>(pci)
-  {}
-
-  virtual void SetBounds(const rrlib::rtti::tGenericObject& min, const rrlib::rtti::tGenericObject& max)
+  virtual void SetBounds(core::tAbstractPort& port, const rrlib::rtti::tGenericObject& min, const rrlib::rtti::tGenericObject& max)
   {
-    tGenericPortImplementationTyped<T>::port.SetBounds(tBounds<T>(min.GetData<T>(), max.GetData<T>()));
+    std::conditional<cBOUNDABLE, tBoundsSetter<T>, tNoBoundsSetter>::type::SetBounds(port, min, max);
   }
 };
+
 
 class tGenericPortImplementationCheapCopy : public tGenericPortImplementation
 {
 public:
-  optimized::tCheapCopyPort* port;
 
-  tGenericPortImplementationCheapCopy(const common::tAbstractDataPortCreationInfo& creation_info) :
-    port(new optimized::tCheapCopyPort(creation_info))
+  typedef optimized::tCheapCopyPort tPortBase;
+
+  virtual core::tAbstractPort* CreatePort(const common::tAbstractDataPortCreationInfo& creation_info)
   {
-    if (creation_info.DefaultValueSet())
-    {
-      std::unique_ptr<rrlib::rtti::tGenericObject> temp(creation_info.data_type.CreateInstanceGeneric());
-      rrlib::serialization::tInputStream is(&creation_info.GetDefaultGeneric());
-      is >> (*temp);
-      port->SetDefault(*temp);
-
-      // publish for value caching in Parameter classes
-      rrlib::serialization::tInputStream is2(&creation_info.GetDefaultGeneric());
-      optimized::tCheapCopyPort::tUnusedManagerPointer buffer_manager_pointer(
-        optimized::tGlobalBufferPools::Instance().GetUnusedBuffer(port->GetCheaplyCopyableTypeIndex()).release());
-      is2 >> buffer_manager_pointer->GetObject();
-      tString error = port->BrowserPublishRaw(buffer_manager_pointer);
-      if (error.length() > 0)
-      {
-        FINROC_LOG_PRINT(WARNING, "Could not set default value: ", error);
-      }
-    }
+    return new tPortBase(creation_info);
   }
 
-  virtual void Get(rrlib::rtti::tGenericObject& result, rrlib::time::tTimestamp& timestamp)
+  virtual void Get(core::tAbstractPort& port, rrlib::rtti::tGenericObject& result, rrlib::time::tTimestamp& timestamp)
   {
-    port->CopyCurrentValueToGenericObject(result, timestamp);
+    static_cast<tPortBase&>(port).CopyCurrentValueToGenericObject(result, timestamp);
   }
 
-  virtual common::tAbstractDataPort* GetWrapped()
+  virtual void Publish(core::tAbstractPort& port, const rrlib::rtti::tGenericObject& data, const rrlib::time::tTimestamp& timestamp)
   {
-    return port;
-  }
-
-  virtual void Publish(const rrlib::rtti::tGenericObject& data, const rrlib::time::tTimestamp& timestamp)
-  {
-    assert(data.GetType() == port->GetDataType());
+    assert(data.GetType() == port.GetDataType());
     optimized::tThreadLocalBufferPools* thread_local_pools = optimized::tThreadLocalBufferPools::Get();
     if (thread_local_pools)
     {
-      typename optimized::tThreadLocalBufferPools::tBufferPointer buffer = thread_local_pools->GetUnusedBuffer(port->GetCheaplyCopyableTypeIndex());
+      typename optimized::tThreadLocalBufferPools::tBufferPointer buffer = thread_local_pools->GetUnusedBuffer(static_cast<tPortBase&>(port).GetCheaplyCopyableTypeIndex());
       buffer->SetTimestamp(timestamp);
       buffer->GetObject().DeepCopyFrom(data);
       common::tPublishOperation<optimized::tCheapCopyPort, typename optimized::tCheapCopyPort::tPublishingDataThreadLocalBuffer> publish_operation(buffer.release(), true);
-      publish_operation.Execute<false, common::tAbstractDataPort::tChangeStatus::CHANGED, false>(*port);
+      publish_operation.Execute<false, common::tAbstractDataPort::tChangeStatus::CHANGED, false>(static_cast<tPortBase&>(port));
     }
     else
     {
-      typename optimized::tCheapCopyPort::tUnusedManagerPointer buffer(optimized::tGlobalBufferPools::Instance().GetUnusedBuffer(port->GetCheaplyCopyableTypeIndex()).release());
+      typename optimized::tCheapCopyPort::tUnusedManagerPointer buffer(optimized::tGlobalBufferPools::Instance().GetUnusedBuffer(static_cast<tPortBase&>(port).GetCheaplyCopyableTypeIndex()).release());
       buffer->SetTimestamp(timestamp);
       buffer->GetObject().DeepCopyFrom(data);
       common::tPublishOperation<optimized::tCheapCopyPort, typename optimized::tCheapCopyPort::tPublishingDataGlobalBuffer> publish_operation(buffer);
-      publish_operation.Execute<false, common::tAbstractDataPort::tChangeStatus::CHANGED, false>(*port);
+      publish_operation.Execute<false, common::tAbstractDataPort::tChangeStatus::CHANGED, false>(static_cast<tPortBase&>(port));
     }
   }
 
-  virtual void SetBounds(const rrlib::rtti::tGenericObject& min, const rrlib::rtti::tGenericObject& max)
+  virtual void SetBounds(core::tAbstractPort& port, const rrlib::rtti::tGenericObject& min, const rrlib::rtti::tGenericObject& max)
   {
-    FINROC_LOG_PRINT(ERROR, "Cannot set bounds for type ", port->GetDataType().GetName());
+    FINROC_LOG_PRINT(ERROR, "Cannot set bounds for type ", port.GetDataType().GetName());
   }
 };
 
 class tGenericPortImplementationStandard : public tGenericPortImplementation
 {
 public:
-  standard::tStandardPort* port;
 
-  tGenericPortImplementationStandard(const common::tAbstractDataPortCreationInfo& creation_info) :
-    port(new standard::tStandardPort(creation_info))
+  typedef standard::tStandardPort tPortBase;
+
+  virtual core::tAbstractPort* CreatePort(const common::tAbstractDataPortCreationInfo& creation_info)
   {
-    if (creation_info.DefaultValueSet())
-    {
-      rrlib::serialization::tInputStream is(&creation_info.GetDefaultGeneric());
-      is >> (port->GetDefaultBufferRaw());
-    }
+    return new tPortBase(creation_info);
   }
 
-  virtual void Get(rrlib::rtti::tGenericObject& result, rrlib::time::tTimestamp& timestamp)
+  virtual void Get(core::tAbstractPort& port, rrlib::rtti::tGenericObject& result, rrlib::time::tTimestamp& timestamp)
   {
-    typename standard::tStandardPort::tLockingManagerPointer mgr = port->GetCurrentValueRaw();
+    typename tPortBase::tLockingManagerPointer mgr = static_cast<tPortBase&>(port).GetCurrentValueRaw();
     result.DeepCopyFrom(mgr->GetObject());
     timestamp = mgr->GetTimestamp();
   }
 
-  virtual common::tAbstractDataPort* GetWrapped()
+  virtual void Publish(core::tAbstractPort& port, const rrlib::rtti::tGenericObject& data, const rrlib::time::tTimestamp& timestamp)
   {
-    return port;
-  }
-
-  virtual void Publish(const rrlib::rtti::tGenericObject& data, const rrlib::time::tTimestamp& timestamp)
-  {
-    assert(data.GetType() == port->GetDataType());
-    typename standard::tStandardPort::tUnusedManagerPointer mgr = port->GetUnusedBufferRaw();
+    assert(data.GetType() == port.GetDataType());
+    typename tPortBase::tUnusedManagerPointer mgr = static_cast<tPortBase&>(port).GetUnusedBufferRaw();
     mgr->GetObject().DeepCopyFrom(data);
     mgr->SetTimestamp(timestamp);
-    port->Publish(mgr);
+    static_cast<tPortBase&>(port).Publish(mgr);
   }
 
-  virtual void SetBounds(const rrlib::rtti::tGenericObject& min, const rrlib::rtti::tGenericObject& max)
+  virtual void SetBounds(core::tAbstractPort& port, const rrlib::rtti::tGenericObject& min, const rrlib::rtti::tGenericObject& max)
   {
-    FINROC_LOG_PRINT(ERROR, "Cannot set bounds for type ", port->GetDataType().GetName());
+    FINROC_LOG_PRINT(ERROR, "Cannot set bounds for type ", port.GetDataType().GetName());
   }
 };
 
-tGenericPortImplementation* tGenericPortImplementation::CreatePortImplementation(const common::tAbstractDataPortCreationInfo& creation_info)
+template <typename T>
+static void CheckCreateImplementationForType(rrlib::rtti::tType type)
 {
-  assert(creation_info.data_type != NULL);
-  int t = creation_info.data_type.GetTypeTraits();
-  if ((t & rrlib::rtti::trait_flags::cIS_INTEGRAL) || (t & rrlib::rtti::trait_flags::cIS_FLOATING_POINT))
+  if (type.GetRttiName() == typeid(T).name())
   {
-    if (creation_info.data_type.GetRttiName() == typeid(int8_t).name())
+    type.AddAnnotation<tGenericPortImplementation>(new internal::tGenericPortImplementationTyped<T>());
+  }
+}
+
+} // namespace internal
+
+void tGenericPortImplementation::CreateImplementations()
+{
+  static rrlib::thread::tMutex mutex;
+  static int16_t initialized_types = 0;
+  rrlib::thread::tLock lock(mutex);
+
+  for (; initialized_types < rrlib::rtti::tType::GetTypeCount(); initialized_types++)
+  {
+    rrlib::rtti::tType type = rrlib::rtti::tType::GetType(initialized_types);
+    if (IsDataFlowType(type))
     {
-      return new tGenericPortImplementationNumeric<int8_t>(creation_info);
-    }
-    else if (creation_info.data_type.GetRttiName() == typeid(int16_t).name())
-    {
-      return new tGenericPortImplementationNumeric<int16_t>(creation_info);
-    }
-    else if (creation_info.data_type.GetRttiName() == typeid(int32_t).name())
-    {
-      return new tGenericPortImplementationNumeric<int32_t>(creation_info);
-    }
-    else if (creation_info.data_type.GetRttiName() == typeid(int64_t).name())
-    {
-      return new tGenericPortImplementationNumeric<int64_t>(creation_info);
-    }
-    else if (creation_info.data_type.GetRttiName() == typeid(uint8_t).name())
-    {
-      return new tGenericPortImplementationNumeric<uint8_t>(creation_info);
-    }
-    else if (creation_info.data_type.GetRttiName() == typeid(uint16_t).name())
-    {
-      return new tGenericPortImplementationNumeric<uint16_t>(creation_info);
-    }
-    else if (creation_info.data_type.GetRttiName() == typeid(uint32_t).name())
-    {
-      return new tGenericPortImplementationNumeric<uint32_t>(creation_info);
-    }
-    else if (creation_info.data_type.GetRttiName() == typeid(uint64_t).name())
-    {
-      return new tGenericPortImplementationNumeric<uint64_t>(creation_info);
-    }
-    else if (creation_info.data_type.GetRttiName() == typeid(float).name())
-    {
-      return new tGenericPortImplementationNumeric<float>(creation_info);
-    }
-    else if (creation_info.data_type.GetRttiName() == typeid(double).name())
-    {
-      return new tGenericPortImplementationNumeric<double>(creation_info);
+      // typed implementations for certain types
+      internal::CheckCreateImplementationForType<int8_t>(type);
+      internal::CheckCreateImplementationForType<int16_t>(type);
+      internal::CheckCreateImplementationForType<int>(type);
+      internal::CheckCreateImplementationForType<long int>(type);
+      internal::CheckCreateImplementationForType<long long int>(type);
+      internal::CheckCreateImplementationForType<uint8_t>(type);
+      internal::CheckCreateImplementationForType<uint16_t>(type);
+      internal::CheckCreateImplementationForType<unsigned int>(type);
+      internal::CheckCreateImplementationForType<unsigned long int>(type);
+      internal::CheckCreateImplementationForType<unsigned long long int>(type);
+      internal::CheckCreateImplementationForType<double>(type);
+      internal::CheckCreateImplementationForType<float>(type);
+      internal::CheckCreateImplementationForType<numeric::tNumber>(type);
+
+      if (!type.GetAnnotation<tGenericPortImplementation>())
+      {
+        assert((type.GetTypeTraits() & rrlib::rtti::trait_flags::cIS_INTEGRAL) == 0);
+        if (IsCheaplyCopiedType(type))
+        {
+          type.AddAnnotation<tGenericPortImplementation>(new internal::tGenericPortImplementationCheapCopy());
+        }
+        else
+        {
+          type.AddAnnotation<tGenericPortImplementation>(new internal::tGenericPortImplementationStandard());
+        }
+      }
     }
   }
-  else if (creation_info.data_type.GetRttiName() == typeid(std::string).name())
-  {
-    return new tGenericPortImplementationTyped<std::string>(creation_info);
-  }
-  else if (creation_info.data_type.GetRttiName() == typeid(tString).name())
-  {
-    return new tGenericPortImplementationTyped<tString>(creation_info);
-  }
-  else if (creation_info.data_type.GetRttiName() == typeid(bool).name())
-  {
-    return new tGenericPortImplementationTyped<bool>(creation_info);
-  }
-  else if (IsCheaplyCopiedType(creation_info.data_type))
-  {
-    return new tGenericPortImplementationCheapCopy(creation_info);
-  }
-  else
-  {
-    return new tGenericPortImplementationStandard(creation_info);
-  }
-  FINROC_LOG_PRINT(ERROR, "Cannot create port for type ", creation_info.data_type.GetName());
-  return NULL;
 }
 
 //----------------------------------------------------------------------

@@ -241,7 +241,7 @@ public:
     else
     {
       tLockingManagerPointer dc = PullValueRaw();
-      rrlib::rtti::sStaticTypeInfo<T>::DeepCopy(dc->GetObject().GetData<T>(), buffer, NULL);
+      rrlib::rtti::sStaticTypeInfo<T>::DeepCopy(GetObject(*dc).GetData<T>(), buffer, NULL);
     }
   }
 
@@ -272,7 +272,7 @@ public:
     else
     {
       tLockingManagerPointer dc = PullValueRaw();
-      rrlib::rtti::sStaticTypeInfo<T>::DeepCopy(dc->GetObject().GetData<T>(), buffer, NULL);
+      rrlib::rtti::sStaticTypeInfo<T>::DeepCopy(GetObject(*dc).GetData<T>(), buffer, NULL);
       timestamp = dc->GetTimestamp();
     }
   }
@@ -313,6 +313,14 @@ public:
   inline uint32_t GetCheaplyCopyableTypeIndex() const
   {
     return cheaply_copyable_type_index;
+  }
+
+  /*!
+   * \return Default value that has been assigned to port (NULL if no default value set)
+   */
+  const rrlib::rtti::tGenericObject* GetDefaultValue() const
+  {
+    return default_value.get();
   }
 
   /*!
@@ -591,6 +599,14 @@ protected:
       published_buffer = static_cast<tThreadLocalBufferManager*>(published.get());
       int pointer_tag = published_buffer->IncrementReuseCounter();
       published_buffer_tagged_pointer = tTaggedBufferPointer(published.release(), pointer_tag);
+    }
+
+    void Init(tThreadLocalBufferManager* published, bool unused)
+    {
+      CheckRecycle();
+      published_buffer = published;
+      int pointer_tag = unused ? published->IncrementReuseCounter() : published->GetPointerTag();
+      published_buffer_tagged_pointer = tTaggedBufferPointer(published, pointer_tag);
     }
   };
 

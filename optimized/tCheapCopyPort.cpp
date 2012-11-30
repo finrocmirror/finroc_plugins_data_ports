@@ -169,8 +169,9 @@ void tCheapCopyPort::ApplyDefaultValue()
 
 std::string tCheapCopyPort::BrowserPublishRaw(tUnusedManagerPointer& buffer)
 {
-  if (buffer->GetThreadLocalOrigin() && buffer->GetThreadLocalOrigin() == tThreadLocalBufferPools::Get()) // Is current thread the owner?
+  if (buffer->GetThreadLocalOrigin()) // Is current thread the owner?
   {
+    assert(buffer->GetThreadLocalOrigin() == tThreadLocalBufferPools::Get() && "Thread must be owner of thread-local buffer");
     common::tPublishOperation<tCheapCopyPort, tPublishingDataThreadLocalBuffer> data(buffer);
     data.Execute<false, tChangeStatus::CHANGED, true>(*this);
   }
@@ -401,7 +402,7 @@ void tCheapCopyPort::LockCurrentValueForPublishing(tPublishingDataThreadLocalBuf
   tTaggedBufferPointer current_buffer = current_value.load();
   if (tThreadLocalBufferPools::Get() == current_buffer->GetThreadLocalOrigin()) // Is current thread the owner thread?
   {
-    publishing_data = tPublishingDataThreadLocalBuffer(static_cast<tThreadLocalBufferManager*>(current_buffer.GetPointer()), false);
+    publishing_data.Init(static_cast<tThreadLocalBufferManager*>(current_buffer.GetPointer()), false);
     return;
   }
 
@@ -416,7 +417,7 @@ void tCheapCopyPort::LockCurrentValueForPublishing(tPublishingDataThreadLocalBuf
     typename tTaggedBufferPointer::tStorage current_raw_2 = current_value.load();
     if (current_raw == current_raw_2)    // still valid??
     {
-      publishing_data = tPublishingDataThreadLocalBuffer(unused_manager.release(), true);
+      publishing_data.Init(unused_manager.release(), true);
       return;
     }
     current_buffer = current_raw_2;
@@ -510,6 +511,9 @@ void tCheapCopyPort::SetDefault(rrlib::rtti::tGenericObject& new_default)
     return;
   }
   default_value->DeepCopyFrom(new_default);
+
+  tTaggedBufferPointer cur_pointer = current_value.load();
+  cur_pointer->GetObject().DeepCopyFrom(*default_value);
 }
 
 //void tCheapCopyPort::SetMaxQueueLengthImpl(int length)

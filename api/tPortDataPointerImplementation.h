@@ -230,6 +230,124 @@ private:
   rrlib::time::tTimestamp timestamp;
 };
 
+template <>
+class tPortDataPointerImplementation<rrlib::rtti::tGenericObject, false> : boost::noncopyable
+{
+  typedef rrlib::rtti::tGenericObject tPortData;
+
+//----------------------------------------------------------------------
+// Public methods and typedefs
+//----------------------------------------------------------------------
+public:
+
+  inline tPortDataPointerImplementation() : buffer_manager(NULL), object(NULL), unused_buffer(false)
+  {
+  }
+
+  template <typename TManager>
+  inline tPortDataPointerImplementation(TManager* manager, bool unused) :
+    buffer_manager(manager),
+    object(&manager->GetObject()),
+    unused_buffer(unused)
+  {
+  }
+
+  // Move constructor
+  inline tPortDataPointerImplementation(tPortDataPointerImplementation && other) :
+    buffer_manager(NULL), object(NULL), unused_buffer(false)
+  {
+    std::swap(buffer_manager, other.buffer_manager);
+    std::swap(object, other.object);
+    std::swap(unused_buffer, other.unused_buffer);
+  }
+
+  // Move assignment
+  inline tPortDataPointerImplementation& operator=(tPortDataPointerImplementation && other)
+  {
+    std::swap(buffer_manager, other.buffer_manager);
+    std::swap(object, other.object);
+    std::swap(unused_buffer, other.unused_buffer);
+    return *this;
+  }
+
+  inline ~tPortDataPointerImplementation()
+  {
+    if (buffer_manager)
+    {
+      if (unused_buffer)
+      {
+        if (IsCheaplyCopiedType(object->GetType()))
+        {
+          // recycle unused buffer
+          typename optimized::tCheapCopyPort::tUnusedManagerPointer::deleter_type deleter;
+          deleter(static_cast<optimized::tCheaplyCopiedBufferManager*>(buffer_manager));
+        }
+        else
+        {
+          // recycle unused buffer
+          typename standard::tStandardPort::tUnusedManagerPointer::deleter_type deleter;
+          deleter(static_cast<standard::tPortBufferManager*>(buffer_manager));
+        }
+      }
+      else
+      {
+        if (IsCheaplyCopiedType(object->GetType()))
+        {
+          // reduce reference counter
+          typename optimized::tCheapCopyPort::tLockingManagerPointer::deleter_type deleter;
+          deleter(static_cast<optimized::tCheaplyCopiedBufferManager*>(buffer_manager));
+        }
+        else
+        {
+          // reduce reference counter
+          typename standard::tStandardPort::tLockingManagerPointer::deleter_type deleter;
+          deleter(static_cast<standard::tPortBufferManager*>(buffer_manager));
+        }
+      }
+    }
+  }
+
+  inline rrlib::rtti::tGenericObject* Get() const
+  {
+    return object;
+  }
+
+  inline rrlib::time::tTimestamp GetTimestamp() const
+  {
+    return buffer_manager->GetTimestamp();
+  }
+
+  bool IsUnused() const
+  {
+    return unused_buffer;
+  }
+
+  inline common::tReferenceCountingBufferManager* Release()
+  {
+    common::tReferenceCountingBufferManager* temp = buffer_manager;
+    buffer_manager = NULL;
+    return temp;
+  }
+
+  inline void SetTimestamp(const rrlib::time::tTimestamp& timestamp)
+  {
+    buffer_manager->SetTimestamp(timestamp);
+  }
+
+//----------------------------------------------------------------------
+// Private fields and methods
+//----------------------------------------------------------------------
+private:
+
+  /*! Locked buffer - if standard type */
+  common::tReferenceCountingBufferManager* buffer_manager;
+
+  /*! Generic object this pointer points to */
+  rrlib::rtti::tGenericObject* object;
+
+  /*! Unused buffer? */
+  bool unused_buffer;
+};
 //----------------------------------------------------------------------
 // End of namespace declaration
 //----------------------------------------------------------------------

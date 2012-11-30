@@ -250,6 +250,14 @@ public:
    */
   void SetFlag(uint flag, bool value);
 
+  /*!
+   * Removes default value from port creation info
+   */
+  void UnsetDefaultValue()
+  {
+    default_value.Clear();
+  }
+
 //----------------------------------------------------------------------
 // Protected classes and fields (used by derived class tPortCreationInfo also)
 //----------------------------------------------------------------------

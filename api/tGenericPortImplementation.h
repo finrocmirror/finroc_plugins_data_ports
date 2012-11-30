@@ -39,10 +39,12 @@
 //----------------------------------------------------------------------
 // External includes (system with <>, local with "")
 //----------------------------------------------------------------------
+#include "rrlib/rtti/tTypeAnnotation.h"
 
 //----------------------------------------------------------------------
 // Internal includes with ""
 //----------------------------------------------------------------------
+#include "plugins/data_ports/api/tPortImplementation.h"
 #include "plugins/data_ports/common/tAbstractDataPortCreationInfo.h"
 #include "plugins/data_ports/common/tAbstractDataPort.h"
 
@@ -67,7 +69,7 @@ namespace api
 /*!
  * Implementations for tGenericPort.
  */
-class tGenericPortImplementation
+class tGenericPortImplementation : public rrlib::rtti::tTypeAnnotation
 {
 
 //----------------------------------------------------------------------
@@ -75,14 +77,13 @@ class tGenericPortImplementation
 //----------------------------------------------------------------------
 public:
 
-  friend class tGenericPort;
-
   /*!
    * Creates port backend for specified port creation info
    *
-   * \param pci Information for port creation
+   * \param creation_info Information for port creation
+   * \return Created port
    */
-  static tGenericPortImplementation* CreatePortImplementation(const common::tAbstractDataPortCreationInfo& pci);
+  virtual core::tAbstractPort* CreatePort(const common::tAbstractDataPortCreationInfo& creation_info) = 0;
 
   /*!
    * Gets Port's current value
@@ -92,12 +93,55 @@ public:
    * \param result Buffer to (deep) copy port's current value to
    * (Using this get()-variant is more efficient when using CC types, but can be extremely costly with large data types)
    */
-  virtual void Get(rrlib::rtti::tGenericObject& result, rrlib::time::tTimestamp& timestamp) = 0;
+  virtual void Get(core::tAbstractPort& port, rrlib::rtti::tGenericObject& result, rrlib::time::tTimestamp& timestamp) = 0;
 
   /*!
-   * \return Wrapped port.
+   * \return Port's default value (NULL if none has been set)
    */
-  virtual common::tAbstractDataPort* GetWrapped() = 0;
+  const rrlib::rtti::tGenericObject* GetDefaultValue(core::tAbstractPort& port)
+  {
+    return IsCheaplyCopiedType(port.GetDataType()) ? static_cast<optimized::tCheapCopyPort&>(port).GetDefaultValue() : static_cast<standard::tStandardPort&>(port).GetDefaultValue();
+  }
+
+  /*!
+   * \param Data type to get implementation for
+   * \return Implementation for specified data type
+   */
+  static tGenericPortImplementation* GetImplementation(const rrlib::rtti::tType& type)
+  {
+    tGenericPortImplementation* annotation = type.GetAnnotation<tGenericPortImplementation>();
+    if (!annotation)
+    {
+      CreateImplementations();
+      annotation = type.GetAnnotation<tGenericPortImplementation>();
+    }
+    return annotation;
+  }
+
+  /*!
+   * \return Unused buffer.
+   * Buffers to be published using this port should be acquired using this function.
+   * The buffer might contain old data, so it should be cleared prior to using.
+   */
+  inline tPortDataPointer<rrlib::rtti::tGenericObject> GetUnusedBuffer(core::tAbstractPort& port)
+  {
+    if (IsCheaplyCopiedType(port.GetDataType()))
+    {
+      optimized::tCheapCopyPort& cc_port = static_cast<optimized::tCheapCopyPort&>(port);
+      if (optimized::tThreadLocalBufferPools::Get())
+      {
+        return tPortDataPointerImplementation<rrlib::rtti::tGenericObject, false>(optimized::tThreadLocalBufferPools::Get()->GetUnusedBuffer(cc_port.GetCheaplyCopyableTypeIndex()).release(), true);
+      }
+      else
+      {
+        return tPortDataPointerImplementation<rrlib::rtti::tGenericObject, false>(optimized::tGlobalBufferPools::Instance().GetUnusedBuffer(cc_port.GetCheaplyCopyableTypeIndex()).release(), true);
+      }
+    }
+    else
+    {
+      return tPortDataPointerImplementation<rrlib::rtti::tGenericObject, false>(static_cast<standard::tStandardPort&>(port).GetUnusedBufferRaw().release(), true);
+    }
+  }
 
   /*!
    * Publish Data Buffer. This data will be forwarded to any connected ports.
@@ -106,7 +150,7 @@ public:
    * \param data Data to publish. It will be deep-copied.
    * This publish()-variant is efficient when using CC types, but can be extremely costly with large data types)
    */
-  virtual void Publish(const rrlib::rtti::tGenericObject& data, const rrlib::time::tTimestamp& timestamp) = 0;
+  virtual void Publish(core::tAbstractPort& port, const rrlib::rtti::tGenericObject& data, const rrlib::time::tTimestamp& timestamp) = 0;
 
   /*!
    * Set new bounds
@@ -114,7 +158,12 @@ public:
    *
    * \param b New Bounds
    */
-  virtual void SetBounds(const rrlib::rtti::tGenericObject& min, const rrlib::rtti::tGenericObject& max) = 0;
+  virtual void SetBounds(core::tAbstractPort& port, const rrlib::rtti::tGenericObject& min, const rrlib::rtti::tGenericObject& max) = 0;
+
+private:
+
+  /*! Creates implementation for data types that weren't annotated yet */
+  static void CreateImplementations();
 
 };
 

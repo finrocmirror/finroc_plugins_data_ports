@@ -224,11 +224,9 @@ public:
 //  }
 
   /*!
-   * Gets Port's current value
+   * Gets Port's current value in buffer
    *
-   * \return Port's current value with read lock.
-   * (in Java lock will need to be released manually, in C++ tPortDataPtr takes care of this)
-   * (Using get with parameter T& is more efficient when using CC types - shouldn't matter usually)
+   * \return Buffer with port's current value with read lock.
    */
   inline tPortDataPointer<const T> GetPointer() const
   {
@@ -278,7 +276,7 @@ public:
     {
       throw std::runtime_error("This is not a bounded port");
     }
-    return static_cast<tBoundedPort*>(GetWrapped())->SetBounds(new_bounds);
+    static_cast<tBoundedPort*>(GetWrapped())->SetBounds(new_bounds);
   }
 
   /*!
