@@ -23,7 +23,6 @@
       tPortCreationInfo.h
       tPortDataPointer.h
       tPortListener.h
-      tPortWrapperBase.h
       tProxyPort.h
       tPullRequestHandler.h
       tThreadLocalBufferManagement.h

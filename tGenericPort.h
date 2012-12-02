@@ -41,11 +41,11 @@
 //----------------------------------------------------------------------
 // External includes (system with <>, local with "")
 //----------------------------------------------------------------------
+#include "core/port/tPortWrapperBase.h"
 
 //----------------------------------------------------------------------
 // Internal includes with ""
 //----------------------------------------------------------------------
-#include "plugins/data_ports/tPortWrapperBase.h"
 #include "plugins/data_ports/api/tGenericPortImplementation.h"
 
 //----------------------------------------------------------------------
@@ -70,7 +70,7 @@ namespace data_ports
  * (note: Get and Publish are currently only implemented based on deep-copying data.
  *  Therefore, Generic ports are only efficient for data types that can be copied cheaply)
  */
-class tGenericPort : public tPortWrapperBase
+class tGenericPort : public core::tPortWrapperBase
 {
 
 //----------------------------------------------------------------------

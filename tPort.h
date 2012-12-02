@@ -39,13 +39,13 @@
 //----------------------------------------------------------------------
 // External includes (system with <>, local with "")
 //----------------------------------------------------------------------
+#include "core/port/tPortWrapperBase.h"
 
 //----------------------------------------------------------------------
 // Internal includes with ""
 //----------------------------------------------------------------------
 #include "plugins/data_ports/tPortCreationInfo.h"
 #include "plugins/data_ports/tPortListener.h"
-#include "plugins/data_ports/tPortWrapperBase.h"
 #include "plugins/data_ports/api/tPortImplementation.h"
 #include "plugins/data_ports/tPortBuffers.h"
 
@@ -87,7 +87,7 @@ namespace data_ports
  *              Smart pointers do not support numeric types (due to conversion overhead).
  */
 template<typename T>
-class tPort : public tPortWrapperBase
+class tPort : public core::tPortWrapperBase
 {
 protected:
 
@@ -95,6 +95,11 @@ protected:
 
   /*! Class that contains actual implementation of most functionality */
   typedef api::tPortImplementation<T, api::tPortImplementationTypeTrait<T>::type> tImplementation;
+
+//----------------------------------------------------------------------
+// Public methods and typedefs
+//----------------------------------------------------------------------
+public:
 
   /*! Typeless port class used in backend */
   typedef typename tImplementation::tPortBase tPortBackend;
@@ -108,17 +113,11 @@ protected:
   /*! Should methods dealing with bounds be available? */
   enum { cBOUNDABLE = tIsBoundable<T>::value };
 
-//----------------------------------------------------------------------
-// Public methods and typedefs
-//----------------------------------------------------------------------
-public:
-
   /*!
    * Smart pointer class returned by various methods
    */
   typedef tPortDataPointer<T> tDataPointer;
 
-  //typedef typename tPortTypeMap<T>::tPortBackend tPortBackend;
 
   /*!
    * Constructor takes variadic argument list... just any properties you want to assign to port.

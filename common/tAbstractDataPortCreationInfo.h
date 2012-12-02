@@ -110,12 +110,12 @@ public:
    *
    * The first string is interpreted as port name, the second possibly as config entry (relevant for parameters only).
    * A framework element pointer is interpreted as parent.
-   * unsigned int arguments are interpreted as flags.
+   * tFrameworkElementFlag arguments are interpreted as flags.
    * int argument is interpreted as queue length.
    * tBounds<T> are port's bounds.
    * tUnit argument is port's unit.
    * int16/short argument is interpreted as minimum network update interval.
-   * tPortCreationBase argument is copied. This is only allowed as first argument.
+   * tAbstractPortCreationInfo argument is copied. This is only allowed as first argument.
    */
   template <typename ARG1, typename ... TArgs>
   explicit tAbstractDataPortCreationInfo(const ARG1& arg1, const TArgs&... rest) :
@@ -276,12 +276,12 @@ protected:
 
     tStorage(const tStorage& o)
     {
-      CopyFrom(o);
+      this->CopyFrom(o);
     }
 
     tStorage& operator=(const tStorage& o)
     {
-      CopyFrom(o);
+      this->CopyFrom(o);
       return *this;
     }
   };
