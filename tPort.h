@@ -104,6 +104,9 @@ public:
   /*! Typeless port class used in backend */
   typedef typename tImplementation::tPortBase tPortBackend;
 
+  /*! Type T */
+  typedef T tDataType;
+
   /*! Port buffers used in backend */
   typedef typename tImplementation::tPortBuffer tPortBuffer;
 

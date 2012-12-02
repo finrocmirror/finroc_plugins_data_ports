@@ -82,6 +82,12 @@ class tInputPort : public tPort<T>
 //----------------------------------------------------------------------
 public:
 
+  /*! Copy constructor for non-const aguments */
+  tInputPort(tInputPort& other)
+  {
+    SetWrapped(other.GetWrapped());
+  }
+
   /*!
    * Constructor takes variadic argument list... just any properties you want to assign to port.
    *
@@ -103,7 +109,7 @@ public:
    */
   template <typename ... ARGS>
   tInputPort(ARGS && ... args) :
-    tPort<T>(core::tFrameworkElement::tFlag::ACCEPTS_DATA | core::tFrameworkElement::tFlag::PUSH_STRATEGY, std::forward<ARGS>(args)...)
+    tPort<T>(std::forward<ARGS>(args)..., core::tFrameworkElement::tFlag::ACCEPTS_DATA | core::tFrameworkElement::tFlag::PUSH_STRATEGY)
   {}
 
   /*!
@@ -257,6 +263,13 @@ public:
     port.SetWrapped(&wrap);
     return port;
   }
+
+//----------------------------------------------------------------------
+// Protected constructor
+//----------------------------------------------------------------------
+protected:
+
+  tInputPort() {}
 
 //----------------------------------------------------------------------
 // Private fields and methods

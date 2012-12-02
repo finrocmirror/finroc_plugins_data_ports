@@ -110,10 +110,9 @@ class tPortListenerAdapter<const void*, TPortImplementationType> : public common
   }
 };
 
-template <>
-class tPortListenerAdapter<const void*, tPortImplementationType::STANDARD> : public common::tPortListenerRaw
+class tVoidPointerPortListenerAdapter : public common::tPortListenerRaw
 {
-  virtual void PortChanged(common::tAbstractDataPort& origin, const void* const& value, const rrlib::time::tTimestamp& timestamp) = 0;
+  virtual void PortChanged(common::tAbstractDataPort& origin, const void* value, const rrlib::time::tTimestamp& timestamp) = 0;
 
   virtual void PortChangedRaw(common::tAbstractDataPort& origin, rrlib::buffer_pools::tBufferManagementInfo& value, const rrlib::time::tTimestamp& timestamp)
   {

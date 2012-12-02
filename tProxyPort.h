@@ -99,8 +99,8 @@ public:
    */
   template <typename ... ARGS>
   tProxyPort(const ARGS && ... args) :
-    tPort<T>(core::tFrameworkElement::tFlag::EMITS_DATA | core::tFrameworkElement::tFlag::ACCEPTS_DATA |
-             (OUTPUT_PORT ? core::tFrameworkElement::tFlag::OUTPUT_PORT : core::tFrameworkElement::tFlag::EMITS_DATA), std::forward<const ARGS>(args)...)
+    tPort<T>(std::forward<const ARGS>(args)..., core::tFrameworkElement::tFlag::EMITS_DATA | core::tFrameworkElement::tFlag::ACCEPTS_DATA |
+             (OUTPUT_PORT ? core::tFrameworkElement::tFlag::OUTPUT_PORT : core::tFrameworkElement::tFlag::EMITS_DATA))
   {}
 
 //----------------------------------------------------------------------

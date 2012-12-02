@@ -98,6 +98,22 @@ class tPortListener<tPortDataPointer<const T>> : public api::tPointerPortListene
 
 };
 
+template <>
+class tPortListener<const void*> : public api::tVoidPointerPortListenerAdapter
+{
+
+  /*!
+   * Called whenever port's value has changed
+   * Needs to be overridden by subclass
+   *
+   * \param origin Port that value comes from
+   * \param value Port's new value (locked for duration of method call)
+   * \param timestamp Timestamp attached to new value
+   */
+  virtual void PortChanged(common::tAbstractDataPort& origin, const void* value, const rrlib::time::tTimestamp& timestamp) = 0;
+
+};
+
 //----------------------------------------------------------------------
 // End of namespace declaration
 //----------------------------------------------------------------------
