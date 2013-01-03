@@ -181,6 +181,14 @@ public:
     return false;
   }
 
+  /*!
+   * \return True, if reference counter is one (aka manager is only referenced by one ("this") pointer)
+   */
+  bool Unique() const
+  {
+    return (reference_and_reuse_counter.load() >> 16) == 1;
+  }
+
 //----------------------------------------------------------------------
 // Protected fields and methods
 //----------------------------------------------------------------------

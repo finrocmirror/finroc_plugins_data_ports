@@ -123,6 +123,7 @@ tStandardPort::tStandardPort(common::tAbstractDataPortCreationInfo creation_info
   }
   int pointer_tag = initial->GetPointerTag();
   initial->AddLocks(1, pointer_tag);
+  initial->SetUnused(false);
   current_value.store(tTaggedBufferPointer(initial, pointer_tag));
 
   // Initialize queue
@@ -199,7 +200,7 @@ tPortBufferManager* tStandardPort::CreateDefaultValue(const common::tAbstractDat
     pdm->InitReferenceCounter(1);
     if (creation_info.DefaultValueSet())
     {
-      rrlib::serialization::tInputStream input(&creation_info.GetDefaultGeneric());
+      rrlib::serialization::tInputStream input(creation_info.GetDefaultGeneric());
       pdm->GetObject().Deserialize(input);
     }
     return pdm;

@@ -82,11 +82,8 @@ class tOutputPort : public tPort<T>
 //----------------------------------------------------------------------
 public:
 
-  /*! Copy constructor for non-const aguments */
-  tOutputPort(tOutputPort& other)
-  {
-    SetWrapped(other.GetWrapped());
-  }
+  /*! Creates no wrapped port */
+  tOutputPort() {}
 
   /*!
    * Constructor takes variadic argument list... just any properties you want to assign to port.
@@ -108,8 +105,8 @@ public:
    * numeric type: The first numeric argument is interpreted as default_value.
    */
   template <typename ... ARGS>
-  tOutputPort(ARGS && ... args) :
-    tPort<T>(std::forward<ARGS>(args)..., core::tFrameworkElement::tFlag::EMITS_DATA | core::tFrameworkElement::tFlag::OUTPUT_PORT)
+  tOutputPort(const ARGS& ... args) :
+    tPort<T>(args..., core::tFrameworkElement::tFlag::EMITS_DATA | core::tFrameworkElement::tFlag::OUTPUT_PORT)
   {}
 
   /*!
@@ -201,13 +198,6 @@ public:
     port.SetWrapped(&wrap);
     return port;
   }
-
-//----------------------------------------------------------------------
-// Protected constructor
-//----------------------------------------------------------------------
-protected:
-
-  tOutputPort() {}
 
 //----------------------------------------------------------------------
 // Private fields and methods

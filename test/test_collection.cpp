@@ -19,23 +19,28 @@
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 //----------------------------------------------------------------------
-/*!\file    plugins/data_ports/standard/tPortBufferManager.cpp
+/*!\file    plugins/data_ports/test/test_collection.cpp
  *
  * \author  Max Reichardt
  *
- * \date    2012-10-30
+ * \date    2013-01-03
  *
+ * Collections of tests.
+ * This is the place to add simple tests for data_ports.
  */
 //----------------------------------------------------------------------
-#include "plugins/data_ports/standard/tPortBufferManager.h"
 
 //----------------------------------------------------------------------
 // External includes (system with <>, local with "")
 //----------------------------------------------------------------------
+#include "core/tRuntimeEnvironment.h"
 
 //----------------------------------------------------------------------
 // Internal includes with ""
 //----------------------------------------------------------------------
+#include "plugins/data_ports/tInputPort.h"
+#include "plugins/data_ports/tOutputPort.h"
+#include "plugins/data_ports/tProxyPort.h"
 
 //----------------------------------------------------------------------
 // Debugging
@@ -45,16 +50,8 @@
 //----------------------------------------------------------------------
 // Namespace usage
 //----------------------------------------------------------------------
-
-//----------------------------------------------------------------------
-// Namespace declaration
-//----------------------------------------------------------------------
-namespace finroc
-{
-namespace data_ports
-{
-namespace standard
-{
+using namespace finroc::core;
+using namespace finroc::data_ports;
 
 //----------------------------------------------------------------------
 // Forward declarations / typedefs / enums
@@ -68,33 +65,56 @@ namespace standard
 // Implementation
 //----------------------------------------------------------------------
 
-tPortBufferManager::tPortBufferManager() :
-  unused(true),
-  derived_from(NULL)
-{}
-
-tPortBufferManager::~tPortBufferManager()
+void TestPortChains()
 {
-  GetObject().~tGenericObject();
+  FINROC_LOG_PRINT(USER, "Testing forwarding data among port chains");
+  tFrameworkElement* parent = new tFrameworkElement(&finroc::core::tRuntimeEnvironment::GetInstance(), "TestPortChains");
+
+  // Create ports
+  tOutputPort<std::string> output_port1("Output Port 1", parent);
+  tOutputPort<std::string> output_port2("Output Port 2", parent);
+  tOutputPort<std::string> output_port3("Output Port 3", parent);
+  tProxyPort<std::string, true> proxy_port1("Proxy Port 1", parent);
+  tProxyPort<std::string, true> proxy_port2("Proxy Port 2", parent);
+  tProxyPort<std::string, true> proxy_port3("Proxy Port 3", parent);
+  tInputPort<std::string> input_port1("Input Port 1", parent);
+  tInputPort<std::string> input_port2("Input Port 2", parent);
+  tInputPort<std::string> input_port3("Input Port 3", parent);
+
+  // Connect ports
+  output_port1.ConnectTo(proxy_port1);
+  output_port2.ConnectTo(proxy_port2);
+  output_port3.ConnectTo(proxy_port3);
+  proxy_port1.ConnectTo(input_port1);
+  proxy_port2.ConnectTo(input_port2);
+  proxy_port3.ConnectTo(input_port3);
+  parent->Init();
+
+  std::string test_string = "12345";
+  for (int i = 0; i < 20; i++)
+  {
+    // Publish data
+    tPortDataPointer<std::string> unused_buffer = output_port1.GetUnusedBuffer();
+    *unused_buffer = "Test";
+    output_port1.Publish(unused_buffer);
+
+    // Forward data to second and third chain
+    output_port2.Publish(input_port1.GetPointer());
+    output_port3.Publish(input_port2.GetPointer());
+
+    if (i > 10)
+    {
+      output_port2.Publish(test_string);
+      output_port3.Publish(input_port2.GetPointer());
+    }
+  }
+
+  parent->ManagedDelete();
 }
 
-tPortBufferManager* tPortBufferManager::CreateInstance(const rrlib::rtti::tType& type)
+int main(int, char**)
 {
-  static_assert(sizeof(tPortBufferManager) % 8 == 0, "Port Data manager must be aligned to 8 byte boundary");
-  char* placement = (char*)operator new(sizeof(tPortBufferManager) + type.GetSize(true));
-  type.CreateInstanceGeneric(placement + sizeof(tPortBufferManager));
-  return new(placement) tPortBufferManager();
-}
+  TestPortChains();
 
-rrlib::rtti::tGenericObject& tPortBufferManager::GetObjectImplementation()
-{
-  return GetObject();
-}
-
-
-//----------------------------------------------------------------------
-// End of namespace declaration
-//----------------------------------------------------------------------
-}
-}
+  return 0;
 }

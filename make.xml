@@ -59,5 +59,12 @@
       test/configuration.cpp
     </sources>
   </testprogram>
+  
+  <testprogram name="collection">
+    <sources>
+      test/test_collection.cpp
+    </sources>
+  </testprogram>
+  
 
 </targets>

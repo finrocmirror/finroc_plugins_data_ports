@@ -65,6 +65,12 @@ enum { cMAX_CHEAPLY_COPYABLE_TYPES = 150 };
 //----------------------------------------------------------------------
 
 /*!
+ * \param type Data type
+ * \return 'Cheaply copied type index' of this type
+ */
+uint32_t GetCheaplyCopiedTypeIndex(const rrlib::rtti::tType& type);
+
+/*!
  * \param cheaply_copied_type_index 'cheaply copied type index'
  * \return Number of ports that use this type
  */

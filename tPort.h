@@ -123,6 +123,11 @@ public:
 
 
   /*!
+   * Creates no wrapped port
+   */
+  tPort() {}
+
+  /*!
    * Constructor takes variadic argument list... just any properties you want to assign to port.
    *
    * The first string is interpreted as port name, the second possibly as config entry (relevant for parameters only).
@@ -141,18 +146,21 @@ public:
    * string type: The second string argument is interpreted as default_value. The third as config entry.
    * numeric type: The first numeric argument is interpreted as default_value.
    */
-  template <typename ... ARGS>
-  tPort(const ARGS&... args)
+  template <typename TArg1, typename ... TRest>
+  tPort(const TArg1& arg1, const TRest&... args)
   {
-    tPortCreationInfo<T> creation_info(args...);
-    creation_info.data_type = rrlib::rtti::tDataType<tPortBuffer>();
-    SetWrapped(tImplementation::CreatePort(creation_info));
-    GetWrapped()->SetWrapperDataType(rrlib::rtti::tDataType<T>());
-    if (creation_info.DefaultValueSet())
+    if (!this->CopyConstruction<tPort>(&arg1))
     {
-      T t = rrlib::rtti::sStaticTypeInfo<T>::CreateByValue();
-      creation_info.GetDefault(t);
-      SetDefault(t);
+      tPortCreationInfo<T> creation_info(arg1, args...);
+      creation_info.data_type = rrlib::rtti::tDataType<tPortBuffer>();
+      SetWrapped(tImplementation::CreatePort(creation_info));
+      GetWrapped()->SetWrapperDataType(rrlib::rtti::tDataType<T>());
+      if (creation_info.DefaultValueSet())
+      {
+        T t = rrlib::rtti::sStaticTypeInfo<T>::CreateByValue();
+        creation_info.GetDefault(t);
+        SetDefault(t);
+      }
     }
   }
 
@@ -330,17 +338,6 @@ public:
     port.SetWrapped(&wrap);
     return port;
   }
-
-//----------------------------------------------------------------------
-// Protected methods
-//----------------------------------------------------------------------
-protected:
-
-  /*!
-   * (Constructor for derived classes)
-   * (wrapped must be set in constructor!)
-   */
-  tPort() {}
 
 //----------------------------------------------------------------------
 // Private fields and methods

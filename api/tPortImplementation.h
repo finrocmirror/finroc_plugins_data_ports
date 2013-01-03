@@ -319,6 +319,7 @@ struct tPortImplementation<T, tPortImplementationType::STANDARD>
   static inline void Publish(standard::tStandardPort& port, TPointer && data)
   {
     typename tPortBase::tUnusedManagerPointer buffer(data.implementation.Release());
+    assert(buffer->IsUnused());
     port.Publish(buffer);
   }
 
@@ -326,6 +327,7 @@ struct tPortImplementation<T, tPortImplementationType::STANDARD>
   static inline void PublishConstBuffer(standard::tStandardPort& port, TPointer && data)
   {
     typename tPortBase::tLockingManagerPointer buffer(data.implementation.Release());
+    assert(!buffer->IsUnused());
     port.Publish(buffer);
   }
 

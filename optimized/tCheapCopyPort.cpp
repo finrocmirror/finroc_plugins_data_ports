@@ -81,7 +81,7 @@ static rrlib::rtti::tGenericObject* CreateDefaultValue(const common::tAbstractDa
     rrlib::rtti::tGenericObject* result = creation_info.data_type.CreateInstanceGeneric();
     if (creation_info.DefaultValueSet())
     {
-      rrlib::serialization::tInputStream input(&creation_info.GetDefaultGeneric());
+      rrlib::serialization::tInputStream input(creation_info.GetDefaultGeneric());
       result->Deserialize(input);
     }
     return result;

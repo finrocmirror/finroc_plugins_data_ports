@@ -177,7 +177,7 @@ public:
     return queue_fifo->Dequeue();
   }
 
-  virtual void ForwardData(tAbstractPort& other);
+  virtual void ForwardData(tAbstractPort& other); // TODO either add to AbstractDataPort or remove virtuality and add comment
 
   /*!
    * \param never_pull Do not attempt to pull data - even if port is on push strategy

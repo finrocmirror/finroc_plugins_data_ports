@@ -99,6 +99,11 @@ public:
   {
   }
 
+  inline tPortDataPointer(typename tPortImplementation::tPortBase::tLockingManagerPointer && pointer, typename tPortImplementation::tPortBase& port) :
+    implementation(pointer, port)
+  {
+  }
+
   // Move constructor
   inline tPortDataPointer(tPortDataPointer && other) : implementation()
   {
@@ -132,9 +137,17 @@ public:
   /*!
    * \return Timestamp attached to data
    */
-  rrlib::time::tTimestamp GetTimestamp()
+  rrlib::time::tTimestamp GetTimestamp() const
   {
     return implementation.GetTimestamp();
+  }
+
+  /*!
+   * Reset pointer to NULL
+   */
+  void Reset()
+  {
+    *this = tPortDataPointer();
   }
 
   /*!
@@ -157,9 +170,9 @@ public:
     return Get();
   }
 
-  inline operator const void*()
+  inline operator const void*() const
   {
-    return Get();
+    return implementation.Get();
   }
 
 //----------------------------------------------------------------------
@@ -169,10 +182,29 @@ private:
 
   friend struct api::tPortImplementation<tPortData, api::tPortImplementationTypeTrait<tPortData>::type>;
   friend class tGenericPort;
+  template <typename U>
+  friend rrlib::serialization::tOutputStream& operator << (rrlib::serialization::tOutputStream& stream, const tPortDataPointer<U>& data);
+  template <typename U>
+  friend rrlib::serialization::tInputStream& operator >> (rrlib::serialization::tInputStream& stream, tPortDataPointer<U>& data);
 
   /*! Actual implementation of smart pointer class */
   tImplementation implementation;
 };
+
+
+template <typename T>
+rrlib::serialization::tOutputStream& operator << (rrlib::serialization::tOutputStream& stream, const tPortDataPointer<T>& data)
+{
+  data.implementation.Serialize(stream);
+  return stream;
+}
+
+template <typename T>
+rrlib::serialization::tInputStream& operator >> (rrlib::serialization::tInputStream& stream, tPortDataPointer<T>& data)
+{
+  data.implementation.Deserialize(stream);
+  return stream;
+}
 
 //----------------------------------------------------------------------
 // End of namespace declaration

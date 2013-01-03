@@ -79,10 +79,9 @@ class tPortListenerAdapter : public common::tPortListenerRaw
 
   virtual void PortChangedRaw(common::tAbstractDataPort& origin, rrlib::buffer_pools::tBufferManagementInfo& value, const rrlib::time::tTimestamp& timestamp)
   {
-    T v;
-    tImplementation::Assign(v,
-                            static_cast<optimized::tCheaplyCopiedBufferManager&>(value).GetObject().GetData<typename tImplementation::tPortBuffer>(),
-                            static_cast<optimized::tCheapCopyPort&>(origin));
+    T v = tImplementation::ToValue(
+            static_cast<optimized::tCheaplyCopiedBufferManager&>(value).GetObject().GetData<typename tImplementation::tPortBuffer>(),
+            static_cast<optimized::tCheapCopyPort&>(origin).GetUnit());
     PortChanged(origin, v, timestamp);
   }
 };

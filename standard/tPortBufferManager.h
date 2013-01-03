@@ -133,9 +133,6 @@ private:
   /*! PortDataManager that this manager is derived from - null if not derived */
   tPortBufferManager* derived_from;
 
-  /*! Helper variable - e.g. for blackboards; TODO: remove as soon as we have more complex responses from RPC calls */
-  int lock_id;
-
 
   tPortBufferManager();
 

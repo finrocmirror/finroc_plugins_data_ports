@@ -122,6 +122,8 @@ public:
    * \return Unused buffer.
    * Buffers to be published using this port should be acquired using this function.
    * The buffer might contain old data, so it should be cleared prior to using.
+   *
+   * Note: The returned buffer is always of the port's actual buffer type (e.g. no int, double etc. - but tNumber)
    */
   inline tPortDataPointer<rrlib::rtti::tGenericObject> GetUnusedBuffer(core::tAbstractPort& port)
   {

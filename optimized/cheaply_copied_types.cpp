@@ -32,6 +32,7 @@
 //----------------------------------------------------------------------
 // External includes (system with <>, local with "")
 //----------------------------------------------------------------------
+#include "rrlib/rtti/tTypeAnnotation.h"
 #include "rrlib/thread/tLock.h"
 #include "core/definitions.h"
 
@@ -74,29 +75,40 @@ namespace optimized
 namespace internal
 {
 
+class tIndexAnnotation : public rrlib::rtti::tTypeAnnotation
+{
+public:
+
+  tIndexAnnotation(uint32_t index) : index(index) {}
+
+  /*! Cheaply copied typed index */
+  uint32_t index;
+};
+
 /*! Register with types */
 struct tRegister
 {
   struct tEntry
   {
     rrlib::rtti::tType type;
-    size_t port_count;
+    std::atomic<size_t> port_count;
 
-    tEntry(rrlib::rtti::tType type) : type(type), port_count(1)
+    tEntry() : type(), port_count(0)
     {}
   };
 
   /*! Cheaply copied types used in ports */
-  std::vector<tEntry> used_types;
+  std::array<tEntry, cMAX_CHEAPLY_COPYABLE_TYPES> used_types;
+
+  /*! Number of registered types */
+  size_t registered_types;
 
   tRegister() :
-    used_types()
+    used_types(),
+    registered_types(1)
   {
-    used_types.reserve(cMAX_CHEAPLY_COPYABLE_TYPES + 1); // avoids reallocation which would be a thread-safety issue
-
     // Put number at position zero - as this is the most frequently used type
-    used_types.emplace_back(rrlib::rtti::tDataType<numeric::tNumber>());
-    used_types[0].port_count = 0;
+    used_types[0].type = rrlib::rtti::tDataType<numeric::tNumber>();
   }
 };
 
@@ -111,6 +123,45 @@ static internal::tRegister& GetRegister()
   return the_register;
 }
 
+
+uint32_t GetCheaplyCopiedTypeIndex(const rrlib::rtti::tType& type)
+{
+  internal::tIndexAnnotation* annotation = type.GetAnnotation<internal::tIndexAnnotation>();
+  if (annotation)
+  {
+    return annotation->index;
+  }
+
+  static rrlib::thread::tMutex mutex;
+  rrlib::thread::tLock lock(mutex);
+  if (!IsCheaplyCopiedType(type))
+  {
+    FINROC_LOG_PRINT(ERROR, "Invalid type registered");
+    abort();
+  }
+
+  // check again - now synchronized - as type could have been added
+  internal::tRegister& reg = GetRegister();
+  for (size_t i = 0; i < reg.registered_types; i++)
+  {
+    if (reg.used_types[i].type == type)
+    {
+      return i;
+    }
+  }
+
+  uint32_t result = reg.registered_types;
+  reg.used_types[result].type = type;
+  rrlib::rtti::tType type_copy = type;
+  type_copy.AddAnnotation(new internal::tIndexAnnotation(result));
+  if (result >= cMAX_CHEAPLY_COPYABLE_TYPES)
+  {
+    FINROC_LOG_PRINT(ERROR, "Maximum number of cheaply copyable types exceeded");
+    abort();
+  }
+  return result;
+}
+
 size_t GetPortCount(uint32_t cheaply_copied_type_index)
 {
   return GetRegister().used_types[cheaply_copied_type_index].port_count;
@@ -118,7 +169,7 @@ size_t GetPortCount(uint32_t cheaply_copied_type_index)
 
 size_t GetRegisteredTypeCount()
 {
-  return GetRegister().used_types.size();
+  return GetRegister().registered_types;
 }
 
 rrlib::rtti::tType GetType(uint32_t cheaply_copied_type_index)
@@ -128,30 +179,8 @@ rrlib::rtti::tType GetType(uint32_t cheaply_copied_type_index)
 
 uint32_t RegisterPort(const rrlib::rtti::tType& type)
 {
-  static rrlib::thread::tMutex mutex;
-  rrlib::thread::tLock lock(mutex);
-  if (!IsCheaplyCopiedType(type))
-  {
-    FINROC_LOG_PRINT(ERROR, "Invalid type registered");
-    abort();
-  }
-
-  for (auto it = GetRegister().used_types.begin(); it != GetRegister().used_types.end(); ++it)
-  {
-    if (it->type == type)
-    {
-      it->port_count++;
-      return it - GetRegister().used_types.begin();
-    }
-  }
-
-  uint32_t result = GetRegister().used_types.size();
-  GetRegister().used_types.emplace_back(type);
-  if (result >= cMAX_CHEAPLY_COPYABLE_TYPES)
-  {
-    FINROC_LOG_PRINT(ERROR, "Maximum number of cheaply copyable types exceeded");
-    abort();
-  }
+  uint32_t result = GetCheaplyCopiedTypeIndex(type);
+  GetRegister().used_types[result].port_count++;
   return result;
 }
 

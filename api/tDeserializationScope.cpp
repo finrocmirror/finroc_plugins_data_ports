@@ -19,15 +19,15 @@
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 //----------------------------------------------------------------------
-/*!\file    plugins/data_ports/standard/tPortBufferManager.cpp
+/*!\file    plugins/data_ports/api/tDeserializationScope.cpp
  *
  * \author  Max Reichardt
  *
- * \date    2012-10-30
+ * \date    2012-12-19
  *
  */
 //----------------------------------------------------------------------
-#include "plugins/data_ports/standard/tPortBufferManager.h"
+#include "plugins/data_ports/api/tDeserializationScope.h"
 
 //----------------------------------------------------------------------
 // External includes (system with <>, local with "")
@@ -36,6 +36,7 @@
 //----------------------------------------------------------------------
 // Internal includes with ""
 //----------------------------------------------------------------------
+#include "plugins/data_ports/tPort.h"
 
 //----------------------------------------------------------------------
 // Debugging
@@ -53,7 +54,7 @@ namespace finroc
 {
 namespace data_ports
 {
-namespace standard
+namespace api
 {
 
 //----------------------------------------------------------------------
@@ -68,27 +69,35 @@ namespace standard
 // Implementation
 //----------------------------------------------------------------------
 
-tPortBufferManager::tPortBufferManager() :
-  unused(true),
-  derived_from(NULL)
-{}
+__thread tDeserializationScope* tDeserializationScope::current_scope;
 
-tPortBufferManager::~tPortBufferManager()
+tPortDataPointerImplementation<rrlib::rtti::tGenericObject, false> tDeserializationScope::GetUnusedBuffer(const rrlib::rtti::tType& type)
 {
-  GetObject().~tGenericObject();
-}
-
-tPortBufferManager* tPortBufferManager::CreateInstance(const rrlib::rtti::tType& type)
-{
-  static_assert(sizeof(tPortBufferManager) % 8 == 0, "Port Data manager must be aligned to 8 byte boundary");
-  char* placement = (char*)operator new(sizeof(tPortBufferManager) + type.GetSize(true));
-  type.CreateInstanceGeneric(placement + sizeof(tPortBufferManager));
-  return new(placement) tPortBufferManager();
-}
-
-rrlib::rtti::tGenericObject& tPortBufferManager::GetObjectImplementation()
-{
-  return GetObject();
+  if (!IsDataFlowType(type))
+  {
+    throw std::runtime_error("Not a data flow type");
+  }
+  if (IsCheaplyCopiedType(type))
+  {
+    uint32_t index = optimized::GetCheaplyCopiedTypeIndex(type);
+    if (optimized::tThreadLocalBufferPools::Get())
+    {
+      return tPortDataPointerImplementation<rrlib::rtti::tGenericObject, false>(optimized::tThreadLocalBufferPools::Get()->GetUnusedBuffer(index).release(), true);
+    }
+    else
+    {
+      return tPortDataPointerImplementation<rrlib::rtti::tGenericObject, false>(optimized::tGlobalBufferPools::Instance().GetUnusedBuffer(index).release(), true);
+    }
+  }
+  else
+  {
+    if (!current_scope)
+    {
+      throw std::runtime_error("No scope created");
+    }
+    auto buffer = current_scope->buffer_source.GetUnusedBuffer(type);
+    return tPortDataPointerImplementation<rrlib::rtti::tGenericObject, false>(buffer.release(), true);
+  }
 }
 
 

@@ -39,6 +39,7 @@
 //----------------------------------------------------------------------
 // External includes (system with <>, local with "")
 //----------------------------------------------------------------------
+#include "core/port/tPortWrapperBase.h"
 
 //----------------------------------------------------------------------
 // Internal includes with ""
@@ -123,7 +124,7 @@ public:
       FINROC_LOG_PRINT_STATIC(DEBUG_WARNING, "Bounds were not set");
       return result;
     }
-    rrlib::serialization::tInputStream is(&bounds);
+    rrlib::serialization::tInputStream is(bounds);
     is >> result;
     return result;
   }
@@ -148,7 +149,7 @@ public:
       FINROC_LOG_PRINT_STATIC(DEBUG_WARNING, "Default value was not set");
       return;
     }
-    rrlib::serialization::tInputStream is(&default_value);
+    rrlib::serialization::tInputStream is(default_value);
     is >> buffer;
   }
 
@@ -163,7 +164,7 @@ public:
   template < bool AVAILABLE = cBOUNDABLE >
   void Set(const typename std::enable_if<AVAILABLE, tBounds<T>>::type& bounds)
   {
-    rrlib::serialization::tOutputStream os(&this->bounds);
+    rrlib::serialization::tOutputStream os(this->bounds);
     os << bounds;
   }
 
@@ -229,6 +230,15 @@ private:
     }
   }
 
+  /*!
+   * This exists so that the copy construction works/compiles with the varargs constructor.
+   * At runtime, however, tPortWrapperBase::CopyConstruction should return true - and this is never called
+   */
+  void Set(const core::tPortWrapperBase& base)
+  {
+    throw std::logic_error("This should never be called");
+  }
+
   // various helper methods
   template < bool STRING = tIsString<T>::value >
   void SetString(const typename std::enable_if < !STRING, tString >::type& s)
@@ -260,7 +270,7 @@ private:
     {
       FINROC_LOG_PRINT_STATIC(DEBUG_WARNING, "Default value already set");
     }
-    rrlib::serialization::tOutputStream os(&default_value);
+    rrlib::serialization::tOutputStream os(default_value);
     os << default_val;
   }
 };

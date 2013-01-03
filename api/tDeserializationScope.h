@@ -19,15 +19,24 @@
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 //----------------------------------------------------------------------
-/*!\file    plugins/data_ports/standard/tPortBufferManager.cpp
+/*!\file    plugins/data_ports/api/tDeserializationScope.h
  *
  * \author  Max Reichardt
  *
- * \date    2012-10-30
+ * \date    2012-12-19
+ *
+ * \brief   Contains tDeserializationScope
+ *
+ * \b tDeserializationScope
+ *
+ * When deserializing data from (e.g. network) streams,
+ * contains information where to get the empty/unused buffers from.
+ * This buffer source will be used until the object goes out of scope.
  *
  */
 //----------------------------------------------------------------------
-#include "plugins/data_ports/standard/tPortBufferManager.h"
+#ifndef __plugins__data_ports__api__tDeserializationScope_h__
+#define __plugins__data_ports__api__tDeserializationScope_h__
 
 //----------------------------------------------------------------------
 // External includes (system with <>, local with "")
@@ -36,15 +45,7 @@
 //----------------------------------------------------------------------
 // Internal includes with ""
 //----------------------------------------------------------------------
-
-//----------------------------------------------------------------------
-// Debugging
-//----------------------------------------------------------------------
-#include <cassert>
-
-//----------------------------------------------------------------------
-// Namespace usage
-//----------------------------------------------------------------------
+#include "plugins/data_ports/standard/tMultiTypePortBufferPool.h"
 
 //----------------------------------------------------------------------
 // Namespace declaration
@@ -53,44 +54,76 @@ namespace finroc
 {
 namespace data_ports
 {
-namespace standard
+namespace api
 {
 
 //----------------------------------------------------------------------
 // Forward declarations / typedefs / enums
 //----------------------------------------------------------------------
 
-//----------------------------------------------------------------------
-// Const values
-//----------------------------------------------------------------------
+template <typename, bool>
+class tPortDataPointerImplementation;
 
 //----------------------------------------------------------------------
-// Implementation
+// Class declaration
 //----------------------------------------------------------------------
-
-tPortBufferManager::tPortBufferManager() :
-  unused(true),
-  derived_from(NULL)
-{}
-
-tPortBufferManager::~tPortBufferManager()
+//! Buffer source scope for deserialization
+/*!
+ * When deserializing data from (e.g. network) streams,
+ * contains information where to get the empty/unused buffers from.
+ * This buffer source will be used until the object goes out of scope.
+ */
+class tDeserializationScope : boost::noncopyable
 {
-  GetObject().~tGenericObject();
-}
 
-tPortBufferManager* tPortBufferManager::CreateInstance(const rrlib::rtti::tType& type)
-{
-  static_assert(sizeof(tPortBufferManager) % 8 == 0, "Port Data manager must be aligned to 8 byte boundary");
-  char* placement = (char*)operator new(sizeof(tPortBufferManager) + type.GetSize(true));
-  type.CreateInstanceGeneric(placement + sizeof(tPortBufferManager));
-  return new(placement) tPortBufferManager();
-}
+//----------------------------------------------------------------------
+// Public methods and typedefs
+//----------------------------------------------------------------------
+public:
 
-rrlib::rtti::tGenericObject& tPortBufferManager::GetObjectImplementation()
-{
-  return GetObject();
-}
+  tDeserializationScope(standard::tMultiTypePortBufferPool& buffer_source) :
+    buffer_source(buffer_source),
+    outer_scope(current_scope)
+  {
+  }
 
+  ~tDeserializationScope()
+  {
+    current_scope = outer_scope; // restores old scope
+  }
+
+  /*!
+   * \return Buffer source in current scope
+   */
+  static standard::tMultiTypePortBufferPool& GetBufferSource()
+  {
+    if (!current_scope)
+    {
+      throw std::runtime_error("No scope created");
+    }
+    return current_scope->buffer_source;
+  }
+
+  /*!
+   * \param type Data type
+   * \return Unused buffer of this type
+   */
+  static tPortDataPointerImplementation<rrlib::rtti::tGenericObject, false> GetUnusedBuffer(const rrlib::rtti::tType& type);
+
+//----------------------------------------------------------------------
+// Private fields and methods
+//----------------------------------------------------------------------
+private:
+
+  /*! Buffer source to use */
+  standard::tMultiTypePortBufferPool& buffer_source;
+
+  /*! Active scope before this scope was created */
+  tDeserializationScope* outer_scope;
+
+  /*! Active scope */
+  static __thread tDeserializationScope* current_scope;
+};
 
 //----------------------------------------------------------------------
 // End of namespace declaration
@@ -98,3 +131,6 @@ rrlib::rtti::tGenericObject& tPortBufferManager::GetObjectImplementation()
 }
 }
 }
+
+
+#endif

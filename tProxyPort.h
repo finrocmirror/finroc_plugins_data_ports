@@ -78,6 +78,9 @@ class tProxyPort : public tPort<T>
 //----------------------------------------------------------------------
 public:
 
+  /*! Creates no wrapped port */
+  tProxyPort() {}
+
   /*!
    * Constructor takes variadic argument list... just any properties you want to assign to port.
    *
@@ -98,7 +101,7 @@ public:
    * numeric type: The first numeric argument is interpreted as default_value.
    */
   template <typename ... ARGS>
-  tProxyPort(const ARGS && ... args) :
+  tProxyPort(const ARGS& ... args) :
     tPort<T>(std::forward<const ARGS>(args)..., core::tFrameworkElement::tFlag::EMITS_DATA | core::tFrameworkElement::tFlag::ACCEPTS_DATA |
              (OUTPUT_PORT ? core::tFrameworkElement::tFlag::OUTPUT_PORT : core::tFrameworkElement::tFlag::EMITS_DATA))
   {}
