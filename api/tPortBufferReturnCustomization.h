@@ -76,16 +76,17 @@ namespace api
 template <typename T>
 struct tPortBufferReturnCustomization : public tPortImplementation<T, tPortImplementationTypeTrait<T>::type>
 {
-  static_assert(tIsCheaplyCopiedType<T>::value, "Only available for cheaply-copied types. Use tPortDataPointer<T> instead.");
+  static_assert(tIsCheaplyCopiedType<T>::value, "Only available for cheaply-copied types. Use tPortBufferReturnCustomization<tPortDataPointer<T>> instead.");
 
   typedef typename std::remove_const<T>::type tPortDataType;
   typedef tPortImplementation<T, tPortImplementationTypeTrait<T>::type> tBase;
-  typedef typename tBase::tBufferType tBufferType;
-  typedef typename tBase::tPortBase::tLockingManagerPointer tLockingManagerPointer;
+  typedef typename tBase::tPortBuffer tPortBuffer;
+  typedef typename tBase::tPortBase::tPortBufferContainerPointer tPortBufferContainerPointer;
 
-  static T ToDesiredType(const tLockingManagerPointer& locked_buffer, optimized::tCheapCopyPort& port)
+  static T ToDesiredType(const tPortBufferContainerPointer& locked_buffer, optimized::tCheapCopyPort& port)
   {
-    const tBufferType& value_buffer = locked_buffer->GetObject().template GetData<tBufferType>();
+    const tPortBuffer& value_buffer = locked_buffer.locked_buffer->GetObject().template GetData<tPortBuffer>();
+    locked_buffer->locked_buffer.reset();
     return tBase::ToValue(value_buffer, port.GetUnit());
   }
 };
@@ -97,11 +98,12 @@ struct tPortBufferReturnCustomization<tPortDataPointer<T>> : public tPortImpleme
   typedef typename std::remove_const<T>::type tPortDataType;
   typedef tPortImplementation<tPortDataType, tPortImplementationTypeTrait<tPortDataType>::type> tBase;
   typedef typename tBase::tPortBase tPortBase;
+  typedef typename tBase::tPortBase::tPortBufferContainerPointer tPortBufferContainerPointer;
   typedef typename tBase::tPortBase::tLockingManagerPointer tLockingManagerPointer;
 
-  static tPortDataPointer<T> ToDesiredType(const tLockingManagerPointer& locked_buffer, tPortBase& port)
+  static tPortDataPointer<T> ToDesiredType(const tPortBufferContainerPointer& locked_buffer, tPortBase& port)
   {
-    return tPortDataPointer<T>(locked_buffer, port);
+    return tPortDataPointer<T>(std::move(locked_buffer->locked_buffer), port);
   }
 };
 

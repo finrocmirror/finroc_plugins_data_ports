@@ -45,6 +45,7 @@
 #include "plugins/data_ports/common/tAbstractDataPort.h"
 #include "plugins/data_ports/common/tPortBufferPool.h"
 #include "plugins/data_ports/common/tPortListenerRaw.h"
+#include "plugins/data_ports/common/tPortQueue.h"
 #include "plugins/data_ports/common/tPublishOperation.h"
 #include "plugins/data_ports/optimized/tGlobalBufferPools.h"
 #include "plugins/data_ports/optimized/tPullRequestHandlerRaw.h"
@@ -156,6 +157,9 @@ public:
 
   /*! std::unique_ptr that automatically recycles buffer when deleted */
   typedef std::unique_ptr<tCheaplyCopiedBufferManager, tUnusedBufferRecycler> tUnusedManagerPointer;
+
+  /*! std::unique_ptr Pointer in a queue fragment */
+  typedef typename common::tPortQueue<tLockingManagerPointer>::tPortBufferContainerPointer tPortBufferContainerPointer;
 
 
   /*!
@@ -283,10 +287,10 @@ public:
    *
    * \return fragment Fragment containing all dequeued values
    */
-  rrlib::concurrent_containers::tQueueFragment<tLockingManagerPointer> DequeueAllRaw()
+  rrlib::concurrent_containers::tQueueFragment<tPortBufferContainerPointer> DequeueAllRaw()
   {
     assert(GetFlag(tFlag::HAS_QUEUE) && GetFlag(tFlag::HAS_DEQUEUE_ALL_QUEUE));
-    return queue_all->DequeueAll();
+    return input_queue->DequeueAll();
   }
 
   /*!
@@ -302,7 +306,7 @@ public:
   tLockingManagerPointer DequeueSingleRaw()
   {
     assert(GetFlag(tFlag::HAS_QUEUE) && (!GetFlag(tFlag::HAS_DEQUEUE_ALL_QUEUE)));
-    return queue_fifo->Dequeue();
+    return input_queue->Dequeue();
   }
 
   virtual void ForwardData(tAbstractPort& other);
@@ -649,12 +653,6 @@ private:
   template <typename TPort, typename TPublishingData, typename TManager>
   friend class common::tPullOperation;
 
-  typedef rrlib::concurrent_containers::tQueue < tLockingManagerPointer, rrlib::concurrent_containers::tConcurrency::FULL,
-          rrlib::concurrent_containers::tDequeueMode::FIFO, true > tFifoPortQueue;
-
-  typedef rrlib::concurrent_containers::tQueue < tLockingManagerPointer, rrlib::concurrent_containers::tConcurrency::FULL,
-          rrlib::concurrent_containers::tDequeueMode::ALL, true > tDequeueAllPortQueue;
-
   /*! 'cheaply copyable type index' of type used in this port */
   uint32_t cheaply_copyable_type_index;
 
@@ -694,14 +692,8 @@ private:
    */
   //const int port_index;
 
-  union
-  {
-    /*! FIFO Queue for ports with incoming value queue */
-    tFifoPortQueue* queue_fifo;
-
-    /*! Queue for ports with incoming value queue that dequeues all values at once */
-    tDequeueAllPortQueue* queue_all;
-  };
+  /*! Queue for ports with incoming value queue */
+  std::unique_ptr<common::tPortQueue<tLockingManagerPointer>> input_queue;
 
   /*! Object that handles pull requests - null if there is none (typical case) */
   tPullRequestHandlerRaw* pull_request_handler;

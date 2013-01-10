@@ -97,7 +97,7 @@ tCheapCopyPort::tCheapCopyPort(common::tAbstractDataPortCreationInfo creation_in
   default_value(internal::CreateDefaultValue(creation_info)),
   current_value(0),
   standard_assign(!GetFlag(tFlag::NON_STANDARD_ASSIGN) && (!GetFlag(tFlag::HAS_QUEUE))),
-  queue_fifo(NULL),
+  input_queue(),
   pull_request_handler(NULL),
   port_listeners(),
   unit(creation_info.unit)
@@ -123,14 +123,7 @@ tCheapCopyPort::tCheapCopyPort(common::tAbstractDataPortCreationInfo creation_in
   // Initialize queue
   if (GetFlag(tFlag::HAS_QUEUE))
   {
-    if (GetFlag(tFlag::HAS_DEQUEUE_ALL_QUEUE))
-    {
-      queue_all = new tDequeueAllPortQueue();
-    }
-    else
-    {
-      queue_fifo = new tFifoPortQueue();
-    }
+    input_queue.reset(new common::tPortQueue<tLockingManagerPointer>(!GetFlag(tFlag::HAS_DEQUEUE_ALL_QUEUE)));
   }
 
   PropagateStrategy(NULL, NULL);  // initialize strategy
@@ -143,18 +136,6 @@ tCheapCopyPort::~tCheapCopyPort()
   tTaggedBufferPointer cur_pointer = current_value.exchange(0);
   tPortBufferUnlocker unlocker;
   unlocker(cur_pointer.GetPointer());
-
-  if (queue_all)
-  {
-    if (GetFlag(tFlag::HAS_DEQUEUE_ALL_QUEUE))
-    {
-      delete queue_all;
-    }
-    else
-    {
-      delete queue_fifo;
-    }
-  }
 }
 
 void tCheapCopyPort::ApplyDefaultValue()
@@ -294,18 +275,7 @@ void tCheapCopyPort::ForwardData(tAbstractPort& other)
 
 int tCheapCopyPort::GetMaxQueueLengthImplementation() const
 {
-  if (queue_all)
-  {
-    if (GetFlag(tFlag::HAS_DEQUEUE_ALL_QUEUE))
-    {
-      return queue_all->GetMaxLength();
-    }
-    else
-    {
-      return queue_fifo->GetMaxLength();
-    }
-  }
-  return -1;
+  return input_queue ? input_queue->GetMaxQueueLength() : -1;
 }
 
 //tCCPortDataManager* tCheapCopyPort::GetInInterThreadContainer(bool dont_pull)
@@ -428,18 +398,11 @@ bool tCheapCopyPort::NonStandardAssign(tPublishingDataGlobalBuffer& publishing_d
 {
   if (GetFlag(tFlag::USES_QUEUE))
   {
-    assert((GetFlag(tFlag::HAS_QUEUE)));
+    assert(GetFlag(tFlag::HAS_QUEUE));
 
     // enqueue
     publishing_data.AddLock();
-    if (GetFlag(tFlag::HAS_DEQUEUE_ALL_QUEUE))
-    {
-      queue_all->Enqueue(tLockingManagerPointer(publishing_data.published_buffer));
-    }
-    else
-    {
-      queue_fifo->Enqueue(tLockingManagerPointer(publishing_data.published_buffer));
-    }
+    input_queue->Enqueue(tLockingManagerPointer(publishing_data.published_buffer));
   }
   return true;
 }
@@ -448,18 +411,11 @@ bool tCheapCopyPort::NonStandardAssign(tPublishingDataThreadLocalBuffer& publish
 {
   if (GetFlag(tFlag::USES_QUEUE))
   {
-    assert((GetFlag(tFlag::HAS_QUEUE)));
+    assert(GetFlag(tFlag::HAS_QUEUE));
 
-    // enqueue
+    // Enqueue
     publishing_data.AddLock();
-    if (GetFlag(tFlag::HAS_DEQUEUE_ALL_QUEUE))
-    {
-      queue_all->Enqueue(tLockingManagerPointer(publishing_data.published_buffer));
-    }
-    else
-    {
-      queue_fifo->Enqueue(tLockingManagerPointer(publishing_data.published_buffer));
-    }
+    input_queue->Enqueue(tLockingManagerPointer(publishing_data.published_buffer));
   }
   return true;
 }

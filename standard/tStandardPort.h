@@ -50,6 +50,7 @@
 #include "plugins/data_ports/common/tAbstractDataPort.h"
 #include "plugins/data_ports/common/tPortBufferPool.h"
 #include "plugins/data_ports/common/tPortListenerRaw.h"
+#include "plugins/data_ports/common/tPortQueue.h"
 #include "plugins/data_ports/common/tPublishOperation.h"
 #include "plugins/data_ports/standard/tPortBufferManager.h"
 #include "plugins/data_ports/standard/tPullRequestHandlerRaw.h"
@@ -120,6 +121,9 @@ public:
   /*! std::unique_ptr that automatically recycles buffer when deleted */
   typedef typename tBufferPool::tPointer tUnusedManagerPointer;
 
+  /*! std::unique_ptr Pointer in a queue fragment */
+  typedef typename common::tPortQueue<tLockingManagerPointer>::tPortBufferContainerPointer tPortBufferContainerPointer;
+
   /*!
    * \param creation_info PortCreationInformation
    */
@@ -155,10 +159,10 @@ public:
    *
    * \return fragment Fragment containing all dequeued values
    */
-  rrlib::concurrent_containers::tQueueFragment<tLockingManagerPointer> DequeueAllRaw()
+  rrlib::concurrent_containers::tQueueFragment<tPortBufferContainerPointer> DequeueAllRaw()
   {
     assert(GetFlag(tFlag::HAS_QUEUE) && GetFlag(tFlag::HAS_DEQUEUE_ALL_QUEUE));
-    return queue_all->DequeueAll();
+    return input_queue->DequeueAll();
   }
 
   /*!
@@ -174,7 +178,7 @@ public:
   tLockingManagerPointer DequeueSingleRaw()
   {
     assert(GetFlag(tFlag::HAS_QUEUE) && (!GetFlag(tFlag::HAS_DEQUEUE_ALL_QUEUE)));
-    return queue_fifo->Dequeue();
+    return input_queue->Dequeue();
   }
 
   virtual void ForwardData(tAbstractPort& other); // TODO either add to AbstractDataPort or remove virtuality and add comment
@@ -390,12 +394,6 @@ private:
   template <typename TPort, typename TPublishingData, typename TManager>
   friend class common::tPullOperation;
 
-  typedef rrlib::concurrent_containers::tQueue < tLockingManagerPointer, rrlib::concurrent_containers::tConcurrency::FULL,
-          rrlib::concurrent_containers::tDequeueMode::FIFO, true > tFifoPortQueue;
-
-  typedef rrlib::concurrent_containers::tQueue < tLockingManagerPointer, rrlib::concurrent_containers::tConcurrency::FULL,
-          rrlib::concurrent_containers::tDequeueMode::ALL, true > tDequeueAllPortQueue;
-
   /*! Current type of port data - relevant for ports with multi type buffer pool */
   //const rrlib::rtti::tType cur_data_type;
 
@@ -424,14 +422,8 @@ private:
    */
   const bool standard_assign;
 
-  union
-  {
-    /*! FIFO Queue for ports with incoming value queue */
-    tFifoPortQueue* queue_fifo;
-
-    /*! Queue for ports with incoming value queue that dequeues all values at once */
-    tDequeueAllPortQueue* queue_all;
-  };
+  /*! Queue for ports with incoming value queue */
+  std::unique_ptr<common::tPortQueue<tLockingManagerPointer>> input_queue;
 
   /*!
    * Optimization - if this is not null that means:

@@ -112,9 +112,53 @@ void TestPortChains()
   parent->ManagedDelete();
 }
 
+template <typename T>
+void TestPortQueues(const T& value1, const T& value2, const T& value3)
+{
+  FINROC_LOG_PRINT(USER, "Testing port queue basic operation");
+  tFrameworkElement* parent = new tFrameworkElement(&finroc::core::tRuntimeEnvironment::GetInstance(), "TestPortQueue");
+
+  tOutputPort<T> output_port("Output Port", parent);
+  tInputPort<T> input_port_fifo("Input Port FIFO", parent, finroc::core::tFrameworkElement::tFlag::HAS_QUEUE | finroc::core::tFrameworkElement::tFlag::USES_QUEUE);
+  tInputPort<T> input_port_all("Input Port ALL", parent, finroc::core::tFrameworkElement::tFlag::HAS_QUEUE | finroc::core::tFrameworkElement::tFlag::USES_QUEUE | finroc::core::tFrameworkElement::tFlag::HAS_DEQUEUE_ALL_QUEUE);
+  output_port.ConnectTo(input_port_fifo);
+  output_port.ConnectTo(input_port_all);
+  parent->Init();
+
+  FINROC_LOG_PRINT(USER, " Enqueueing three values");
+  output_port.Publish(value1);
+  output_port.Publish(value2);
+  output_port.Publish(value3);
+
+  FINROC_LOG_PRINT(USER, " Dequeueing five values FIFO");
+  for (size_t i = 0; i < 5; ++i)
+  {
+    tPortDataPointer<const T> result = input_port_fifo.Dequeue();
+    if (result)
+    {
+      FINROC_LOG_PRINT(USER, "  Dequeued ", *result);
+    }
+    else
+    {
+      FINROC_LOG_PRINT(USER, "  Dequeued nothing");
+    }
+  }
+
+  FINROC_LOG_PRINT(USER, " Dequeueing all values at once");
+  tPortBuffers<tPortDataPointer<const T>> dequeued = input_port_all.DequeueAllBuffers();
+  while (!dequeued.Empty())
+  {
+    FINROC_LOG_PRINT(USER, "  Dequeued ", *dequeued.PopFront());
+  }
+
+  parent->ManagedDelete();
+};
+
 int main(int, char**)
 {
   TestPortChains();
+  TestPortQueues<int>(1, 2, 3);
+  TestPortQueues<std::string>("1", "2", "3");
 
   return 0;
 }

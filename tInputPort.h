@@ -137,7 +137,11 @@ public:
   inline tPortDataPointer<const T> Dequeue()
   {
     auto buffer_pointer = this->GetWrapped()->DequeueSingleRaw();
-    return tPortDataPointer<const T>(buffer_pointer, *this->GetWrapped());
+    if (buffer_pointer)
+    {
+      return tPortDataPointer<const T>(buffer_pointer, *this->GetWrapped());
+    }
+    return tPortDataPointer<const T>();
   }
 
   /*!

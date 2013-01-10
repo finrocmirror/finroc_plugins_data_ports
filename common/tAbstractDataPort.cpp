@@ -81,7 +81,9 @@ tAbstractDataPort::tAbstractDataPort(const tAbstractDataPortCreationInfo& create
   custom_changed_flag(tChangeStatus::NO_CHANGE),
   strategy(-1),
   min_net_update_time(create_info.min_net_update_interval)
-{}
+{
+  printf("Data Port %p\n", this);
+}
 
 tAbstractDataPort::~tAbstractDataPort()
 {}
@@ -196,7 +198,7 @@ int16_t tAbstractDataPort::GetStrategyRequirement() const
       if (GetFlag(tFlag::USES_QUEUE))
       {
         int qlen = GetMaxQueueLength();
-        return static_cast<int16_t>((qlen > 0 ? qlen : std::numeric_limits<short>::max()));
+        return static_cast<int16_t>((qlen > 0 ? std::min<int>(qlen, std::numeric_limits<int16_t>::max()) : std::numeric_limits<int16_t>::max()));
       }
       else
       {

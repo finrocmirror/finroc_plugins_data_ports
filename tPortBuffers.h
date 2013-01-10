@@ -77,7 +77,7 @@ class tPortBuffers : boost::noncopyable
   typedef typename tImplementation::tPortBase tPortBase;
 
   /*! Type of wrapped queue fragment */
-  typedef rrlib::concurrent_containers::tQueueFragment<typename tPortBase::tLockingManagerPointer> tQueueFragment;
+  typedef rrlib::concurrent_containers::tQueueFragment<typename tPortBase::tPortBufferContainerPointer> tQueueFragment;
 
 //----------------------------------------------------------------------
 // Public methods and typedefs

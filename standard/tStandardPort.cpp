@@ -104,7 +104,7 @@ tStandardPort::tStandardPort(common::tAbstractDataPortCreationInfo creation_info
   default_value(CreateDefaultValue(creation_info, buffer_pool)),
   current_value(0),
   standard_assign(!GetFlag(tFlag::NON_STANDARD_ASSIGN) && (!GetFlag(tFlag::HAS_QUEUE))),
-  queue_fifo(NULL),
+  input_queue(),
   pull_request_handler(NULL),
   port_listeners()
 {
@@ -129,14 +129,7 @@ tStandardPort::tStandardPort(common::tAbstractDataPortCreationInfo creation_info
   // Initialize queue
   if (GetFlag(tFlag::HAS_QUEUE))
   {
-    if (GetFlag(tFlag::HAS_DEQUEUE_ALL_QUEUE))
-    {
-      queue_all = new tDequeueAllPortQueue();
-    }
-    else
-    {
-      queue_fifo = new tFifoPortQueue();
-    }
+    input_queue.reset(new common::tPortQueue<tLockingManagerPointer>(!GetFlag(tFlag::HAS_DEQUEUE_ALL_QUEUE)));
   }
 
   PropagateStrategy(NULL, NULL);  // initialize strategy
@@ -151,18 +144,6 @@ tStandardPort::~tStandardPort()
   unlocker(cur_pointer.GetPointer()); // thread safe, since nobody should publish to port anymore
 
   delete multi_type_buffer_pool;
-
-  if (queue_all)
-  {
-    if (GetFlag(tFlag::HAS_DEQUEUE_ALL_QUEUE))
-    {
-      delete queue_all;
-    }
-    else
-    {
-      delete queue_fifo;
-    }
-  }
 }
 
 /*!
@@ -232,18 +213,7 @@ rrlib::rtti::tGenericObject& tStandardPort::GetDefaultBufferRaw()
 
 int tStandardPort::GetMaxQueueLengthImplementation() const
 {
-  if (queue_all)
-  {
-    if (GetFlag(tFlag::HAS_DEQUEUE_ALL_QUEUE))
-    {
-      return queue_all->GetMaxLength();
-    }
-    else
-    {
-      return queue_fifo->GetMaxLength();
-    }
-  }
-  return -1;
+  return input_queue ? input_queue->GetMaxQueueLength() : -1;
 }
 
 tStandardPort::tUnusedManagerPointer tStandardPort::GetUnusedBufferRaw(const rrlib::rtti::tType& dt)
@@ -281,18 +251,11 @@ void tStandardPort::NonStandardAssign(tPublishingData& publishing_data)
 {
   if (GetFlag(tFlag::USES_QUEUE))
   {
-    assert((GetFlag(tFlag::HAS_QUEUE)));
+    assert(GetFlag(tFlag::HAS_QUEUE) && input_queue);
 
     // enqueue
     publishing_data.AddLock();
-    if (GetFlag(tFlag::HAS_DEQUEUE_ALL_QUEUE))
-    {
-      queue_all->Enqueue(tLockingManagerPointer(publishing_data.published_buffer));
-    }
-    else
-    {
-      queue_fifo->Enqueue(tLockingManagerPointer(publishing_data.published_buffer));
-    }
+    input_queue->Enqueue(tLockingManagerPointer(publishing_data.published_buffer));
   }
 }
 
