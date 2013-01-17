@@ -108,14 +108,6 @@ public:
   static tThreadLocalBufferManager* CreateInstance(const rrlib::rtti::tType& type);
 
   /*!
-   * \return Managed Buffer as generic object
-   */
-  inline rrlib::rtti::tGenericObject& GetObject()
-  {
-    return reinterpret_cast<rrlib::rtti::tGenericObject&>(*(this + 1));
-  }
-
-  /*!
    * \return Pointer tag to use for current buffer publishing operation
    */
   inline int GetPointerTag() const
@@ -192,16 +184,8 @@ public:
 //----------------------------------------------------------------------
 private:
 
-  /*! Reference counter */
-  int reference_counter;
-
-  /*! Reuse counter */
-  uint32_t reuse_counter;
-
-
   tThreadLocalBufferManager();
 
-  virtual rrlib::rtti::tGenericObject& GetObjectImplementation();
 };
 
 //----------------------------------------------------------------------

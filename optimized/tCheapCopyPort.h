@@ -170,15 +170,6 @@ public:
   virtual ~tCheapCopyPort();
 
   /*!
-   * \param listener Listener to add
-   */
-  inline void AddPortListenerRaw(common::tPortListenerRaw& listener)
-  {
-    tLock l(*this);
-    port_listeners.Add(&listener);
-  }
-
-  /*!
    * Set current value to default value
    */
   void ApplyDefaultValue();
@@ -234,7 +225,7 @@ public:
       for (; ;)
       {
         tTaggedBufferPointer current = current_value.load();
-        buffer = GetObject(*current).GetData<T>();
+        buffer = current->GetObject().GetData<T>();
         tTaggedBufferPointer::tStorage current_raw = current;
         if (current_raw == current_value.load())    // still valid??
         {
@@ -245,7 +236,7 @@ public:
     else
     {
       tLockingManagerPointer dc = PullValueRaw();
-      rrlib::rtti::sStaticTypeInfo<T>::DeepCopy(GetObject(*dc).GetData<T>(), buffer, NULL);
+      rrlib::rtti::sStaticTypeInfo<T>::DeepCopy(dc->GetObject().GetData<T>(), buffer, NULL);
     }
   }
 
@@ -264,7 +255,7 @@ public:
       for (; ;)
       {
         tTaggedBufferPointer current = current_value.load();
-        buffer = GetObject(*current).GetData<T>();
+        buffer = current->GetObject().GetData<T>();
         timestamp = current.GetPointer()->GetTimestamp();
         tTaggedBufferPointer::tStorage current_raw = current;
         if (current_raw == current_value.load())    // still valid??
@@ -276,7 +267,7 @@ public:
     else
     {
       tLockingManagerPointer dc = PullValueRaw();
-      rrlib::rtti::sStaticTypeInfo<T>::DeepCopy(GetObject(*dc).GetData<T>(), buffer, NULL);
+      rrlib::rtti::sStaticTypeInfo<T>::DeepCopy(dc->GetObject().GetData<T>(), buffer, NULL);
       timestamp = dc->GetTimestamp();
     }
   }
@@ -361,6 +352,14 @@ public:
 //   */
 //  tCCPortDataManager* GetInInterThreadContainer(bool dont_pull = false);
 
+  /*!
+   * \param listener Listener to remove
+   */
+  inline common::tPortListenerRaw* GetPortListener()
+  {
+    return port_listener;
+  }
+
 //  /*!
 //   * Pulls port data (regardless of strategy) and returns it in interhread container
 //   * (careful: no auto-release of lock)
@@ -416,18 +415,19 @@ public:
 //  }
 
   /*!
-   * \param listener Listener to remove
-   */
-  inline void RemovePortListenerRaw(common::tPortListenerRaw& listener)
-  {
-    tLock l(*this);
-    port_listeners.Remove(&listener);
-  }
-
-  /*!
    * \param New default value for port
    */
   void SetDefault(rrlib::rtti::tGenericObject& new_default);
+
+  /*!
+   * \param listener New ports Listener
+   *
+   * (warning: this will not delete the old listener)
+   */
+  inline void SetPortListener(common::tPortListenerRaw* listener)
+  {
+    port_listener = listener;
+  }
 
   /*!
    * \param pull_request_handler Object that handles pull requests - null if there is none (typical case)
@@ -699,8 +699,7 @@ private:
   tPullRequestHandlerRaw* pull_request_handler;
 
   /*! Listens to port value changes - may be null */
-  rrlib::concurrent_containers::tSet < common::tPortListenerRaw*, rrlib::concurrent_containers::tAllowDuplicates::NO, rrlib::thread::tNoMutex,
-        rrlib::concurrent_containers::set::storage::ArrayChunkBased<1, 3, definitions::cSINGLE_THREADED >> port_listeners;
+  common::tPortListenerRaw* port_listener;
 
   /*! Unit of port (currently only used for numeric ports) */
   tUnit unit;
@@ -817,15 +816,6 @@ private:
 
   virtual int GetMaxQueueLengthImplementation() const;
 
-  /*!
-   * \param manager Generic object manager (works for both tCheaplyCopiedBufferManager and tThreadLlocalBufferManager classes)
-   * \return Object managed with this manager
-   */
-  static rrlib::rtti::tGenericObject& GetObject(tCheaplyCopiedBufferManager& manager)
-  {
-    return manager.GetThreadLocalOrigin() ? static_cast<tThreadLocalBufferManager&>(manager).GetObject() : manager.GetObject();
-  }
-
 //  /*!
 //   * (Meant for internal use)
 //   *
@@ -848,9 +838,9 @@ private:
   __attribute__((always_inline))
   inline void NotifyListeners(TPublishingData& publishing_data)
   {
-    for (auto it = port_listeners.Begin(); it != port_listeners.End(); ++it)
+    if (port_listener)
     {
-      (*it)->PortChangedRaw(*this, *publishing_data.published_buffer, publishing_data.published_buffer->GetTimestamp());
+      port_listener->PortChangedRaw(*this, *publishing_data.published_buffer, publishing_data.published_buffer->GetTimestamp());
     }
   }
 

@@ -106,7 +106,7 @@ tStandardPort::tStandardPort(common::tAbstractDataPortCreationInfo creation_info
   standard_assign(!GetFlag(tFlag::NON_STANDARD_ASSIGN) && (!GetFlag(tFlag::HAS_QUEUE))),
   input_queue(),
   pull_request_handler(NULL),
-  port_listeners()
+  port_listener(NULL)
 {
   if ((!IsDataFlowType(GetDataType())) || IsCheaplyCopiedType(GetDataType()))
   {
@@ -144,6 +144,10 @@ tStandardPort::~tStandardPort()
   unlocker(cur_pointer.GetPointer()); // thread safe, since nobody should publish to port anymore
 
   delete multi_type_buffer_pool;
+  if (port_listener)
+  {
+    port_listener->PortDeleted();
+  }
 }
 
 /*!

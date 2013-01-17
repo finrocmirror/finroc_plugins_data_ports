@@ -132,15 +132,6 @@ public:
   virtual ~tStandardPort();
 
   /*!
-   * \param listener Listener to add
-   */
-  inline void AddPortListenerRaw(common::tPortListenerRaw& listener)
-  {
-    tLock l(*this);
-    port_listeners.Add(&listener);
-  }
-
-  /*!
    * Set current value to default value
    */
   void ApplyDefaultValue();
@@ -215,6 +206,14 @@ public:
   }
 
   /*!
+   * \param listener Listener to remove
+   */
+  inline common::tPortListenerRaw* GetPortListener()
+  {
+    return port_listener;
+  }
+
+  /*!
    * Pulls port data (regardless of strategy)
    *
    * \param intermediate_assign Assign pulled value to ports in between?
@@ -258,12 +257,13 @@ public:
   }
 
   /*!
-   * \param listener Listener to remove
+   * \param listener New ports Listener
+   *
+   * (warning: this will not delete the old listener)
    */
-  inline void RemovePortListenerRaw(common::tPortListenerRaw& listener)
+  inline void SetPortListener(common::tPortListenerRaw* listener)
   {
-    tLock l(*this);
-    port_listeners.Remove(&listener);
+    port_listener = listener;
   }
 
   /*!
@@ -435,9 +435,8 @@ private:
   /*! Object that handles pull requests - null if there is none (typical case) */
   tPullRequestHandlerRaw* pull_request_handler;
 
-  /*! Listeners of port value changes */
-  rrlib::concurrent_containers::tSet < common::tPortListenerRaw*, rrlib::concurrent_containers::tAllowDuplicates::NO, rrlib::thread::tNoMutex,
-        rrlib::concurrent_containers::set::storage::ArrayChunkBased<1, 3, definitions::cSINGLE_THREADED >> port_listeners;
+  /*! Listener(s) of port value changes */
+  common::tPortListenerRaw* port_listener;
 
   /*!
    * Assigns new data to port.
@@ -511,9 +510,9 @@ private:
    */
   inline void NotifyListeners(tPublishingData& publishing_data)
   {
-    for (auto it = port_listeners.Begin(); it != port_listeners.End(); ++it)
+    if (port_listener)
     {
-      (*it)->PortChangedRaw(*this, *publishing_data.published_buffer, publishing_data.published_buffer->GetTimestamp());
+      port_listener->PortChangedRaw(*this, *publishing_data.published_buffer, publishing_data.published_buffer->GetTimestamp());
     }
   }
 

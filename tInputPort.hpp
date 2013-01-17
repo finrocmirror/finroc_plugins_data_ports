@@ -19,22 +19,14 @@
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 //----------------------------------------------------------------------
-/*!\file    plugins/data_ports/tPortListener.h
+/*!\file    plugins/data_ports/tInputPort.hpp
  *
  * \author  Max Reichardt
  *
- * \date    2012-10-21
- *
- * \brief   Contains tPortListener
- *
- * \b tPortListener
- *
- * Can register at port to receive callbacks whenever the port's value changes
+ * \date    2013-01-17
  *
  */
 //----------------------------------------------------------------------
-#ifndef __plugins__data_ports__tPortListener_h__
-#define __plugins__data_ports__tPortListener_h__
 
 //----------------------------------------------------------------------
 // External includes (system with <>, local with "")
@@ -44,6 +36,11 @@
 // Internal includes with ""
 //----------------------------------------------------------------------
 #include "plugins/data_ports/api/tPortListenerAdapter.h"
+
+//----------------------------------------------------------------------
+// Debugging
+//----------------------------------------------------------------------
+#include <cassert>
 
 //----------------------------------------------------------------------
 // Namespace declaration
@@ -58,67 +55,60 @@ namespace data_ports
 //----------------------------------------------------------------------
 
 //----------------------------------------------------------------------
-// Class declaration
+// Const values
 //----------------------------------------------------------------------
-//! Port data change listener
-/*!
- * Can register at port to receive callbacks whenever the port's value changes.
- *
- * \tparam T If port to register at has type U, then T can be (1) U directly (2) tPortDataPointer<const U> or (3) const void*
- */
-template <typename T>
-class tPortListener : public api::tPortListenerAdapter<T, api::tPortImplementationTypeTrait<T>::type>
+
+//----------------------------------------------------------------------
+// Implementation
+//----------------------------------------------------------------------
+
+template <typename T> template <typename TListener>
+void tInputPort<T>::AddPortListener(TListener& listener)
 {
+  if (this->GetWrapped()->GetPortListener())
+  {
+    typedef api::tPortListenerAdapter<TListener, T, api::tPortImplementationTypeTrait<T>::type, false> tAdapter;
+    this->GetWrapped()->SetPortListener(new tAdapter(listener, *this->GetWrapped()->GetPortListener()));
+  }
+  else
+  {
+    typedef api::tPortListenerAdapter<TListener, T, api::tPortImplementationTypeTrait<T>::type, true> tAdapter;
+    this->GetWrapped()->SetPortListener(new tAdapter(listener));
+  }
+}
 
-  /*!
-   * Called whenever port's value has changed
-   * Needs to be overridden by subclass
-   *
-   * \param origin Port that value comes from
-   * \param value Port's new value (locked for duration of method call)
-   * \param timestamp Timestamp attached to new value
-   */
-  virtual void PortChanged(common::tAbstractDataPort& origin, const T& value, const rrlib::time::tTimestamp& timestamp) = 0;
-
-};
-
-template <typename T>
-class tPortListener<tPortDataPointer<const T>> : public api::tPointerPortListenerAdapter<T>
+template <typename T> template <typename TListener>
+void tInputPort<T>::AddPortListenerForPointer(TListener& listener)
 {
+  if (this->GetWrapped()->GetPortListener())
+  {
+    typedef api::tPortListenerAdapterForPointer<TListener, T, false> tAdapter;
+    this->GetWrapped()->SetPortListener(new tAdapter(listener, *this->GetWrapped()->GetPortListener()));
+  }
+  else
+  {
+    typedef api::tPortListenerAdapterForPointer<TListener, T, true> tAdapter;
+    this->GetWrapped()->SetPortListener(new tAdapter(listener));
+  }
+}
 
-  /*!
-   * Called whenever port's value has changed
-   * Needs to be overridden by subclass
-   *
-   * \param origin Port that value comes from
-   * \param value Port's new value (locked for duration of method call)
-   * \param timestamp Timestamp attached to new value
-   */
-  virtual void PortChanged(common::tAbstractDataPort& origin, tPortDataPointer<const T>& value, const rrlib::time::tTimestamp& timestamp) = 0;
-
-};
-
-template <>
-class tPortListener<const void*> : public api::tVoidPointerPortListenerAdapter
+template <typename T> template <typename TListener>
+void tInputPort<T>::AddPortListenerSimple(TListener& listener)
 {
-
-  /*!
-   * Called whenever port's value has changed
-   * Needs to be overridden by subclass
-   *
-   * \param origin Port that value comes from
-   * \param value Port's new value (locked for duration of method call)
-   * \param timestamp Timestamp attached to new value
-   */
-  virtual void PortChanged(common::tAbstractDataPort& origin, const void* value, const rrlib::time::tTimestamp& timestamp) = 0;
-
-};
+  if (this->GetWrapped()->GetPortListener())
+  {
+    typedef api::tPortListenerAdapterSimple<TListener, false> tAdapter;
+    this->GetWrapped()->SetPortListener(new tAdapter(listener, *this->GetWrapped()->GetPortListener()));
+  }
+  else
+  {
+    typedef api::tPortListenerAdapterSimple<TListener, true> tAdapter;
+    this->GetWrapped()->SetPortListener(new tAdapter(listener));
+  }
+}
 
 //----------------------------------------------------------------------
 // End of namespace declaration
 //----------------------------------------------------------------------
 }
 }
-
-
-#endif

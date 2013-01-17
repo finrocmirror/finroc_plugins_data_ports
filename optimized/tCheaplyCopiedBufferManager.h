@@ -96,7 +96,6 @@ public:
    */
   inline rrlib::rtti::tGenericObject& GetObject()
   {
-    assert((!origin) && "Please call GetObject() on subclass");
     return reinterpret_cast<rrlib::rtti::tGenericObject&>(*(this + 1));
   }
 
@@ -115,6 +114,17 @@ public:
 protected:
 
   tCheaplyCopiedBufferManager(tThreadLocalBufferPools* origin = NULL);
+
+
+  /*!
+   * Thread Local Reference counter
+   * (for tThreadLocalBufferManager subclass - we define it here,
+   * so it has the same memory layout and GetObject() can be used)
+   */
+  int reference_counter;
+
+  /*! Thread Local Reuse counter */
+  uint32_t reuse_counter;
 
 //----------------------------------------------------------------------
 // Private fields and methods

@@ -82,7 +82,6 @@ tAbstractDataPort::tAbstractDataPort(const tAbstractDataPortCreationInfo& create
   strategy(-1),
   min_net_update_time(create_info.min_net_update_interval)
 {
-  printf("Data Port %p\n", this);
 }
 
 tAbstractDataPort::~tAbstractDataPort()

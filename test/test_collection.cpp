@@ -41,6 +41,7 @@
 #include "plugins/data_ports/tInputPort.h"
 #include "plugins/data_ports/tOutputPort.h"
 #include "plugins/data_ports/tProxyPort.h"
+#include "plugins/data_ports/tThreadLocalBufferManagement.h"
 
 //----------------------------------------------------------------------
 // Debugging
@@ -67,7 +68,7 @@ using namespace finroc::data_ports;
 
 void TestPortChains()
 {
-  FINROC_LOG_PRINT(USER, "Testing forwarding data among port chains");
+  FINROC_LOG_PRINT(USER, "\nTesting forwarding data among port chains");
   tFrameworkElement* parent = new tFrameworkElement(&finroc::core::tRuntimeEnvironment::GetInstance(), "TestPortChains");
 
   // Create ports
@@ -115,7 +116,7 @@ void TestPortChains()
 template <typename T>
 void TestPortQueues(const T& value1, const T& value2, const T& value3)
 {
-  FINROC_LOG_PRINT(USER, "Testing port queue basic operation");
+  FINROC_LOG_PRINT(USER, "\nTesting port queue basic operation for type ", (rrlib::rtti::tDataType<T>()).GetName());
   tFrameworkElement* parent = new tFrameworkElement(&finroc::core::tRuntimeEnvironment::GetInstance(), "TestPortQueue");
 
   tOutputPort<T> output_port("Output Port", parent);
@@ -154,11 +155,57 @@ void TestPortQueues(const T& value1, const T& value2, const T& value3)
   parent->ManagedDelete();
 };
 
+
+
+template <typename T>
+void TestPortListeners(const T& publish_value)
+{
+  class tListener
+  {
+  public:
+    void PortChanged(tInputPort<T>& port, const T& value, const rrlib::time::tTimestamp& timestamp)
+    {
+      FINROC_LOG_PRINT(USER, "  Port Changed: ", value);
+    }
+    void PortChanged(tInputPort<T>& port, tPortDataPointer<const T>& value, const rrlib::time::tTimestamp& timestamp)
+    {
+      FINROC_LOG_PRINT(USER, "  Port Changed (tPortDataPointer): ", *value);
+    }
+    void PortChanged(common::tAbstractDataPort& port)
+    {
+      FINROC_LOG_PRINT(USER, "  Port Changed Simple");
+    }
+  };
+
+  FINROC_LOG_PRINT(USER, "\nTesting port listeners for type ", (rrlib::rtti::tDataType<T>()).GetName());
+  tListener listener;
+  tFrameworkElement* parent = new tFrameworkElement(&finroc::core::tRuntimeEnvironment::GetInstance(), "TestPortListeners");
+
+  tOutputPort<T> output_port("Output Port", parent);
+  tInputPort<T> input_port("Input Port", parent);
+  output_port.ConnectTo(input_port);
+  input_port.AddPortListener(listener);
+  input_port.AddPortListenerForPointer(listener);
+  input_port.AddPortListenerSimple(listener);
+  parent->Init();
+
+  output_port.Publish(publish_value);
+
+  parent->ManagedDelete();
+}
+
 int main(int, char**)
 {
   TestPortChains();
   TestPortQueues<int>(1, 2, 3);
   TestPortQueues<std::string>("1", "2", "3");
+  TestPortListeners<int>(1);
+  TestPortListeners<std::string>("test");
+
+  tThreadLocalBufferManagement local_buffers;
+  TestPortChains();
+  TestPortQueues<int>(1, 2, 3);
+  TestPortListeners<int>(1);
 
   return 0;
 }

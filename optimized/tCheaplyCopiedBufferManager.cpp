@@ -69,6 +69,8 @@ namespace optimized
 //----------------------------------------------------------------------
 
 tCheaplyCopiedBufferManager::tCheaplyCopiedBufferManager(tThreadLocalBufferPools* origin) :
+  reference_counter(0),
+  reuse_counter(0),
   origin(origin)
 {}
 

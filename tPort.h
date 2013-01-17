@@ -45,7 +45,6 @@
 // Internal includes with ""
 //----------------------------------------------------------------------
 #include "plugins/data_ports/tPortCreationInfo.h"
-#include "plugins/data_ports/tPortListener.h"
 #include "plugins/data_ports/api/tPortImplementation.h"
 #include "plugins/data_ports/tPortBuffers.h"
 

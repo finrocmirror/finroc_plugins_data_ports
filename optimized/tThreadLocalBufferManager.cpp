@@ -70,9 +70,7 @@ namespace optimized
 //----------------------------------------------------------------------
 
 tThreadLocalBufferManager::tThreadLocalBufferManager() :
-  tCheaplyCopiedBufferManager(tThreadLocalBufferPools::Get()),
-  reference_counter(0),
-  reuse_counter(0)
+  tCheaplyCopiedBufferManager(tThreadLocalBufferPools::Get())
 {
   assert(GetThreadLocalOrigin());
 }
@@ -88,11 +86,6 @@ tThreadLocalBufferManager* tThreadLocalBufferManager::CreateInstance(const rrlib
   char* placement = (char*)operator new(sizeof(tThreadLocalBufferManager) + type.GetSize(true));
   type.CreateInstanceGeneric(placement + sizeof(tThreadLocalBufferManager));
   return new(placement) tThreadLocalBufferManager();
-}
-
-rrlib::rtti::tGenericObject& tThreadLocalBufferManager::GetObjectImplementation()
-{
-  return GetObject();
 }
 
 

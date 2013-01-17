@@ -47,6 +47,7 @@
 // Internal includes with ""
 //----------------------------------------------------------------------
 #include "plugins/data_ports/tPort.h"
+#include "plugins/data_ports/api/tPortImplementationTypeTrait.h"
 
 //----------------------------------------------------------------------
 // Namespace declaration
@@ -59,6 +60,16 @@ namespace data_ports
 //----------------------------------------------------------------------
 // Forward declarations / typedefs / enums
 //----------------------------------------------------------------------
+namespace api
+{
+
+template <typename LISTENER, typename T, tPortImplementationType TPortImplementationType, bool FIRST_LISTENER>
+class tPortListenerAdapter;
+
+template <typename LISTENER, typename T, bool FIRST_LISTENER>
+class tPortListenerAdapterForPointer;
+
+}
 
 //----------------------------------------------------------------------
 // Class declaration
@@ -111,19 +122,36 @@ public:
 
   /*!
    * \param listener Listener to add
+   *
+   * \tparam LISTENER Listener class needs to implement a method
+   * void PortChanged(tInputPort<T>& port, const T& value, const rrlib::time::tTimestamp& timestamp)
+   *
+   * (It's preferred to add listeners before port is initialized)
    */
-  void AddPortListener(tPortListener<tPortDataPointer<const T>>& listener)
-  {
-    this->GetWrapped()->AddPortListenerRaw(listener);
-  }
-  void AddPortListener(tPortListener<const void*>& listener)
-  {
-    this->GetWrapped()->AddPortListenerRaw(listener);
-  }
-  inline void AddPortListener(tPortListener<T>& listener)
-  {
-    this->GetWrapped()->AddPortListenerRaw(listener);
-  }
+  template <typename TListener>
+  void AddPortListener(TListener& listener);
+
+  /*!
+   * \param listener Listener to add
+   *
+   * \tparam LISTENER Listener class needs to implement a method
+   * void PortChanged(tInputPort<T>& port, tPortDataPointer<const T>& value, const rrlib::time::tTimestamp& timestamp)
+   *
+   * (It's preferred to add listeners before port is initialized)
+   */
+  template <typename TListener>
+  void AddPortListenerForPointer(TListener& listener);
+
+  /*!
+   * \param listener Listener to add
+   *
+   * \tparam LISTENER Listener class needs to implement a method
+   * void PortChanged(common::tAbstractDataPort& origin)
+   *
+   * (It's preferred to add listeners before port is initialized)
+   */
+  template <typename TListener>
+  void AddPortListenerSimple(TListener& listener);
 
   /*!
    * Dequeue first/oldest element in queue.
@@ -211,21 +239,21 @@ public:
     return this->GetWrapped()->PushStrategy();
   }
 
-  /*!
-   * \param listener Listener to remove
-   */
-  void RemovePortListener(tPortListener<tPortDataPointer<const T>>& listener)
-  {
-    this->GetWrapped()->RemovePortListenerRaw(listener);
-  }
-  inline void RemovePortListener(tPortListener<T>& listener)
-  {
-    this->GetWrapped()->RemovePortListenerRaw(listener);
-  }
-  inline void RemovePortListener(tPortListener<const void*>& listener)
-  {
-    this->GetWrapped()->RemovePortListenerRaw(listener);
-  }
+//  /*!
+//   * \param listener Listener to remove
+//   */
+//  void RemovePortListener(tPortListener<tPortDataPointer<const T>>& listener)
+//  {
+//    this->GetWrapped()->RemovePortListenerRaw(listener);
+//  }
+//  void RemovePortListener(tPortListener<T>& listener)
+//  {
+//    this->GetWrapped()->RemovePortListenerRaw(listener);
+//  }
+//  void RemovePortListener(tPortListener<const void*>& listener)
+//  {
+//    this->GetWrapped()->RemovePortListenerRaw(listener);
+//  }
 
   /*!
    * (relevant for input ports only)
@@ -270,6 +298,13 @@ public:
 //----------------------------------------------------------------------
 private:
 
+  template <typename LISTENER, typename U, api::tPortImplementationType TPortImplementationType, bool FIRST_LISTENER>
+  friend class api::tPortListenerAdapter;
+
+  template <typename LISTENER, typename U, bool FIRST_LISTENER>
+  friend class api::tPortListenerAdapterForPointer;
+
+
 };
 
 //----------------------------------------------------------------------
@@ -278,5 +313,6 @@ private:
 }
 }
 
+#include "plugins/data_ports/tInputPort.hpp"
 
 #endif

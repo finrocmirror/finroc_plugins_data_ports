@@ -70,7 +70,7 @@ namespace standard
  * Special version that supports buffers of multiple types.
  * This list is not real-time capable if new types are used.
  */
-class tMultiTypePortBufferPool : rrlib::thread::tMutex
+class tMultiTypePortBufferPool : public rrlib::thread::tMutex
 {
 
   /*! Buffer pool used by standard port implementation */

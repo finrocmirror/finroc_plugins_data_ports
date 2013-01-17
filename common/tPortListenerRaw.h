@@ -77,6 +77,8 @@ class tPortListenerRaw
 //----------------------------------------------------------------------
 public:
 
+  virtual ~tPortListenerRaw() {}
+
   /*!
    * Called whenever port's value has changed
    *
@@ -86,6 +88,12 @@ public:
    */
   virtual void PortChangedRaw(tAbstractDataPort& origin, rrlib::buffer_pools::tBufferManagementInfo& value, const rrlib::time::tTimestamp& timestamp) = 0;
 
+  /*!
+   * Called when port is deleted
+   *
+   * (if this is a port listener adapter, it usually deletes itself as well)
+   */
+  virtual void PortDeleted() {}
 };
 
 //----------------------------------------------------------------------

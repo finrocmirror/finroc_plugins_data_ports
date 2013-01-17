@@ -99,7 +99,7 @@ tCheapCopyPort::tCheapCopyPort(common::tAbstractDataPortCreationInfo creation_in
   standard_assign(!GetFlag(tFlag::NON_STANDARD_ASSIGN) && (!GetFlag(tFlag::HAS_QUEUE))),
   input_queue(),
   pull_request_handler(NULL),
-  port_listeners(),
+  port_listener(NULL),
   unit(creation_info.unit)
 {
   if ((!IsDataFlowType(GetDataType())) || (!IsCheaplyCopiedType(GetDataType())))
@@ -136,6 +136,11 @@ tCheapCopyPort::~tCheapCopyPort()
   tTaggedBufferPointer cur_pointer = current_value.exchange(0);
   tPortBufferUnlocker unlocker;
   unlocker(cur_pointer.GetPointer());
+
+  if (port_listener)
+  {
+    port_listener->PortDeleted();
+  }
 }
 
 void tCheapCopyPort::ApplyDefaultValue()
@@ -197,7 +202,7 @@ void tCheapCopyPort::CopyCurrentValueToGenericObject(rrlib::rtti::tGenericObject
     for (; ;)
     {
       tTaggedBufferPointer current = current_value.load();
-      buffer.DeepCopyFrom(GetObject(*current));
+      buffer.DeepCopyFrom(current->GetObject());
       timestamp = current->GetTimestamp();
       tTaggedBufferPointer::tStorage current_raw = current;
       if (current_raw == current_value.load())    // still valid??
@@ -233,7 +238,7 @@ void tCheapCopyPort::ForwardData(tAbstractPort& other)
     auto unused_manager = tThreadLocalBufferPools::Get()->GetUnusedBuffer(cheaply_copyable_type_index);
     for (; ;)
     {
-      unused_manager->GetObject().DeepCopyFrom(GetObject(*current_buffer));
+      unused_manager->GetObject().DeepCopyFrom(current_buffer->GetObject());
       unused_manager->SetTimestamp(current_buffer->GetTimestamp());
       typename tTaggedBufferPointer::tStorage current_raw = current_buffer;
       typename tTaggedBufferPointer::tStorage current_raw_2 = current_value.load();
@@ -381,7 +386,7 @@ void tCheapCopyPort::LockCurrentValueForPublishing(tPublishingDataThreadLocalBuf
   auto unused_manager = tThreadLocalBufferPools::Get()->GetUnusedBuffer(cheaply_copyable_type_index);
   for (; ;)
   {
-    unused_manager->GetObject().DeepCopyFrom(GetObject(*current_buffer));
+    unused_manager->GetObject().DeepCopyFrom(current_buffer->GetObject());
     unused_manager->SetTimestamp(current_buffer->GetTimestamp());
     typename tTaggedBufferPointer::tStorage current_raw = current_buffer;
     typename tTaggedBufferPointer::tStorage current_raw_2 = current_value.load();
