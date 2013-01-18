@@ -99,7 +99,6 @@ tCheapCopyPort::tCheapCopyPort(common::tAbstractDataPortCreationInfo creation_in
   standard_assign(!GetFlag(tFlag::NON_STANDARD_ASSIGN) && (!GetFlag(tFlag::HAS_QUEUE))),
   input_queue(),
   pull_request_handler(NULL),
-  port_listener(NULL),
   unit(creation_info.unit)
 {
   if ((!IsDataFlowType(GetDataType())) || (!IsCheaplyCopiedType(GetDataType())))
@@ -136,11 +135,6 @@ tCheapCopyPort::~tCheapCopyPort()
   tTaggedBufferPointer cur_pointer = current_value.exchange(0);
   tPortBufferUnlocker unlocker;
   unlocker(cur_pointer.GetPointer());
-
-  if (port_listener)
-  {
-    port_listener->PortDeleted();
-  }
 }
 
 void tCheapCopyPort::ApplyDefaultValue()

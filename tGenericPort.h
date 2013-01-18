@@ -59,6 +59,13 @@ namespace data_ports
 //----------------------------------------------------------------------
 // Forward declarations / typedefs / enums
 //----------------------------------------------------------------------
+namespace api
+{
+template <typename LISTENER, bool FIRST_LISTENER>
+class tPortListenerAdapterGeneric;
+template <typename LISTENER, bool FIRST_LISTENER>
+class tPortListenerAdapterGenericForPointer;
+}
 
 //----------------------------------------------------------------------
 // Class declaration
@@ -108,6 +115,41 @@ public:
     implementation = api::tGenericPortImplementation::GetImplementation(creation_info.data_type);
     SetWrapped(implementation->CreatePort(creation_info));
   }
+
+  /*!
+   * \param listener Listener to add
+   *
+   * \tparam LISTENER Listener class needs to implement a method
+   * void PortChanged(tGenericPort& port, const rrlib::rtti::tGenericObject& value, const rrlib::time::tTimestamp& timestamp)
+   *
+   * (It's preferred to add listeners before port is initialized)
+   * (Note: Buffer in 'value' always has data type of port backend (e.g. tNumber instead of double)
+   */
+  template <typename TListener>
+  void AddPortListener(TListener& listener);
+
+  /*!
+   * \param listener Listener to add
+   *
+   * \tparam LISTENER Listener class needs to implement a method
+   * void PortChanged(tGenericPort& port, tPortDataPointer<const rrlib::rtti::tGenericObject>& value, const rrlib::time::tTimestamp& timestamp)
+   *
+   * (It's preferred to add listeners before port is initialized)
+   * (Note: Buffer in 'value' always has data type of port backend (e.g. tNumber instead of double)
+   */
+  template <typename TListener>
+  void AddPortListenerForPointer(TListener& listener);
+
+  /*!
+   * \param listener Listener to add
+   *
+   * \tparam LISTENER Listener class needs to implement a method
+   * void PortChanged(common::tAbstractDataPort& origin)
+   *
+   * (It's preferred to add listeners before port is initialized)
+   */
+  template <typename TListener>
+  void AddPortListenerSimple(TListener& listener);
 
   /*!
    * Publish buffer through port
@@ -169,6 +211,14 @@ public:
   }
 
   /*!
+   * \return Wrapped port. For rare case that someone really needs to access ports.
+   */
+  inline common::tAbstractDataPort* GetWrapped() const
+  {
+    return static_cast<common::tAbstractDataPort*>(tPortWrapperBase::GetWrapped());
+  }
+
+  /*!
    * Publish Data Buffer. This data will be forwarded to any connected ports.
    * Should only be called on output ports.
    *
@@ -214,6 +264,11 @@ public:
 //----------------------------------------------------------------------
 private:
 
+  template <typename LISTENER, bool FIRST_LISTENER>
+  friend class api::tPortListenerAdapterGeneric;
+  template <typename LISTENER, bool FIRST_LISTENER>
+  friend class api::tPortListenerAdapterGenericForPointer;
+
   /** Implementation of port functionality */
   api::tGenericPortImplementation* implementation;
 
@@ -225,5 +280,8 @@ private:
 }
 }
 
+#include "plugins/data_ports/tInputPort.h"
+#include "plugins/data_ports/tGenericPort.hpp"
+#include "plugins/data_ports/api/tPortListenerAdapter.h"
 
 #endif

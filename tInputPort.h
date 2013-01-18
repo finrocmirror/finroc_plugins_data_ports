@@ -62,13 +62,10 @@ namespace data_ports
 //----------------------------------------------------------------------
 namespace api
 {
-
 template <typename LISTENER, typename T, tPortImplementationType TPortImplementationType, bool FIRST_LISTENER>
 class tPortListenerAdapter;
-
 template <typename LISTENER, typename T, bool FIRST_LISTENER>
 class tPortListenerAdapterForPointer;
-
 }
 
 //----------------------------------------------------------------------
@@ -304,7 +301,6 @@ private:
   template <typename LISTENER, typename U, bool FIRST_LISTENER>
   friend class api::tPortListenerAdapterForPointer;
 
-
 };
 
 //----------------------------------------------------------------------
@@ -313,6 +309,8 @@ private:
 }
 }
 
+#include "plugins/data_ports/tGenericPort.h"
 #include "plugins/data_ports/tInputPort.hpp"
+#include "plugins/data_ports/api/tPortListenerAdapter.h"
 
 #endif

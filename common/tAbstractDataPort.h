@@ -45,6 +45,7 @@
 // Internal includes with ""
 //----------------------------------------------------------------------
 #include "plugins/data_ports/common/tAbstractDataPortCreationInfo.h"
+#include "plugins/data_ports/common/tPortListenerRaw.h"
 
 //----------------------------------------------------------------------
 // Namespace declaration
@@ -135,6 +136,14 @@ enum class tChangeStatus : int8_t
   int16_t GetMinNetworkUpdateIntervalForSubscription() const;
 
   /*!
+   * \param listener Listener to remove
+   */
+  inline common::tPortListenerRaw* GetPortListener()
+  {
+    return port_listener;
+  }
+
+  /*!
    * \return Strategy to use, when this port is target
    */
   inline int16_t GetStrategy() const
@@ -195,6 +204,16 @@ enum class tChangeStatus : int8_t
    * \param interval Minimum Network Update Interval
    */
   void SetMinNetUpdateInterval(rrlib::time::tDuration& interval);
+
+  /*!
+   * \param listener New ports Listener
+   *
+   * (warning: this will not delete the old listener)
+   */
+  inline void SetPortListener(common::tPortListenerRaw* listener)
+  {
+    port_listener = listener;
+  }
 
   /*!
    * Set whether data should be pushed or pulled
@@ -307,6 +326,10 @@ private:
 
   /*! Minimum network update interval. Value < 0 means default for this type */
   int16_t min_net_update_time;
+
+  /*! Listener(s) of port value changes */
+  common::tPortListenerRaw* port_listener;
+
 
   /*!
    * Make some auto-adjustments to port creation info in constructor

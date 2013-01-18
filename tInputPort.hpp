@@ -35,7 +35,6 @@
 //----------------------------------------------------------------------
 // Internal includes with ""
 //----------------------------------------------------------------------
-#include "plugins/data_ports/api/tPortListenerAdapter.h"
 
 //----------------------------------------------------------------------
 // Debugging
@@ -53,6 +52,11 @@ namespace data_ports
 //----------------------------------------------------------------------
 // Forward declarations / typedefs / enums
 //----------------------------------------------------------------------
+namespace api
+{
+template <typename LISTENER, bool FIRST_LISTENER>
+class tPortListenerAdapterSimple;
+}
 
 //----------------------------------------------------------------------
 // Const values

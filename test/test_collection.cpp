@@ -171,6 +171,14 @@ void TestPortListeners(const T& publish_value)
     {
       FINROC_LOG_PRINT(USER, "  Port Changed (tPortDataPointer): ", *value);
     }
+    void PortChanged(tGenericPort& port, const rrlib::rtti::tGenericObject& value, const rrlib::time::tTimestamp& timestamp)
+    {
+      FINROC_LOG_PRINT(USER, "  Port Changed Generic: ", value);
+    }
+    void PortChanged(tGenericPort& port, tPortDataPointer<const rrlib::rtti::tGenericObject>& value, const rrlib::time::tTimestamp& timestamp)
+    {
+      FINROC_LOG_PRINT(USER, "  Port Changed Generic (tPortDataPointer): ", *value);
+    }
     void PortChanged(common::tAbstractDataPort& port)
     {
       FINROC_LOG_PRINT(USER, "  Port Changed Simple");
@@ -187,6 +195,10 @@ void TestPortListeners(const T& publish_value)
   input_port.AddPortListener(listener);
   input_port.AddPortListenerForPointer(listener);
   input_port.AddPortListenerSimple(listener);
+  tGenericPort generic_input_port = tGenericPort::Wrap(*input_port.GetWrapped());
+  generic_input_port.AddPortListener(listener);
+  generic_input_port.AddPortListenerForPointer(listener);
+  generic_input_port.AddPortListenerSimple(listener);
   parent->Init();
 
   output_port.Publish(publish_value);

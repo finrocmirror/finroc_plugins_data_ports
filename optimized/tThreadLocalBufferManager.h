@@ -179,6 +179,14 @@ public:
     }
   }
 
+  /*!
+   * \return Thread-local reference counter (If additional locks are required during publishing operation, adding to this counter is a safe and efficient way of doing this)
+   */
+  inline int& ThreadLocalReferenceCounter()
+  {
+    return reference_counter;
+  }
+
 //----------------------------------------------------------------------
 // Private fields and methods
 //----------------------------------------------------------------------

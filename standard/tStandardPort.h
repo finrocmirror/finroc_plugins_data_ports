@@ -49,7 +49,6 @@
 //----------------------------------------------------------------------
 #include "plugins/data_ports/common/tAbstractDataPort.h"
 #include "plugins/data_ports/common/tPortBufferPool.h"
-#include "plugins/data_ports/common/tPortListenerRaw.h"
 #include "plugins/data_ports/common/tPortQueue.h"
 #include "plugins/data_ports/common/tPublishOperation.h"
 #include "plugins/data_ports/standard/tPortBufferManager.h"
@@ -206,14 +205,6 @@ public:
   }
 
   /*!
-   * \param listener Listener to remove
-   */
-  inline common::tPortListenerRaw* GetPortListener()
-  {
-    return port_listener;
-  }
-
-  /*!
    * Pulls port data (regardless of strategy)
    *
    * \param intermediate_assign Assign pulled value to ports in between?
@@ -254,16 +245,6 @@ public:
   inline void Publish(tLockingManagerPointer& data)
   {
     PublishImplementation<false, tChangeStatus::CHANGED, false>(data);
-  }
-
-  /*!
-   * \param listener New ports Listener
-   *
-   * (warning: this will not delete the old listener)
-   */
-  inline void SetPortListener(common::tPortListenerRaw* listener)
-  {
-    port_listener = listener;
   }
 
   /*!
@@ -313,16 +294,6 @@ protected:
     /*! Tagged pointer to port data used in current publishing operation */
     tTaggedBufferPointer published_buffer_tagged_pointer;
 
-    /*!
-     * Registers another lock on buffer.
-     * Will increase lock_estimate and reference counter if necessary.
-     */
-    void AddLock()
-    {
-      used_locks++;
-      assert(used_locks <= added_locks && "Too many locks in this publishing operation");
-    }
-
     tPublishingData(tUnusedManagerPointer& published, int add_locks) :
       added_locks(add_locks),
       used_locks(0),
@@ -357,11 +328,21 @@ protected:
       if (published_buffer)
       {
         assert((used_locks <= added_locks) && "Too many locks in this publishing operation");
-        if (used_locks < added_locks)
-        {
-          published_buffer->ReleaseLocks<typename tUnusedManagerPointer::deleter_type, tPortBufferManager>(added_locks - used_locks);
-        }
+        //if (used_locks < added_locks) // as we usually add ~1000 locks, this check reduces performance
+        //{
+        published_buffer->ReleaseLocks<typename tUnusedManagerPointer::deleter_type, tPortBufferManager>(added_locks - used_locks);
+        //}
       }
+    }
+
+    /*!
+     * Registers another lock on buffer.
+     * (Will increase lock_estimate and reference counter if necessary. (currently not))
+     */
+    void AddLock()
+    {
+      used_locks++;
+      assert(used_locks <= added_locks && "Too many locks in this publishing operation");
     }
 
     void CheckRecycle() {}
@@ -372,6 +353,14 @@ protected:
       pointer_tag = published->GetPointerTag();
       published_buffer = published;
       published_buffer_tagged_pointer = tTaggedBufferPointer(published, pointer_tag);
+    }
+
+    /*!
+     * \return Reference counter (If additional locks are required during publishing operation, adding to this counter is a safe and efficient way of doing this)
+     */
+    inline int& ReferenceCounter()
+    {
+      return used_locks;
     }
   };
 
@@ -435,8 +424,6 @@ private:
   /*! Object that handles pull requests - null if there is none (typical case) */
   tPullRequestHandlerRaw* pull_request_handler;
 
-  /*! Listener(s) of port value changes */
-  common::tPortListenerRaw* port_listener;
 
   /*!
    * Assigns new data to port.
@@ -510,9 +497,9 @@ private:
    */
   inline void NotifyListeners(tPublishingData& publishing_data)
   {
-    if (port_listener)
+    if (GetPortListener())
     {
-      port_listener->PortChangedRaw(*this, *publishing_data.published_buffer, publishing_data.published_buffer->GetTimestamp());
+      GetPortListener()->PortChangedRaw(*this, publishing_data.ReferenceCounter(), *publishing_data.published_buffer, publishing_data.published_buffer->GetTimestamp());
     }
   }
 

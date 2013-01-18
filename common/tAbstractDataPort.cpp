@@ -80,12 +80,18 @@ tAbstractDataPort::tAbstractDataPort(const tAbstractDataPortCreationInfo& create
   changed(static_cast<int8_t>(tChangeStatus::NO_CHANGE)),
   custom_changed_flag(tChangeStatus::NO_CHANGE),
   strategy(-1),
-  min_net_update_time(create_info.min_net_update_interval)
+  min_net_update_time(create_info.min_net_update_interval),
+  port_listener(NULL)
 {
 }
 
 tAbstractDataPort::~tAbstractDataPort()
-{}
+{
+  if (port_listener)
+  {
+    port_listener->PortDeleted();
+  }
+}
 
 core::tAbstractPortCreationInfo tAbstractDataPort::AdjustPortCreationInfo(const tAbstractDataPortCreationInfo& create_info)
 {

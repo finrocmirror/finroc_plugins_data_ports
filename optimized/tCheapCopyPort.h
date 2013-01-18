@@ -44,7 +44,6 @@
 //----------------------------------------------------------------------
 #include "plugins/data_ports/common/tAbstractDataPort.h"
 #include "plugins/data_ports/common/tPortBufferPool.h"
-#include "plugins/data_ports/common/tPortListenerRaw.h"
 #include "plugins/data_ports/common/tPortQueue.h"
 #include "plugins/data_ports/common/tPublishOperation.h"
 #include "plugins/data_ports/optimized/tGlobalBufferPools.h"
@@ -352,14 +351,6 @@ public:
 //   */
 //  tCCPortDataManager* GetInInterThreadContainer(bool dont_pull = false);
 
-  /*!
-   * \param listener Listener to remove
-   */
-  inline common::tPortListenerRaw* GetPortListener()
-  {
-    return port_listener;
-  }
-
 //  /*!
 //   * Pulls port data (regardless of strategy) and returns it in interhread container
 //   * (careful: no auto-release of lock)
@@ -418,16 +409,6 @@ public:
    * \param New default value for port
    */
   void SetDefault(rrlib::rtti::tGenericObject& new_default);
-
-  /*!
-   * \param listener New ports Listener
-   *
-   * (warning: this will not delete the old listener)
-   */
-  inline void SetPortListener(common::tPortListenerRaw* listener)
-  {
-    port_listener = listener;
-  }
 
   /*!
    * \param pull_request_handler Object that handles pull requests - null if there is none (typical case)
@@ -540,6 +521,15 @@ protected:
     {
       return &used_locks != used_locks_counter_to_use;
     }
+
+    /*!
+     * \return Reference counter (If additional locks are required during publishing operation, adding to this counter is a safe and efficient way of doing this)
+     */
+    inline int& ReferenceCounter()
+    {
+      return (*used_locks_counter_to_use);
+    }
+
   };
 
   /*!
@@ -611,6 +601,14 @@ protected:
       published_buffer = published;
       int pointer_tag = unused ? published->IncrementReuseCounter() : published->GetPointerTag();
       published_buffer_tagged_pointer = tTaggedBufferPointer(published, pointer_tag);
+    }
+
+    /*!
+     * \return Reference counter (If additional locks are required during publishing operation, adding to this counter is a safe and efficient way of doing this)
+     */
+    inline int& ReferenceCounter()
+    {
+      return published_buffer->ThreadLocalReferenceCounter();
     }
   };
 
@@ -697,9 +695,6 @@ private:
 
   /*! Object that handles pull requests - null if there is none (typical case) */
   tPullRequestHandlerRaw* pull_request_handler;
-
-  /*! Listens to port value changes - may be null */
-  common::tPortListenerRaw* port_listener;
 
   /*! Unit of port (currently only used for numeric ports) */
   tUnit unit;
@@ -838,9 +833,9 @@ private:
   __attribute__((always_inline))
   inline void NotifyListeners(TPublishingData& publishing_data)
   {
-    if (port_listener)
+    if (GetPortListener())
     {
-      port_listener->PortChangedRaw(*this, *publishing_data.published_buffer, publishing_data.published_buffer->GetTimestamp());
+      GetPortListener()->PortChangedRaw(*this, publishing_data.ReferenceCounter(), *publishing_data.published_buffer, publishing_data.published_buffer->GetTimestamp());
     }
   }
 

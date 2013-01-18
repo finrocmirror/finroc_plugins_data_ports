@@ -19,33 +19,27 @@
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 //----------------------------------------------------------------------
-/*!\file    plugins/data_ports/common/tPortListenerRaw.h
+/*!\file    plugins/data_ports/tGenericPort.hpp
  *
  * \author  Max Reichardt
  *
- * \date    2012-10-21
- *
- * \brief   Contains tPortListenerRaw
- *
- * \b tPortListenerRaw
- *
- * Can register at port to receive callbacks whenever the port's value changes
+ * \date    2013-01-18
  *
  */
 //----------------------------------------------------------------------
-#ifndef __plugins__data_ports__common__tPortListenerRaw_h__
-#define __plugins__data_ports__common__tPortListenerRaw_h__
 
 //----------------------------------------------------------------------
 // External includes (system with <>, local with "")
 //----------------------------------------------------------------------
-#include "rrlib/buffer_pools/tBufferManagementInfo.h"
-#include "rrlib/rtti/rtti.h"
-#include "rrlib/time/time.h"
 
 //----------------------------------------------------------------------
 // Internal includes with ""
 //----------------------------------------------------------------------
+
+//----------------------------------------------------------------------
+// Debugging
+//----------------------------------------------------------------------
+#include <cassert>
 
 //----------------------------------------------------------------------
 // Namespace declaration
@@ -54,55 +48,71 @@ namespace finroc
 {
 namespace data_ports
 {
-namespace common
-{
 
 //----------------------------------------------------------------------
 // Forward declarations / typedefs / enums
 //----------------------------------------------------------------------
-class tAbstractDataPort;
-
-//----------------------------------------------------------------------
-// Class declaration
-//----------------------------------------------------------------------
-//! Raw (untyped) port listener
-/*!
- * Can register at port to receive callbacks whenever the port's value changes
- */
-class tPortListenerRaw
+namespace api
 {
+template <typename LISTENER, bool FIRST_LISTENER>
+class tPortListenerAdapterSimple;
+}
 
 //----------------------------------------------------------------------
-// Public methods and typedefs
+// Const values
 //----------------------------------------------------------------------
-public:
 
-  virtual ~tPortListenerRaw() {}
+//----------------------------------------------------------------------
+// Implementation
+//----------------------------------------------------------------------
 
-  /*!
-   * Called whenever port's value has changed
-   *
-   * \param origin Port that value comes from
-   * \param lock_counter Lock counter. If listeners require additional locks, adding to this counter is the most efficient way of doing this (and safe).
-   * \param value Base class of manager of port's new value
-   * \param timestamp Timestamp attached to value
-   */
-  virtual void PortChangedRaw(tAbstractDataPort& origin, int& lock_counter, rrlib::buffer_pools::tBufferManagementInfo& value, const rrlib::time::tTimestamp& timestamp) = 0;
+template <typename TListener>
+void tGenericPort::AddPortListener(TListener& listener)
+{
+  if (this->GetWrapped()->GetPortListener())
+  {
+    typedef api::tPortListenerAdapterGeneric<TListener, false> tAdapter;
+    this->GetWrapped()->SetPortListener(new tAdapter(listener, *this->GetWrapped()->GetPortListener()));
+  }
+  else
+  {
+    typedef api::tPortListenerAdapterGeneric<TListener, true> tAdapter;
+    this->GetWrapped()->SetPortListener(new tAdapter(listener));
+  }
+}
 
-  /*!
-   * Called when port is deleted
-   *
-   * (if this is a port listener adapter, it usually deletes itself as well)
-   */
-  virtual void PortDeleted() {}
-};
+template <typename TListener>
+void tGenericPort::AddPortListenerForPointer(TListener& listener)
+{
+  if (this->GetWrapped()->GetPortListener())
+  {
+    typedef api::tPortListenerAdapterGenericForPointer<TListener, false> tAdapter;
+    this->GetWrapped()->SetPortListener(new tAdapter(listener, *this->GetWrapped()->GetPortListener()));
+  }
+  else
+  {
+    typedef api::tPortListenerAdapterGenericForPointer<TListener, true> tAdapter;
+    this->GetWrapped()->SetPortListener(new tAdapter(listener));
+  }
+}
+
+template <typename TListener>
+void tGenericPort::AddPortListenerSimple(TListener& listener)
+{
+  if (this->GetWrapped()->GetPortListener())
+  {
+    typedef api::tPortListenerAdapterSimple<TListener, false> tAdapter;
+    this->GetWrapped()->SetPortListener(new tAdapter(listener, *this->GetWrapped()->GetPortListener()));
+  }
+  else
+  {
+    typedef api::tPortListenerAdapterSimple<TListener, true> tAdapter;
+    this->GetWrapped()->SetPortListener(new tAdapter(listener));
+  }
+}
 
 //----------------------------------------------------------------------
 // End of namespace declaration
 //----------------------------------------------------------------------
 }
 }
-}
-
-
-#endif

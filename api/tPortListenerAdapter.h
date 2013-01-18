@@ -55,280 +55,60 @@ namespace finroc
 {
 namespace data_ports
 {
-namespace api
-{
 
 //----------------------------------------------------------------------
 // Forward declarations / typedefs / enums
 //----------------------------------------------------------------------
+template <typename T>
+class tInputPort;
+class tGenericPort;
+
+namespace api
+{
 
 //----------------------------------------------------------------------
 // Class declaration
 //----------------------------------------------------------------------
-//! Adapts tPortListenerRaw to tPortListener<T>
-/*!
- * Adapts tPortListenerRaw to tPortListener<T>.
- * Therefore, type T must be extracted from tGenericObjectManager reference.
- */
-template <typename LISTENER, typename T, tPortImplementationType TPortImplementationType, bool FIRST_LISTENER>
-class tPortListenerAdapter : public common::tPortListenerRaw
-{
-public:
 
-  tPortListenerAdapter(LISTENER& listener) :
-    listener(listener)
-  {}
-
-private:
-
-  typedef tPortImplementation<T, TPortImplementationType> tImplementation;
-
-  virtual void PortDeleted()
-  {
-    delete this;
-  }
-
-  virtual void PortChangedRaw(common::tAbstractDataPort& origin, rrlib::buffer_pools::tBufferManagementInfo& value, const rrlib::time::tTimestamp& timestamp)
-  {
-    T v = tImplementation::ToValue(
-            static_cast<optimized::tCheaplyCopiedBufferManager&>(value).GetObject().GetData<typename tImplementation::tPortBuffer>(),
-            static_cast<optimized::tCheapCopyPort&>(origin).GetUnit());
-    tInputPort<T> port;
-    port.SetWrapped(&origin);
-    listener.PortChanged(port, v, timestamp);
-  }
-
-  LISTENER& listener;
-};
-
-// Chained, CC type
-template <typename LISTENER, typename T, tPortImplementationType TPortImplementationType>
-class tPortListenerAdapter<LISTENER, T, TPortImplementationType, false> : public common::tPortListenerRaw
-{
-public:
-
-  tPortListenerAdapter(LISTENER& listener, tPortListenerRaw& previous_listener) :
-    listener(listener),
-    previous_listener(previous_listener)
-  {}
-
-private:
-
-  typedef tPortImplementation<T, TPortImplementationType> tImplementation;
-
-  virtual void PortDeleted()
-  {
-    previous_listener.PortDeleted();
-    delete this;
-  }
-
-  virtual void PortChangedRaw(common::tAbstractDataPort& origin, rrlib::buffer_pools::tBufferManagementInfo& value, const rrlib::time::tTimestamp& timestamp)
-  {
-    previous_listener.PortChangedRaw(origin, value, timestamp);
-    T v = tImplementation::ToValue(
-            static_cast<optimized::tCheaplyCopiedBufferManager&>(value).GetObject().GetData<typename tImplementation::tPortBuffer>(),
-            static_cast<optimized::tCheapCopyPort&>(origin).GetUnit());
-    tInputPort<T> port;
-    port.SetWrapped(&origin);
-    listener.PortChanged(port, v, timestamp);
-  }
-
-  LISTENER& listener;
-  tPortListenerRaw& previous_listener;
-};
-
-// First, Standard type
-template <typename LISTENER, typename T>
-class tPortListenerAdapter<LISTENER, T, tPortImplementationType::STANDARD, true> : public common::tPortListenerRaw
-{
-public:
-
-  tPortListenerAdapter(LISTENER& listener) :
-    listener(listener)
-  {}
-
-private:
-
-  typedef tPortImplementation<T, tPortImplementationType::STANDARD> tImplementation;
-
-  virtual void PortDeleted()
-  {
-    delete this;
-  }
-
-  virtual void PortChangedRaw(common::tAbstractDataPort& origin, rrlib::buffer_pools::tBufferManagementInfo& value, const rrlib::time::tTimestamp& timestamp)
-  {
-    tInputPort<T> port;
-    port.SetWrapped(&origin);
-    listener.PortChanged(port, static_cast<standard::tPortBufferManager&>(value).GetObject().GetData<T>(), timestamp);
-  }
-
-  LISTENER& listener;
-};
-
-// Chained, Standard type
-template <typename LISTENER, typename T>
-class tPortListenerAdapter<LISTENER, T, tPortImplementationType::STANDARD, false> : public common::tPortListenerRaw
-{
-public:
-
-  tPortListenerAdapter(LISTENER& listener, tPortListenerRaw& previous_listener) :
-    listener(listener),
-    previous_listener(previous_listener)
-  {}
-
-private:
-
-  typedef tPortImplementation<T, tPortImplementationType::STANDARD> tImplementation;
-
-  virtual void PortDeleted()
-  {
-    previous_listener.PortDeleted();
-    delete this;
-  }
-
-  virtual void PortChangedRaw(common::tAbstractDataPort& origin, rrlib::buffer_pools::tBufferManagementInfo& value, const rrlib::time::tTimestamp& timestamp)
-  {
-    previous_listener.PortChangedRaw(origin, value, timestamp);
-    tInputPort<T> port;
-    port.SetWrapped(&origin);
-    listener.PortChanged(port, static_cast<standard::tPortBufferManager&>(value).GetObject().GetData<T>(), timestamp);
-  }
-
-  LISTENER& listener;
-  tPortListenerRaw& previous_listener;
-};
-
-// Variant for smart pointer with auto-lock-release
-template <typename LISTENER, typename T, bool FIRST_LISTENER>
-class tPortListenerAdapterForPointer : public common::tPortListenerRaw
-{
-public:
-
-  tPortListenerAdapterForPointer(LISTENER& listener) : listener(listener) {}
-
-private:
-
-  typedef typename std::conditional<tIsCheaplyCopiedType<T>::value, optimized::tCheaplyCopiedBufferManager, standard::tPortBufferManager>::type tBufferManager;
-  typedef tPortImplementation<T, tPortImplementationTypeTrait<T>::type> tImplementation;
-
-  virtual void PortDeleted()
-  {
-    delete this;
-  }
-
-  virtual void PortChangedRaw(common::tAbstractDataPort& origin, rrlib::buffer_pools::tBufferManagementInfo& value, const rrlib::time::tTimestamp& timestamp)
-  {
-    tBufferManager& manager = static_cast<tBufferManager&>(value);
-    PortChangedRawImplementation(origin, manager, timestamp);
-  }
-
-  inline void PortChangedRawImplementation(common::tAbstractDataPort& origin, standard::tPortBufferManager& value, const rrlib::time::tTimestamp& timestamp)
-  {
-    value.AddLocks(1);
-    tPortDataPointer<const T> pointer(typename standard::tStandardPort::tLockingManagerPointer(&value), static_cast<standard::tStandardPort&>(origin));
-    tInputPort<T> port;
-    port.SetWrapped(&origin);
-    listener.PortChanged(port, pointer, timestamp);
-  }
-
-  inline void PortChangedRawImplementation(common::tAbstractDataPort& origin, optimized::tCheaplyCopiedBufferManager& value, const rrlib::time::tTimestamp& timestamp)
-  {
-    T data = tImplementation::ToValue(value.GetObject().GetData<typename tImplementation::tPortBuffer>(), static_cast<optimized::tCheapCopyPort&>(origin).GetUnit());
-    tPortDataPointer<const T> pointer(tPortDataPointerImplementation<T, true>(data, timestamp));
-    tInputPort<T> port;
-    port.SetWrapped(&origin);
-    listener.PortChanged(port, pointer, timestamp);
-  }
-
-  LISTENER& listener;
-};
-
-// Variant for smart pointer with auto-lock-release, chained
-template <typename LISTENER, typename T>
-class tPortListenerAdapterForPointer<LISTENER, T, false> : public common::tPortListenerRaw
-{
-public:
-
-  tPortListenerAdapterForPointer(LISTENER& listener, tPortListenerRaw& previous_listener) : listener(listener), previous_listener(previous_listener) {}
-
-private:
-
-  typedef typename std::conditional<tIsCheaplyCopiedType<T>::value, optimized::tCheaplyCopiedBufferManager, standard::tPortBufferManager>::type tBufferManager;
-  typedef tPortImplementation<T, tPortImplementationTypeTrait<T>::type> tImplementation;
-
-  virtual void PortDeleted()
-  {
-    previous_listener.PortDeleted();
-    delete this;
-  }
-
-  virtual void PortChangedRaw(common::tAbstractDataPort& origin, rrlib::buffer_pools::tBufferManagementInfo& value, const rrlib::time::tTimestamp& timestamp)
-  {
-    previous_listener.PortChangedRaw(origin, value, timestamp);
-    tBufferManager& manager = static_cast<tBufferManager&>(value);
-    PortChangedRawImplementation(origin, manager, timestamp);
-  }
-
-  inline void PortChangedRawImplementation(common::tAbstractDataPort& origin, standard::tPortBufferManager& value, const rrlib::time::tTimestamp& timestamp)
-  {
-    value.AddLocks(1);
-    tPortDataPointer<const T> pointer(typename standard::tStandardPort::tLockingManagerPointer(&value), static_cast<standard::tStandardPort&>(origin));
-    tInputPort<T> port;
-    port.SetWrapped(&origin);
-    listener.PortChanged(port, pointer, timestamp);
-  }
-
-  inline void PortChangedRawImplementation(common::tAbstractDataPort& origin, optimized::tCheaplyCopiedBufferManager& value, const rrlib::time::tTimestamp& timestamp)
-  {
-    T data = tImplementation::ToValue(value.GetObject().GetData<typename tImplementation::tPortBuffer>(), static_cast<optimized::tCheapCopyPort&>(origin).GetUnit());
-    tPortDataPointer<const T> pointer(tPortDataPointerImplementation<T, true>(data, timestamp));
-    tInputPort<T> port;
-    port.SetWrapped(&origin);
-    listener.PortChanged(port, pointer, timestamp);
-  }
-
-  LISTENER& listener;
-  tPortListenerRaw& previous_listener;
-};
-
-// simple, first
+// Adapter base class: first listener
 template <typename LISTENER, bool FIRST_LISTENER>
-class tPortListenerAdapterSimple : public common::tPortListenerRaw
+class tPortListenerAdapterBase : public common::tPortListenerRaw
 {
 public:
 
-  tPortListenerAdapterSimple(LISTENER& listener) :
+  tPortListenerAdapterBase(LISTENER& listener) :
     listener(listener)
   {}
 
-private:
+  inline void PortChangedRawBase(common::tAbstractDataPort& origin, int& lock_counter,
+                                 rrlib::buffer_pools::tBufferManagementInfo& value, const rrlib::time::tTimestamp& timestamp)
+  {}
 
   virtual void PortDeleted()
   {
     delete this;
   }
 
-  virtual void PortChangedRaw(common::tAbstractDataPort& origin, rrlib::buffer_pools::tBufferManagementInfo& value, const rrlib::time::tTimestamp& timestamp)
-  {
-    listener.PortChanged(origin);
-  }
-
+  /*! Listener */
   LISTENER& listener;
 };
 
-// simple, chained
+// Adapter base class: chained listener
 template <typename LISTENER>
-class tPortListenerAdapterSimple<LISTENER, false> : public common::tPortListenerRaw
+class tPortListenerAdapterBase<LISTENER, false> : public common::tPortListenerRaw
 {
 public:
 
-  tPortListenerAdapterSimple(LISTENER& listener, tPortListenerRaw& previous_listener) :
+  tPortListenerAdapterBase(LISTENER& listener, tPortListenerRaw& previous_listener) :
     listener(listener),
     previous_listener(previous_listener)
   {}
 
-private:
+  inline void PortChangedRawBase(common::tAbstractDataPort& origin, int& lock_counter,
+                                 rrlib::buffer_pools::tBufferManagementInfo& value, const rrlib::time::tTimestamp& timestamp)
+  {
+    previous_listener.PortChangedRaw(origin, lock_counter, value, timestamp);
+  }
 
   virtual void PortDeleted()
   {
@@ -336,17 +116,180 @@ private:
     delete this;
   }
 
-  virtual void PortChangedRaw(common::tAbstractDataPort& origin, rrlib::buffer_pools::tBufferManagementInfo& value, const rrlib::time::tTimestamp& timestamp)
-  {
-    previous_listener.PortChangedRaw(origin, value, timestamp);
-    listener.PortChanged(origin);
-  }
-
+  /*! Listener */
   LISTENER& listener;
   tPortListenerRaw& previous_listener;
 };
 
+// Normal adapter class for cheaply copied type
+template <typename LISTENER, typename T, tPortImplementationType TPortImplementationType, bool FIRST_LISTENER>
+class tPortListenerAdapter : public tPortListenerAdapterBase<LISTENER, FIRST_LISTENER>
+{
+public:
 
+  template <typename ... TArgs>
+  tPortListenerAdapter(LISTENER& listener, TArgs& ... args) : tPortListenerAdapterBase<LISTENER, FIRST_LISTENER>(listener, args...) {}
+
+private:
+
+  typedef tPortImplementation<T, TPortImplementationType> tImplementation;
+
+  virtual void PortChangedRaw(common::tAbstractDataPort& origin, int& lock_counter,
+                              rrlib::buffer_pools::tBufferManagementInfo& value, const rrlib::time::tTimestamp& timestamp)
+  {
+    this->PortChangedRawBase(origin, lock_counter, value, timestamp);
+    T v = tImplementation::ToValue(
+            static_cast<optimized::tCheaplyCopiedBufferManager&>(value).GetObject().GetData<typename tImplementation::tPortBuffer>(),
+            static_cast<optimized::tCheapCopyPort&>(origin).GetUnit());
+    tInputPort<T> port;
+    port.SetWrapped(&origin);
+    this->listener.PortChanged(port, v, timestamp);
+  }
+};
+
+// Normal adapter class for standard type
+template <typename LISTENER, typename T, bool FIRST_LISTENER>
+class tPortListenerAdapter<LISTENER, T, tPortImplementationType::STANDARD, FIRST_LISTENER> : public tPortListenerAdapterBase<LISTENER, FIRST_LISTENER>
+{
+public:
+
+  template <typename ... TArgs>
+  tPortListenerAdapter(LISTENER& listener, TArgs& ... args) : tPortListenerAdapterBase<LISTENER, FIRST_LISTENER>(listener, args...) {}
+
+private:
+
+  virtual void PortChangedRaw(common::tAbstractDataPort& origin, int& lock_counter,
+                              rrlib::buffer_pools::tBufferManagementInfo& value, const rrlib::time::tTimestamp& timestamp)
+  {
+    this->PortChangedRawBase(origin, lock_counter, value, timestamp);
+    tInputPort<T> port;
+    port.SetWrapped(&origin);
+    this->listener.PortChanged(port, static_cast<standard::tPortBufferManager&>(value).GetObject().GetData<T>(), timestamp);
+  }
+};
+
+// Normal adapter class for generic port
+template <typename LISTENER, bool FIRST_LISTENER>
+class tPortListenerAdapterGeneric : public tPortListenerAdapterBase<LISTENER, FIRST_LISTENER>
+{
+public:
+
+  template <typename ... TArgs>
+  tPortListenerAdapterGeneric(LISTENER& listener, TArgs& ... args) : tPortListenerAdapterBase<LISTENER, FIRST_LISTENER>(listener, args...) {}
+
+private:
+
+  virtual void PortChangedRaw(common::tAbstractDataPort& origin, int& lock_counter,
+                              rrlib::buffer_pools::tBufferManagementInfo& value, const rrlib::time::tTimestamp& timestamp)
+  {
+    this->PortChangedRawBase(origin, lock_counter, value, timestamp);
+    tGenericPort port;
+    port.SetWrapped(&origin);
+    if (IsCheaplyCopiedType(origin.GetDataType()))
+    {
+      this->listener.PortChanged(port, static_cast<optimized::tCheaplyCopiedBufferManager&>(value).GetObject(), timestamp);
+    }
+    else
+    {
+      this->listener.PortChanged(port, static_cast<standard::tPortBufferManager&>(value).GetObject(), timestamp);
+    }
+  }
+};
+
+// Variant for smart pointer
+template <typename LISTENER, typename T, bool FIRST_LISTENER>
+class tPortListenerAdapterForPointer : public tPortListenerAdapterBase<LISTENER, FIRST_LISTENER>
+{
+public:
+
+  template <typename ... TArgs>
+  tPortListenerAdapterForPointer(LISTENER& listener, TArgs& ... args) : tPortListenerAdapterBase<LISTENER, FIRST_LISTENER>(listener, args...) {}
+
+private:
+
+  typedef typename std::conditional<tIsCheaplyCopiedType<T>::value, optimized::tCheaplyCopiedBufferManager, standard::tPortBufferManager>::type tBufferManager;
+  typedef tPortImplementation<T, tPortImplementationTypeTrait<T>::type> tImplementation;
+
+  virtual void PortChangedRaw(common::tAbstractDataPort& origin, int& lock_counter,
+                              rrlib::buffer_pools::tBufferManagementInfo& value, const rrlib::time::tTimestamp& timestamp)
+  {
+    this->PortChangedRawBase(origin, lock_counter, value, timestamp);
+    tBufferManager& manager = static_cast<tBufferManager&>(value);
+    PortChangedRawImplementation(origin, lock_counter, manager, timestamp);
+  }
+
+  inline void PortChangedRawImplementation(common::tAbstractDataPort& origin, int& lock_counter,
+      standard::tPortBufferManager& value, const rrlib::time::tTimestamp& timestamp)
+  {
+    lock_counter++;
+    tPortDataPointer<const T> pointer(typename standard::tStandardPort::tLockingManagerPointer(&value), static_cast<standard::tStandardPort&>(origin));
+    tInputPort<T> port;
+    port.SetWrapped(&origin);
+    this->listener.PortChanged(port, pointer, timestamp);
+  }
+
+  inline void PortChangedRawImplementation(common::tAbstractDataPort& origin, int& lock_counter,
+      optimized::tCheaplyCopiedBufferManager& value, const rrlib::time::tTimestamp& timestamp)
+  {
+    T data = tImplementation::ToValue(value.GetObject().GetData<typename tImplementation::tPortBuffer>(), static_cast<optimized::tCheapCopyPort&>(origin).GetUnit());
+    tPortDataPointer<const T> pointer(tPortDataPointerImplementation<T, true>(data, timestamp));
+    tInputPort<T> port;
+    port.SetWrapped(&origin);
+    this->listener.PortChanged(port, pointer, timestamp);
+  }
+};
+
+// Variant for smart pointer with generic port
+template <typename LISTENER, bool FIRST_LISTENER>
+class tPortListenerAdapterGenericForPointer : public tPortListenerAdapterBase<LISTENER, FIRST_LISTENER>
+{
+public:
+
+  template <typename ... TArgs>
+  tPortListenerAdapterGenericForPointer(LISTENER& listener, TArgs& ... args) : tPortListenerAdapterBase<LISTENER, FIRST_LISTENER>(listener, args...) {}
+
+private:
+
+  virtual void PortChangedRaw(common::tAbstractDataPort& origin, int& lock_counter,
+                              rrlib::buffer_pools::tBufferManagementInfo& value, const rrlib::time::tTimestamp& timestamp)
+  {
+    this->PortChangedRawBase(origin, lock_counter, value, timestamp);
+    lock_counter++;
+    tGenericPort port;
+    port.SetWrapped(&origin);
+    if (IsCheaplyCopiedType(origin.GetDataType()))
+    {
+      tPortDataPointer<const rrlib::rtti::tGenericObject> pointer(
+        api::tPortDataPointerImplementation<rrlib::rtti::tGenericObject, false>(static_cast<optimized::tCheaplyCopiedBufferManager*>(&value), false));
+      this->listener.PortChanged(port, pointer, timestamp);
+    }
+    else
+    {
+      tPortDataPointer<const rrlib::rtti::tGenericObject> pointer(
+        api::tPortDataPointerImplementation<rrlib::rtti::tGenericObject, false>(static_cast<standard::tPortBufferManager*>(&value), false));
+      this->listener.PortChanged(port, pointer, timestamp);
+    }
+  }
+};
+
+// Simple port adapter
+template <typename LISTENER, bool FIRST_LISTENER>
+class tPortListenerAdapterSimple : public tPortListenerAdapterBase<LISTENER, FIRST_LISTENER>
+{
+public:
+
+  template <typename ... TArgs>
+  tPortListenerAdapterSimple(LISTENER& listener, TArgs& ... args) : tPortListenerAdapterBase<LISTENER, FIRST_LISTENER>(listener, args...) {}
+
+private:
+
+  virtual void PortChangedRaw(common::tAbstractDataPort& origin, int& lock_counter,
+                              rrlib::buffer_pools::tBufferManagementInfo& value, const rrlib::time::tTimestamp& timestamp)
+  {
+    this->PortChangedRawBase(origin, lock_counter, value, timestamp);
+    this->listener.PortChanged(origin);
+  }
+};
 
 //----------------------------------------------------------------------
 // End of namespace declaration
