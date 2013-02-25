@@ -297,12 +297,17 @@ bool tAbstractDataPort::PropagateStrategy(tAbstractDataPort* push_wanter, tAbstr
 
 void tAbstractDataPort::SetMinNetUpdateInterval(rrlib::time::tDuration& new_interval)
 {
-  tLock lock(GetStructureMutex());
   int64_t ms = std::chrono::duration_cast<std::chrono::milliseconds>(new_interval).count();
   int16_t interval = std::min<int64_t>(ms < 0 ? 0 : ms, std::numeric_limits<int16_t>::max()); // adjust value to valid range
-  if (min_net_update_time != interval)
+  SetMinNetUpdateIntervalRaw(interval);
+}
+
+void tAbstractDataPort::SetMinNetUpdateIntervalRaw(int16_t new_interval)
+{
+  tLock lock(GetStructureMutex());
+  if (min_net_update_time != new_interval)
   {
-    min_net_update_time = interval;
+    min_net_update_time = new_interval;
     PublishUpdatedInfo(core::tRuntimeListener::tEvent::CHANGE);
   }
 }

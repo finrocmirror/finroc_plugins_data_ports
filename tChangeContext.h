@@ -19,33 +19,32 @@
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 //----------------------------------------------------------------------
-/*!\file    plugins/data_ports/common/tPortListenerRaw.h
+/*!\file    plugins/data_ports/tChangeContext.h
  *
  * \author  Max Reichardt
  *
- * \date    2012-10-21
+ * \date    2013-02-25
  *
- * \brief   Contains tPortListenerRaw
+ * \brief   Contains tChangeContext
  *
- * \b tPortListenerRaw
+ * \b tChangeContext
  *
- * Can register at port to receive callbacks whenever the port's value changes
+ * Contains information on context of a port buffer change
+ * (e.g. timestamp, port that changed, type of change)
  *
  */
 //----------------------------------------------------------------------
-#ifndef __plugins__data_ports__common__tPortListenerRaw_h__
-#define __plugins__data_ports__common__tPortListenerRaw_h__
+#ifndef __plugins__data_ports__tChangeContext_h__
+#define __plugins__data_ports__tChangeContext_h__
 
 //----------------------------------------------------------------------
 // External includes (system with <>, local with "")
 //----------------------------------------------------------------------
-#include "rrlib/buffer_pools/tBufferManagementInfo.h"
-#include "rrlib/rtti/rtti.h"
-#include "rrlib/time/time.h"
 
 //----------------------------------------------------------------------
 // Internal includes with ""
 //----------------------------------------------------------------------
+#include "plugins/data_ports/common/tAbstractDataPort.h"
 
 //----------------------------------------------------------------------
 // Namespace declaration
@@ -58,21 +57,16 @@ namespace data_ports
 //----------------------------------------------------------------------
 // Forward declarations / typedefs / enums
 //----------------------------------------------------------------------
-class tChangeContext;
-
-namespace common
-{
-
-class tAbstractDataPort;
 
 //----------------------------------------------------------------------
 // Class declaration
 //----------------------------------------------------------------------
-//! Raw (untyped) port listener
+//! Information on port buffer change
 /*!
- * Can register at port to receive callbacks whenever the port's value changes
+ * Contains information on context of a port buffer change
+ * (e.g. timestamp, port that changed, type of change)
  */
-class tPortListenerRaw : public boost::noncopyable
+class tChangeContext
 {
 
 //----------------------------------------------------------------------
@@ -80,29 +74,54 @@ class tPortListenerRaw : public boost::noncopyable
 //----------------------------------------------------------------------
 public:
 
-  virtual ~tPortListenerRaw() {}
+  tChangeContext(common::tAbstractDataPort& origin, const rrlib::time::tTimestamp& timestamp, common::tAbstractDataPort::tChangeStatus change_type) :
+    origin(origin),
+    timestamp(timestamp),
+    change_type(change_type)
+  {}
 
   /*!
-   * Called whenever port's value has changed
-   *
-   * \param change_context Context information on port buffer change
-   * \param lock_counter Lock counter. If listeners require additional locks, adding to this counter is the most efficient way of doing this (and safe).
-   * \param value Base class of manager of port's new value
+   * \return Is this a change from an ordinary publishing operation - or e.g. an initial push?
    */
-  virtual void PortChangedRaw(tChangeContext& change_context, int& lock_counter, rrlib::buffer_pools::tBufferManagementInfo& value) = 0;
+  common::tAbstractDataPort::tChangeStatus ChangeType()
+  {
+    return change_type;
+  }
 
   /*!
-   * Called when port is deleted
-   *
-   * (if this is a port listener adapter, it usually deletes itself as well)
+   * \return Port that value comes from
    */
-  virtual void PortDeleted() {}
+  common::tAbstractDataPort& Origin()
+  {
+    return origin;
+  }
+
+  /*!
+   * \return Timestamp attached to new port value/buffer
+   */
+  rrlib::time::tTimestamp Timestamp()
+  {
+    return timestamp;
+  }
+
+//----------------------------------------------------------------------
+// Private fields and methods
+//----------------------------------------------------------------------
+private:
+
+  /*! Port that value comes from */
+  common::tAbstractDataPort& origin;
+
+  /*! Timestamp attached to new port value/buffer */
+  rrlib::time::tTimestamp timestamp;
+
+  /*! Is this a change from an ordinary publishing operation - or e.g. an initial push? */
+  common::tAbstractDataPort::tChangeStatus change_type;
 };
 
 //----------------------------------------------------------------------
 // End of namespace declaration
 //----------------------------------------------------------------------
-}
 }
 }
 

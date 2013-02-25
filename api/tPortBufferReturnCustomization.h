@@ -85,7 +85,7 @@ struct tPortBufferReturnCustomization : public tPortImplementation<T, tPortImple
 
   static T ToDesiredType(const tPortBufferContainerPointer& locked_buffer, optimized::tCheapCopyPort& port)
   {
-    const tPortBuffer& value_buffer = locked_buffer.locked_buffer->GetObject().template GetData<tPortBuffer>();
+    const tPortBuffer& value_buffer = locked_buffer->locked_buffer->GetObject().template GetData<tPortBuffer>();
     locked_buffer->locked_buffer.reset();
     return tBase::ToValue(value_buffer, port.GetUnit());
   }

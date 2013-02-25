@@ -127,6 +127,14 @@ enum class tChangeStatus : int8_t
   }
 
   /*!
+   * \return Minimum Network Update Interval (only-port specific one; -1 if there's no specific setting for port)
+   */
+  inline int16_t GetMinNetUpdateIntervalRaw() const
+  {
+    return min_net_update_time;
+  }
+
+  /*!
    * (Helper function for network functions)
    * Look for minimal port-specific minimal network update interval
    * at all connected ports.
@@ -204,6 +212,7 @@ enum class tChangeStatus : int8_t
    * \param interval Minimum Network Update Interval
    */
   void SetMinNetUpdateInterval(rrlib::time::tDuration& interval);
+  void SetMinNetUpdateIntervalRaw(int16_t interval);
 
   /*!
    * \param listener New ports Listener

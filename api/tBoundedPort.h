@@ -136,7 +136,8 @@ private:
     return creation_info;
   }
 
-  virtual std::string BrowserPublishRaw(tUnusedManagerPointer& buffer) // FIXME: explicitly override when we use gcc 4.7
+  virtual std::string BrowserPublishRaw(tUnusedManagerPointer& buffer, bool notify_listener_on_this_port = true,
+                                        common::tAbstractDataPort::tChangeStatus change_constant = common::tAbstractDataPort::tChangeStatus::CHANGED) // FIXME: explicitly override when we use gcc 4.7
   {
     if (buffer->GetObject().GetType() != GetDataType())
     {
@@ -148,7 +149,7 @@ private:
     {
       return GenerateErrorMessage(value);
     }
-    return tCheapCopyPort::BrowserPublishRaw(buffer);
+    return tCheapCopyPort::BrowserPublishRaw(buffer, notify_listener_on_this_port, change_constant);
   }
 
   /*!
@@ -170,18 +171,18 @@ private:
     return "Value is out of bounds";
   }
 
-  virtual bool NonStandardAssign(tPublishingDataGlobalBuffer& publishing_data) // FIXME: explicitly override when we use gcc 4.7
+  virtual bool NonStandardAssign(tPublishingDataGlobalBuffer& publishing_data, tChangeStatus change_constant) // FIXME: explicitly override when we use gcc 4.7
   {
-    return NonStandardAssignImplementation(publishing_data);
+    return NonStandardAssignImplementation(publishing_data, change_constant);
   }
 
-  virtual bool NonStandardAssign(tPublishingDataThreadLocalBuffer& publishing_data) // FIXME: explicitly override when we use gcc 4.7
+  virtual bool NonStandardAssign(tPublishingDataThreadLocalBuffer& publishing_data, tChangeStatus change_constant) // FIXME: explicitly override when we use gcc 4.7
   {
-    return NonStandardAssignImplementation(publishing_data);
+    return NonStandardAssignImplementation(publishing_data, change_constant);
   }
 
   template <typename TPublishingData>
-  bool NonStandardAssignImplementation(TPublishingData& publishing_data)
+  bool NonStandardAssignImplementation(TPublishingData& publishing_data, tChangeStatus change_constant)
   {
     const tBufferType& value_buffer = publishing_data.published_buffer->GetObject().template GetData<tBufferType>();
     T value = tImplementationVariation::ToValue(value_buffer, GetUnit());
@@ -198,7 +199,7 @@ private:
                                        bounds.GetOutOfBoundsAction() == tOutOfBoundsAction::ADJUST_TO_RANGE ? bounds.ToBounds(value) : bounds.GetOutOfBoundsDefault(), GetUnit());
       publishing_data.published_buffer->SetTimestamp(timestamp);
     }
-    return tCheapCopyPort::NonStandardAssign(publishing_data);
+    return tCheapCopyPort::NonStandardAssign(publishing_data, change_constant);
     // tCheapCopyPort::Assign(publishing_data); done anyway
   }
 };

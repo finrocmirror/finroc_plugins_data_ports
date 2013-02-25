@@ -158,9 +158,30 @@ void tStandardPort::ApplyDefaultValue()
   Publish(default_value);
 }
 
-void tStandardPort::BrowserPublish(tUnusedManagerPointer& data)
+void tStandardPort::BrowserPublish(tUnusedManagerPointer& data, bool notify_listener_on_this_port, common::tAbstractDataPort::tChangeStatus change_constant)
 {
-  PublishImplementation<false, tChangeStatus::CHANGED, true>(data);
+  if (notify_listener_on_this_port)
+  {
+    if (change_constant == tChangeStatus::CHANGED_INITIAL)
+    {
+      PublishImplementation<false, tChangeStatus::CHANGED_INITIAL, true, true>(data);
+    }
+    else
+    {
+      PublishImplementation<false, tChangeStatus::CHANGED, true, true>(data);
+    }
+  }
+  else
+  {
+    if (change_constant == tChangeStatus::CHANGED_INITIAL)
+    {
+      PublishImplementation<false, tChangeStatus::CHANGED_INITIAL, true, false>(data);
+    }
+    else
+    {
+      PublishImplementation<false, tChangeStatus::CHANGED, true, false>(data);
+    }
+  }
 }
 
 void tStandardPort::CallPullRequestHandler(tPublishingData& publishing_data, bool intermediate_assign)
@@ -246,9 +267,9 @@ void tStandardPort::LockCurrentValueForPublishing(tPublishingData& publishing_da
   publishing_data.Init(locked_buffer.release());
 }
 
-void tStandardPort::NonStandardAssign(tPublishingData& publishing_data)
+void tStandardPort::NonStandardAssign(tPublishingData& publishing_data, tChangeStatus change_constant)
 {
-  if (GetFlag(tFlag::USES_QUEUE))
+  if (GetFlag(tFlag::USES_QUEUE) && change_constant != tChangeStatus::CHANGED_INITIAL)
   {
     assert(GetFlag(tFlag::HAS_QUEUE) && input_queue);
 

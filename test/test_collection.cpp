@@ -163,23 +163,23 @@ void TestPortListeners(const T& publish_value)
   class tListener
   {
   public:
-    void PortChanged(tInputPort<T>& port, const T& value, const rrlib::time::tTimestamp& timestamp)
+    void PortChanged(const T& value, tChangeContext& change_context)
     {
       FINROC_LOG_PRINT(USER, "  Port Changed: ", value);
     }
-    void PortChanged(tInputPort<T>& port, tPortDataPointer<const T>& value, const rrlib::time::tTimestamp& timestamp)
+    void PortChanged(tPortDataPointer<const T>& value, tChangeContext& change_context)
     {
       FINROC_LOG_PRINT(USER, "  Port Changed (tPortDataPointer): ", *value);
     }
-    void PortChanged(tGenericPort& port, const rrlib::rtti::tGenericObject& value, const rrlib::time::tTimestamp& timestamp)
+    void PortChanged(const rrlib::rtti::tGenericObject& value, tChangeContext& change_context)
     {
       FINROC_LOG_PRINT(USER, "  Port Changed Generic: ", value);
     }
-    void PortChanged(tGenericPort& port, tPortDataPointer<const rrlib::rtti::tGenericObject>& value, const rrlib::time::tTimestamp& timestamp)
+    void PortChanged(tPortDataPointer<const rrlib::rtti::tGenericObject>& value, tChangeContext& change_context)
     {
       FINROC_LOG_PRINT(USER, "  Port Changed Generic (tPortDataPointer): ", *value);
     }
-    void PortChanged(common::tAbstractDataPort& port)
+    void PortChanged(tChangeContext& change_context)
     {
       FINROC_LOG_PRINT(USER, "  Port Changed Simple");
     }

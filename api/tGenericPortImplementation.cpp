@@ -157,7 +157,7 @@ public:
       buffer->SetTimestamp(timestamp);
       buffer->GetObject().DeepCopyFrom(data);
       common::tPublishOperation<optimized::tCheapCopyPort, typename optimized::tCheapCopyPort::tPublishingDataThreadLocalBuffer> publish_operation(buffer.release(), true);
-      publish_operation.Execute<false, common::tAbstractDataPort::tChangeStatus::CHANGED, false>(static_cast<tPortBase&>(port));
+      publish_operation.Execute<false, common::tAbstractDataPort::tChangeStatus::CHANGED, false, false>(static_cast<tPortBase&>(port));
     }
     else
     {
@@ -165,7 +165,7 @@ public:
       buffer->SetTimestamp(timestamp);
       buffer->GetObject().DeepCopyFrom(data);
       common::tPublishOperation<optimized::tCheapCopyPort, typename optimized::tCheapCopyPort::tPublishingDataGlobalBuffer> publish_operation(buffer);
-      publish_operation.Execute<false, common::tAbstractDataPort::tChangeStatus::CHANGED, false>(static_cast<tPortBase&>(port));
+      publish_operation.Execute<false, common::tAbstractDataPort::tChangeStatus::CHANGED, false, false>(static_cast<tPortBase&>(port));
     }
   }
 
@@ -247,7 +247,7 @@ void tGenericPortImplementation::CreateImplementations()
 
       if (!type.GetAnnotation<tGenericPortImplementation>())
       {
-        assert((type.GetTypeTraits() & rrlib::rtti::trait_flags::cIS_INTEGRAL) == 0);
+        assert((type.GetTypeTraits() & rrlib::rtti::trait_flags::cIS_INTEGRAL) == 0 || type.GetRttiName() == typeid(bool).name());
         if (IsCheaplyCopiedType(type))
         {
           type.AddAnnotation<tGenericPortImplementation>(new internal::tGenericPortImplementationCheapCopy());

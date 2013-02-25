@@ -92,7 +92,7 @@ public:
    * \tparam CHANGE_CONSTANT changedConstant to use
    * \tparam BROWSER_PUBLISH Inform this port's listeners on change and also publish in reverse direction? (only set from BrowserPublish())
    */
-  template <bool REVERSE, tChangeStatus CHANGE_CONSTANT, bool BROWSER_PUBLISH>
+  template <bool REVERSE, tChangeStatus CHANGE_CONSTANT, bool BROWSER_PUBLISH, bool NOTIFY_LISTENER_ON_THIS_PORT>
   inline void Execute(TPort& port)
   {
     if (!(port.IsReady() || BROWSER_PUBLISH))
@@ -101,17 +101,17 @@ public:
       return;
     }
 
-    if (!port.Assign(*this))
+    if (!port.template Assign<CHANGE_CONSTANT>(*this))
     {
       this->CheckRecycle();
       return;
     }
 
     // inform listeners?
-    if (BROWSER_PUBLISH)
+    if (NOTIFY_LISTENER_ON_THIS_PORT)
     {
       port.SetChanged(CHANGE_CONSTANT);
-      port.NotifyListeners(*this);
+      port.template NotifyListeners<CHANGE_CONSTANT>(*this);
     }
 
     if (!REVERSE)
@@ -150,12 +150,12 @@ public:
   template <bool REVERSE, tChangeStatus CHANGE_CONSTANT>
   static inline void Receive(typename std::conditional<TPublishingData::cCOPY_ON_RECEIVE, TPublishingData, TPublishingData&>::type publishing_data, TPort& port, TPort& origin)
   {
-    if (!port.Assign(publishing_data))
+    if (!port.template Assign<CHANGE_CONSTANT>(publishing_data))
     {
       return;
     }
     port.SetChanged(CHANGE_CONSTANT);
-    port.NotifyListeners(publishing_data);
+    port.template NotifyListeners<CHANGE_CONSTANT>(publishing_data);
     port.UpdateStatistics(publishing_data, origin, port);
 
     if (!REVERSE)

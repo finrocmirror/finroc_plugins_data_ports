@@ -42,6 +42,7 @@
 //----------------------------------------------------------------------
 // Internal includes with ""
 //----------------------------------------------------------------------
+#include "plugins/data_ports/tChangeContext.h"
 #include "plugins/data_ports/common/tAbstractDataPort.h"
 #include "plugins/data_ports/common/tPortBufferPool.h"
 #include "plugins/data_ports/common/tPortQueue.h"
@@ -178,9 +179,12 @@ public:
    * (not in normal operation, but from browser; difference: listeners on this port will be notified)
    *
    * \param buffer Buffer with data (must be owned by current thread)
+   * \param notify_listener_on_this_port Notify listener on this port?
+   * \param change_constant Change constant to use for publishing operation
    * \return Error message if something did not work
    */
-  virtual std::string BrowserPublishRaw(tUnusedManagerPointer& buffer);
+  virtual std::string BrowserPublishRaw(tUnusedManagerPointer& buffer, bool notify_listener_on_this_port = true,
+                                        common::tAbstractDataPort::tChangeStatus change_constant = common::tAbstractDataPort::tChangeStatus::CHANGED);
 
   /*!
    * \return Does port contain default value?
@@ -635,10 +639,11 @@ protected:
    * Used, for instance, in queued ports.
    *
    * \param publishing_data Data on publishing operation for different types of buffers
+   * \param change_contant Changed constant for current publishing operation (e.g. we do not want to enqueue values from initial pushing in port queues)
    * \return Whether setting value succeeded (fails, for instance, if bounded ports are set to discard values that are out of bounds)
    */
-  virtual bool NonStandardAssign(tPublishingDataGlobalBuffer& publishing_data);
-  virtual bool NonStandardAssign(tPublishingDataThreadLocalBuffer& publishing_data);
+  virtual bool NonStandardAssign(tPublishingDataGlobalBuffer& publishing_data, tChangeStatus change_constant);
+  virtual bool NonStandardAssign(tPublishingDataThreadLocalBuffer& publishing_data, tChangeStatus change_constant);
 
 //----------------------------------------------------------------------
 // Private fields and methods
@@ -708,14 +713,14 @@ private:
    * \param publishing_data Info on current publishing operation
    * \return Whether setting value succeeded (fails, for instance, if bounded ports are set to discard values that are out of bounds)
    */
-  template <typename TPublishingData>
+  template <tChangeStatus CHANGE_CONSTANT, typename TPublishingData>
   inline bool Assign(TPublishingData& publishing_data)
   {
     assert(publishing_data.published_buffer->GetObject().GetType() == GetDataType());
 
     if (!standard_assign)
     {
-      if (!NonStandardAssign(publishing_data))
+      if (!NonStandardAssign(publishing_data, CHANGE_CONSTANT))
       {
         return false;
       }
@@ -829,13 +834,13 @@ private:
    *
    * \param publishing_data Info on current publishing operation
    */
-  template <typename TPublishingData>
-  __attribute__((always_inline))
+  template <tChangeStatus CHANGE_CONSTANT, typename TPublishingData>
   inline void NotifyListeners(TPublishingData& publishing_data)
   {
     if (GetPortListener())
     {
-      GetPortListener()->PortChangedRaw(*this, publishing_data.ReferenceCounter(), *publishing_data.published_buffer, publishing_data.published_buffer->GetTimestamp());
+      tChangeContext change_context(*this, publishing_data.published_buffer->GetTimestamp(), CHANGE_CONSTANT);
+      GetPortListener()->PortChangedRaw(change_context, publishing_data.ReferenceCounter(), *publishing_data.published_buffer);
     }
   }
 

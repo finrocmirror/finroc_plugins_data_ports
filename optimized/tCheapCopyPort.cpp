@@ -147,18 +147,60 @@ void tCheapCopyPort::ApplyDefaultValue()
   // Publish(*default_value); TODO
 }
 
-std::string tCheapCopyPort::BrowserPublishRaw(tUnusedManagerPointer& buffer)
+std::string tCheapCopyPort::BrowserPublishRaw(tUnusedManagerPointer& buffer, bool notify_listener_on_this_port, common::tAbstractDataPort::tChangeStatus change_constant)
 {
   if (buffer->GetThreadLocalOrigin()) // Is current thread the owner?
   {
     assert(buffer->GetThreadLocalOrigin() == tThreadLocalBufferPools::Get() && "Thread must be owner of thread-local buffer");
     common::tPublishOperation<tCheapCopyPort, tPublishingDataThreadLocalBuffer> data(buffer);
-    data.Execute<false, tChangeStatus::CHANGED, true>(*this);
+    if (notify_listener_on_this_port)
+    {
+      if (change_constant == tChangeStatus::CHANGED_INITIAL)
+      {
+        data.Execute<false, tChangeStatus::CHANGED_INITIAL, true, true>(*this);
+      }
+      else
+      {
+        data.Execute<false, tChangeStatus::CHANGED, true, true>(*this);
+      }
+    }
+    else
+    {
+      if (change_constant == tChangeStatus::CHANGED_INITIAL)
+      {
+        data.Execute<false, tChangeStatus::CHANGED_INITIAL, true, false>(*this);
+      }
+      else
+      {
+        data.Execute<false, tChangeStatus::CHANGED, true, false>(*this);
+      }
+    }
   }
   else
   {
     common::tPublishOperation<tCheapCopyPort, tPublishingDataGlobalBuffer> data(buffer);
-    data.Execute<false, tChangeStatus::CHANGED, true>(*this);
+    if (notify_listener_on_this_port)
+    {
+      if (change_constant == tChangeStatus::CHANGED_INITIAL)
+      {
+        data.Execute<false, tChangeStatus::CHANGED_INITIAL, true, true>(*this);
+      }
+      else
+      {
+        data.Execute<false, tChangeStatus::CHANGED, true, true>(*this);
+      }
+    }
+    else
+    {
+      if (change_constant == tChangeStatus::CHANGED_INITIAL)
+      {
+        data.Execute<false, tChangeStatus::CHANGED_INITIAL, true, false>(*this);
+      }
+      else
+      {
+        data.Execute<false, tChangeStatus::CHANGED, true, false>(*this);
+      }
+    }
   }
   return "";
 }
@@ -223,7 +265,7 @@ void tCheapCopyPort::ForwardData(tAbstractPort& other)
     if (tThreadLocalBufferPools::Get() == current_buffer->GetThreadLocalOrigin()) // Is current thread the owner thread?
     {
       common::tPublishOperation<tCheapCopyPort, tPublishingDataThreadLocalBuffer> data(static_cast<tThreadLocalBufferManager*>(current_buffer.GetPointer()), false);
-      data.Execute<false, tChangeStatus::CHANGED, false>(static_cast<tCheapCopyPort&>(other));
+      data.Execute<false, tChangeStatus::CHANGED, false, false>(static_cast<tCheapCopyPort&>(other));
       return;
     }
 
@@ -239,7 +281,7 @@ void tCheapCopyPort::ForwardData(tAbstractPort& other)
       if (current_raw == current_raw_2)    // still valid??
       {
         common::tPublishOperation<tCheapCopyPort, tPublishingDataThreadLocalBuffer> data(static_cast<tThreadLocalBufferManager*>(current_buffer.GetPointer()), true);
-        data.Execute<false, tChangeStatus::CHANGED, false>(static_cast<tCheapCopyPort&>(other));
+        data.Execute<false, tChangeStatus::CHANGED, false, false>(static_cast<tCheapCopyPort&>(other));
         return;
       }
       current_buffer = current_raw_2;
@@ -250,7 +292,7 @@ void tCheapCopyPort::ForwardData(tAbstractPort& other)
     tUnusedManagerPointer unused_manager = tUnusedManagerPointer(tGlobalBufferPools::Instance().GetUnusedBuffer(cheaply_copyable_type_index).release());
     CopyCurrentValueToManager(*unused_manager, true);
     common::tPublishOperation<tCheapCopyPort, tPublishingDataGlobalBuffer> data(unused_manager);
-    data.Execute<false, tChangeStatus::CHANGED, false>(static_cast<tCheapCopyPort&>(other));
+    data.Execute<false, tChangeStatus::CHANGED, false, false>(static_cast<tCheapCopyPort&>(other));
   }
 }
 
@@ -393,9 +435,9 @@ void tCheapCopyPort::LockCurrentValueForPublishing(tPublishingDataThreadLocalBuf
   }
 }
 
-bool tCheapCopyPort::NonStandardAssign(tPublishingDataGlobalBuffer& publishing_data)
+bool tCheapCopyPort::NonStandardAssign(tPublishingDataGlobalBuffer& publishing_data, tChangeStatus change_constant)
 {
-  if (GetFlag(tFlag::USES_QUEUE))
+  if (GetFlag(tFlag::USES_QUEUE) && change_constant != tChangeStatus::CHANGED_INITIAL)
   {
     assert(GetFlag(tFlag::HAS_QUEUE));
 
@@ -406,9 +448,9 @@ bool tCheapCopyPort::NonStandardAssign(tPublishingDataGlobalBuffer& publishing_d
   return true;
 }
 
-bool tCheapCopyPort::NonStandardAssign(tPublishingDataThreadLocalBuffer& publishing_data)
+bool tCheapCopyPort::NonStandardAssign(tPublishingDataThreadLocalBuffer& publishing_data, tChangeStatus change_constant)
 {
-  if (GetFlag(tFlag::USES_QUEUE))
+  if (GetFlag(tFlag::USES_QUEUE) && change_constant != tChangeStatus::CHANGED_INITIAL)
   {
     assert(GetFlag(tFlag::HAS_QUEUE));
 

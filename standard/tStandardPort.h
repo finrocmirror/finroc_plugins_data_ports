@@ -47,6 +47,7 @@
 //----------------------------------------------------------------------
 // Internal includes with ""
 //----------------------------------------------------------------------
+#include "plugins/data_ports/tChangeContext.h"
 #include "plugins/data_ports/common/tAbstractDataPort.h"
 #include "plugins/data_ports/common/tPortBufferPool.h"
 #include "plugins/data_ports/common/tPortQueue.h"
@@ -139,9 +140,12 @@ public:
    * Publish buffer through port
    * (not in normal operation, but from browser; difference: listeners on this port will be notified)
    *
-   * \param buffer Buffer with data (must be owned by current thread)
+   * \param data Buffer with data (must be owned by current thread)
+   * \param notify_listener_on_this_port Notify listener on this port?
+   * \param change_constant Change constant to use for publishing operation
    */
-  void BrowserPublish(tUnusedManagerPointer& data);
+  void BrowserPublish(tUnusedManagerPointer& data, bool notify_listener_on_this_port = true,
+                      common::tAbstractDataPort::tChangeStatus change_constant = common::tAbstractDataPort::tChangeStatus::CHANGED);
 
   /*!
    * Dequeue all elements currently in port's input queue
@@ -240,11 +244,11 @@ public:
    */
   inline void Publish(tUnusedManagerPointer& data)
   {
-    PublishImplementation<false, tChangeStatus::CHANGED, false>(data);
+    PublishImplementation<false, tChangeStatus::CHANGED, false, false>(data);
   }
   inline void Publish(tLockingManagerPointer& data)
   {
-    PublishImplementation<false, tChangeStatus::CHANGED, false>(data);
+    PublishImplementation<false, tChangeStatus::CHANGED, false, false>(data);
   }
 
   /*!
@@ -369,8 +373,9 @@ protected:
    * Used, for instance, for queued ports.
    *
    * \param publishing_info Info on current publishing operation
+   * \param change_contant Changed constant for current publishing operation (e.g. we do not want to enqueue values from initial pushing in port queues)
    */
-  virtual void NonStandardAssign(tPublishingData& publishing_info);
+  virtual void NonStandardAssign(tPublishingData& publishing_info, tChangeStatus change_constant);
 
 //----------------------------------------------------------------------
 // Private fields and methods
@@ -433,6 +438,7 @@ private:
    * \param publishing_data Info on current publishing operation
    * \return Whether Assigning succeeded (always true)
    */
+  template <tChangeStatus CHANGE_CONSTANT>
   inline bool Assign(tPublishingData& publishing_data)
   {
     assert(publishing_data.published_buffer->GetObject().GetType() == GetDataType());
@@ -442,7 +448,7 @@ private:
     old->ReleaseLocks<typename tUnusedManagerPointer::deleter_type, tPortBufferManager>(1, old.GetStamp());
     if (!standard_assign)
     {
-      NonStandardAssign(publishing_data);
+      NonStandardAssign(publishing_data, CHANGE_CONSTANT);
     }
     return true;
   }
@@ -495,11 +501,13 @@ private:
    *
    * \param publishing_data Info on current publishing operation
    */
+  template <tChangeStatus CHANGE_CONSTANT>
   inline void NotifyListeners(tPublishingData& publishing_data)
   {
     if (GetPortListener())
     {
-      GetPortListener()->PortChangedRaw(*this, publishing_data.ReferenceCounter(), *publishing_data.published_buffer, publishing_data.published_buffer->GetTimestamp());
+      tChangeContext change_context(*this, publishing_data.published_buffer->GetTimestamp(), CHANGE_CONSTANT);
+      GetPortListener()->PortChangedRaw(change_context, publishing_data.ReferenceCounter(), *publishing_data.published_buffer);
     }
   }
 
@@ -518,22 +526,22 @@ private:
     {
       if (changed_constant == tChangeStatus::CHANGED)
       {
-        PublishImplementation<false, tChangeStatus::CHANGED, false>(data);
+        PublishImplementation<false, tChangeStatus::CHANGED, false, false>(data);
       }
       else
       {
-        PublishImplementation<false, tChangeStatus::CHANGED_INITIAL, false>(data);
+        PublishImplementation<false, tChangeStatus::CHANGED_INITIAL, false, false>(data);
       }
     }
     else
     {
       if (changed_constant == tChangeStatus::CHANGED)
       {
-        PublishImplementation<true, tChangeStatus::CHANGED, false>(data);
+        PublishImplementation<true, tChangeStatus::CHANGED, false, false>(data);
       }
       else
       {
-        PublishImplementation<true, tChangeStatus::CHANGED_INITIAL, false>(data);
+        PublishImplementation<true, tChangeStatus::CHANGED_INITIAL, false, false>(data);
       }
     }
   }
@@ -550,7 +558,7 @@ private:
    * \tparam CHANGE_CONSTANT changedConstant to use
    * \tparam BROWSER_PUBLISH Inform this port's listeners on change and also publish in reverse direction? (only set from BrowserPublish())
    */
-  template <bool REVERSE, tChangeStatus CHANGE_CONSTANT, bool BROWSER_PUBLISH, typename TDeleter>
+  template <bool REVERSE, tChangeStatus CHANGE_CONSTANT, bool BROWSER_PUBLISH, bool NOTIFY_LISTENER_ON_THIS_PORT, typename TDeleter>
   inline void PublishImplementation(std::unique_ptr<tPortBufferManager, TDeleter>& data)
   {
     if (!(IsReady() || BROWSER_PUBLISH))
@@ -560,7 +568,7 @@ private:
     }
 
     common::tPublishOperation<tStandardPort, tPublishingData> publish_operation(data, 1000);
-    publish_operation.Execute<REVERSE, CHANGE_CONSTANT, BROWSER_PUBLISH>(*this);
+    publish_operation.Execute<REVERSE, CHANGE_CONSTANT, BROWSER_PUBLISH, NOTIFY_LISTENER_ON_THIS_PORT>(*this);
   }
 
   /*!

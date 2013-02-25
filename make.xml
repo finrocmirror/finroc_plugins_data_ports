@@ -4,6 +4,7 @@
   <finrocplugin name="data_ports">
     <sources>
       tBounds.h
+      tChangeContext.h
       tUnit.cpp
       type_traits.h
       common/*

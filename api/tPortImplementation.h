@@ -87,7 +87,8 @@ struct tCheapCopyPortBaseImplementation
     creation_info.UnsetDefaultValue(); // TBuffer might differ from TWrapper => corrupts default value (it is set later in tPort)
     if (creation_info.BoundsSet())
     {
-      return new tBoundedPort<TWrapper, tPortImplementationType::CHEAP_COPY>(creation_info);
+      return new tBoundedPort<TWrapper, tPortImplementationType::CHEAP_COPY>(creation_info);  // Crashes with release mode in gcc 4.6 :-/
+      //return new optimized::tCheapCopyPort(creation_info);
     }
     else
     {
@@ -211,7 +212,7 @@ struct tPortImplementation : public tCheapCopyPortImplementation<T, TYPE>
       buffer->SetTimestamp(timestamp);
       Assign(buffer->GetObject().GetData<typename tBase::tPortBuffer>(), data, port.GetUnit());
       common::tPublishOperation<optimized::tCheapCopyPort, typename optimized::tCheapCopyPort::tPublishingDataThreadLocalBuffer> publish_operation(buffer.release(), true);
-      publish_operation.Execute<false, common::tAbstractDataPort::tChangeStatus::CHANGED, false>(port);
+      publish_operation.Execute<false, common::tAbstractDataPort::tChangeStatus::CHANGED, false, false>(port);
     }
     else
     {
@@ -219,7 +220,7 @@ struct tPortImplementation : public tCheapCopyPortImplementation<T, TYPE>
       buffer->SetTimestamp(timestamp);
       Assign(buffer->GetObject().GetData<typename tBase::tPortBuffer>(), data, port.GetUnit());
       common::tPublishOperation<optimized::tCheapCopyPort, typename optimized::tCheapCopyPort::tPublishingDataGlobalBuffer> publish_operation(buffer);
-      publish_operation.Execute<false, common::tAbstractDataPort::tChangeStatus::CHANGED, false>(port);
+      publish_operation.Execute<false, common::tAbstractDataPort::tChangeStatus::CHANGED, false, false>(port);
     }
   }
 

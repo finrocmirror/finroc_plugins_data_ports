@@ -163,12 +163,19 @@ void TestInitialPushing(const std::array<T, 9>& test_values)
   tOutputPort<T> o7("o7", tFrameworkElement::tFlag::ACCEPTS_DATA, parent); // flag makes this also a proxy port
   tFrameworkElement::InitAll();
   o7.Publish(test_values[7]);
-  tInputPort<T> o8("o8", parent);
+  tInputPort<T> o8("o8", parent, 5, 5, tFrameworkElement::tFlag::HAS_DEQUEUE_ALL_QUEUE);
   tFrameworkElement::InitAll();
   o7.ConnectTo(o8);
   CheckPortValue(o8, test_values[7]);
   o7.ConnectTo(o1, tAbstractPort::tConnectDirection::TO_TARGET);
   CheckPortValue(o1, test_values[6]);
+
+  tPortBuffers<tPortDataPointer<const T>> queue_fragment = o8.DequeueAllBuffers();
+  while (!queue_fragment.Empty())
+  {
+    FINROC_LOG_PRINT(ERROR, "o8 queue is not empty as expected.");
+    queue_fragment.PopAny();
+  }
 
   // o6->o0->o1->o2->o3
   //        /     \            .

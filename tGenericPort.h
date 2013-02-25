@@ -120,7 +120,7 @@ public:
    * \param listener Listener to add
    *
    * \tparam LISTENER Listener class needs to implement a method
-   * void PortChanged(tGenericPort& port, const rrlib::rtti::tGenericObject& value, const rrlib::time::tTimestamp& timestamp)
+   * void PortChanged(const rrlib::rtti::tGenericObject& value, tChangeContext& change_context)
    *
    * (It's preferred to add listeners before port is initialized)
    * (Note: Buffer in 'value' always has data type of port backend (e.g. tNumber instead of double)
@@ -132,7 +132,7 @@ public:
    * \param listener Listener to add
    *
    * \tparam LISTENER Listener class needs to implement a method
-   * void PortChanged(tGenericPort& port, tPortDataPointer<const rrlib::rtti::tGenericObject>& value, const rrlib::time::tTimestamp& timestamp)
+   * void PortChanged(tPortDataPointer<const rrlib::rtti::tGenericObject>& value, tChangeContext& change_context)
    *
    * (It's preferred to add listeners before port is initialized)
    * (Note: Buffer in 'value' always has data type of port backend (e.g. tNumber instead of double)
@@ -144,7 +144,7 @@ public:
    * \param listener Listener to add
    *
    * \tparam LISTENER Listener class needs to implement a method
-   * void PortChanged(common::tAbstractDataPort& origin)
+   * void PortChanged(tChangeContext& change_context)
    *
    * (It's preferred to add listeners before port is initialized)
    */
@@ -155,20 +155,23 @@ public:
    * Publish buffer through port
    * (not in normal operation, but from browser; difference: listeners on this port will be notified)
    *
-   * \param buffer Buffer with data
+   * \param pointer Buffer with data
+   * \param notify_listener_on_this_port Notify listener on this port?
+   * \param change_constant Change constant to use for publishing operation
    * \return Error message if something did not work
    */
-  inline std::string BrowserPublish(tPortDataPointer<rrlib::rtti::tGenericObject>& pointer)
+  inline std::string BrowserPublish(tPortDataPointer<rrlib::rtti::tGenericObject>& pointer, bool notify_listener_on_this_port = true,
+                                    common::tAbstractDataPort::tChangeStatus change_constant = common::tAbstractDataPort::tChangeStatus::CHANGED)
   {
     if (IsCheaplyCopiedType(pointer->GetType()))
     {
       typename optimized::tCheapCopyPort::tUnusedManagerPointer pointer2(static_cast<optimized::tCheaplyCopiedBufferManager*>(pointer.implementation.Release()));
-      return static_cast<optimized::tCheapCopyPort*>(GetWrapped())->BrowserPublishRaw(pointer2);
+      return static_cast<optimized::tCheapCopyPort*>(GetWrapped())->BrowserPublishRaw(pointer2, notify_listener_on_this_port, change_constant);
     }
     else
     {
       typename standard::tStandardPort::tUnusedManagerPointer pointer2(static_cast<standard::tPortBufferManager*>(pointer.implementation.Release()));
-      static_cast<standard::tStandardPort*>(GetWrapped())->BrowserPublish(pointer2);
+      static_cast<standard::tStandardPort*>(GetWrapped())->BrowserPublish(pointer2, notify_listener_on_this_port, change_constant);
     }
     return "";
   }
