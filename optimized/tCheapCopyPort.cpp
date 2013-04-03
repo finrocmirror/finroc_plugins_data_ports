@@ -123,6 +123,10 @@ tCheapCopyPort::tCheapCopyPort(common::tAbstractDataPortCreationInfo creation_in
   if (GetFlag(tFlag::HAS_QUEUE))
   {
     input_queue.reset(new common::tPortQueue<tLockingManagerPointer>(!GetFlag(tFlag::HAS_DEQUEUE_ALL_QUEUE)));
+    if (creation_info.max_queue_size > 0)
+    {
+      input_queue->SetMaxQueueLength(creation_info.max_queue_size);
+    }
   }
 
   PropagateStrategy(NULL, NULL);  // initialize strategy
@@ -205,19 +209,19 @@ std::string tCheapCopyPort::BrowserPublishRaw(tUnusedManagerPointer& buffer, boo
   return "";
 }
 
-void tCheapCopyPort::CallPullRequestHandler(tPublishingDataGlobalBuffer& publishing_data, bool intermediate_assign)
+void tCheapCopyPort::CallPullRequestHandler(tPublishingDataGlobalBuffer& publishing_data)
 {
   tUnusedManagerPointer result = tUnusedManagerPointer(tGlobalBufferPools::Instance().GetUnusedBuffer(cheaply_copyable_type_index).release());
-  if (pull_request_handler->PullRequest(*this, *result, intermediate_assign))
+  if (pull_request_handler->RawPullRequest(*this, *result))
   {
     publishing_data.Init(result);
   }
 }
 
-void tCheapCopyPort::CallPullRequestHandler(tPublishingDataThreadLocalBuffer& publishing_data, bool intermediate_assign)
+void tCheapCopyPort::CallPullRequestHandler(tPublishingDataThreadLocalBuffer& publishing_data)
 {
   tUnusedManagerPointer result = tUnusedManagerPointer(tThreadLocalBufferPools::Get()->GetUnusedBuffer(cheaply_copyable_type_index).release());
-  if (pull_request_handler->PullRequest(*this, *result, intermediate_assign))
+  if (pull_request_handler->RawPullRequest(*this, *result))
   {
     publishing_data.Init(result);
   }
@@ -355,9 +359,9 @@ int tCheapCopyPort::GetMaxQueueLengthImplementation() const
 //  }
 //}
 //
-//tCCPortDataManager* tCheapCopyPort::GetPullInInterthreadContainerRaw(bool intermediate_assign, bool ignore_pull_request_handler_on_this_port)
+//tCCPortDataManager* tCheapCopyPort::GetPullInInterthreadContainerRaw(bool ignore_pull_request_handler_on_this_port)
 //{
-//  tCCPortDataManagerTL* tmp = PullValueRaw(intermediate_assign, ignore_pull_request_handler_on_this_port);
+//  tCCPortDataManagerTL* tmp = PullValueRaw(ignore_pull_request_handler_on_this_port);
 //  tCCPortDataManager* ret = tThreadLocalCache::GetFast()->GetUnusedInterThreadBuffer(this->data_type);
 //  ret->GetObject()->DeepCopyFrom(tmp->GetObject(), NULL);
 //  ret->SetTimestamp(tmp->GetTimestamp());
@@ -469,18 +473,18 @@ void tCheapCopyPort::NotifyDisconnect()
   }
 }
 
-tCheapCopyPort::tLockingManagerPointer tCheapCopyPort::PullValueRaw(bool intermediate_assign, bool ignore_pull_request_handler_on_this_port)
+tCheapCopyPort::tLockingManagerPointer tCheapCopyPort::PullValueRaw(bool ignore_pull_request_handler_on_this_port)
 {
   if (tThreadLocalBufferPools::Get())
   {
     common::tPullOperation<tCheapCopyPort, tPublishingDataThreadLocalBuffer, tThreadLocalBufferManager> pull_operation;
-    pull_operation.Execute(*this, intermediate_assign);
+    pull_operation.Execute(*this);
     return tLockingManagerPointer(pull_operation.published_buffer);
   }
   else
   {
     common::tPullOperation<tCheapCopyPort, tPublishingDataGlobalBuffer, tCheaplyCopiedBufferManager> pull_operation;
-    pull_operation.Execute(*this, intermediate_assign);
+    pull_operation.Execute(*this);
     return tLockingManagerPointer(pull_operation.published_buffer);
   }
 }

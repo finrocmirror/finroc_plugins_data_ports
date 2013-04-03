@@ -47,6 +47,7 @@
 // Internal includes with ""
 //----------------------------------------------------------------------
 #include "plugins/data_ports/api/tGenericPortImplementation.h"
+#include "plugins/data_ports/tPullRequestHandler.h"
 
 //----------------------------------------------------------------------
 // Namespace declaration
@@ -242,6 +243,21 @@ public:
   inline void SetBounds(const rrlib::rtti::tGenericObject& min, const rrlib::rtti::tGenericObject& max)
   {
     implementation->SetBounds(*GetWrapped(), min, max);
+  }
+
+  /*!
+   * \param pull_request_handler Object that handles any incoming pull requests - null if there is none (typical case)
+   */
+  void SetPullRequestHandler(tPullRequestHandler<rrlib::rtti::tGenericObject>* pull_request_handler)
+  {
+    if (IsCheaplyCopiedType(GetWrapped()->GetDataType()))
+    {
+      static_cast<standard::tStandardPort*>(GetWrapped())->SetPullRequestHandler(pull_request_handler);
+    }
+    else
+    {
+      static_cast<optimized::tCheapCopyPort*>(GetWrapped())->SetPullRequestHandler(pull_request_handler);
+    }
   }
 
   /*!

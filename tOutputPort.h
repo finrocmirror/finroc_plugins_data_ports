@@ -47,6 +47,7 @@
 // Internal includes with ""
 //----------------------------------------------------------------------
 #include "plugins/data_ports/tPort.h"
+#include "plugins/data_ports/tPullRequestHandler.h"
 
 //----------------------------------------------------------------------
 // Namespace declaration
@@ -169,6 +170,14 @@ public:
   inline bool ReversePushStrategy() const
   {
     return this->GetWrapped()->ReversePushStrategy();
+  }
+
+  /*!
+   * \param pull_request_handler Object that handles any incoming pull requests - null if there is none (typical case)
+   */
+  void SetPullRequestHandler(tPullRequestHandler<T>* pull_request_handler)
+  {
+    this->GetWrapped()->SetPullRequestHandler(pull_request_handler);
   }
 
   /*!

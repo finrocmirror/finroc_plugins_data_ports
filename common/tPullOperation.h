@@ -87,11 +87,10 @@ public:
    * Performs pull operation
    *
    * \param port (Output) port to perform pull operation on
-   * \param intermediate_assign Assign pulled value to ports in between?
    */
-  inline void Execute(TPort& port, bool intermediate_assign)
+  inline void Execute(TPort& port)
   {
-    ExecuteImplementation(port, intermediate_assign, true);
+    ExecuteImplementation(port, true);
     this->AddLock(); // lock for return
   }
 
@@ -104,14 +103,13 @@ private:
    * Performs pull operation
    *
    * \param port (Output) port to perform pull operation on
-   * \param intermediate_assign Assign pulled value to ports in between?
    * \param first Is this the call on the first (originating) port?
    */
-  void ExecuteImplementation(TPort& port, bool intermediate_assign, bool first)
+  void ExecuteImplementation(TPort& port, bool first)
   {
     if ((!first) && port.pull_request_handler)
     {
-      port.CallPullRequestHandler(*this, intermediate_assign);
+      port.CallPullRequestHandler(*this);
       if (this->published_buffer)
       {
         typename TPort::tTaggedBufferPointer::tStorage tagged_pointer_raw = this->published_buffer_tagged_pointer;
@@ -129,9 +127,9 @@ private:
     // continue with next-best connected source port
     for (auto it = port.IncomingConnectionsBegin(); it != port.IncomingConnectionsEnd(); ++it)
     {
-      ExecuteImplementation(static_cast<TPort&>(*it), intermediate_assign, false);
+      ExecuteImplementation(static_cast<TPort&>(*it), false);
       typename TPort::tTaggedBufferPointer::tStorage tagged_pointer_raw = this->published_buffer_tagged_pointer;
-      if ((first || intermediate_assign) && (tagged_pointer_raw != port.current_value.load()))
+      if (tagged_pointer_raw != port.current_value.load())
       {
         if (!port.template Assign<tAbstractDataPort::tChangeStatus::CHANGED>(*this))
         {

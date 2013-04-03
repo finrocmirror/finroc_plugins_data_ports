@@ -96,7 +96,7 @@ int main(int, char**)
 
   std::atomic<void*> atomic_pointer;
   std::atomic<int64_t> atomic_int64;
-  FINROC_LOG_PRINT(USER, " std::atomic<void*>::is_lock_free(): ", atomic_pointer.is_lock_free());
-  FINROC_LOG_PRINT(USER, " std::atomic<void*>::is_lock_free(): ", atomic_int64.is_lock_free());
+  //FINROC_LOG_PRINT(USER, " std::atomic<void*>::is_lock_free(): ", atomic_pointer.is_lock_free()); // linker error on gcc 4.7
+  //FINROC_LOG_PRINT(USER, " std::atomic<void*>::is_lock_free(): ", atomic_int64.is_lock_free());
   return 0;
 }

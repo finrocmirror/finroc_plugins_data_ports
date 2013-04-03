@@ -81,10 +81,15 @@ class tDeserializationScope : boost::noncopyable
 //----------------------------------------------------------------------
 public:
 
+  /*!
+   * Standard constructor:
+   * A buffer pool is provided on construction.
+   */
   tDeserializationScope(standard::tMultiTypePortBufferPool& buffer_source) :
-    buffer_source(buffer_source),
+    buffer_source(&buffer_source),
     outer_scope(current_scope)
   {
+    current_scope = this;
   }
 
   ~tDeserializationScope()
@@ -101,7 +106,11 @@ public:
     {
       throw std::runtime_error("No scope created");
     }
-    return current_scope->buffer_source;
+    if (!current_scope->buffer_source)
+    {
+      current_scope->buffer_source = &current_scope->ObtainBufferPool();
+    }
+    return *(current_scope->buffer_source);
   }
 
   /*!
@@ -110,19 +119,43 @@ public:
    */
   static tPortDataPointerImplementation<rrlib::rtti::tGenericObject, false> GetUnusedBuffer(const rrlib::rtti::tType& type);
 
+
+//----------------------------------------------------------------------
+// Protected constructor
+//----------------------------------------------------------------------
+protected:
+
+  /*!
+   * Constructor for subclasses only:
+   * A buffer pool is provided on callback
+   * (CreateBufferPool must be overridden by subclass)
+   */
+  tDeserializationScope() :
+    buffer_source(NULL),
+    outer_scope(current_scope)
+  {
+    current_scope = this;
+  }
+
 //----------------------------------------------------------------------
 // Private fields and methods
 //----------------------------------------------------------------------
 private:
 
   /*! Buffer source to use */
-  standard::tMultiTypePortBufferPool& buffer_source;
+  standard::tMultiTypePortBufferPool* buffer_source;
 
   /*! Active scope before this scope was created */
   tDeserializationScope* outer_scope;
 
   /*! Active scope */
   static __thread tDeserializationScope* current_scope;
+
+
+  /*!
+   * Obtains buffer pool, if not provided on construction.
+   */
+  virtual standard::tMultiTypePortBufferPool& ObtainBufferPool();
 };
 
 //----------------------------------------------------------------------

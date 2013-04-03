@@ -79,10 +79,9 @@ public:
    *
    * \param origin (Output) Port pull request comes from
    * \param result_buffer Buffer with result
-   * \param intermediate_assign Assign pulled value to ports in between?
    * \return Was pull request handled (and result buffer filled) - or should it be handled by port in the standard way (now)?
    */
-  virtual bool PullRequest(tCheapCopyPort& origin, tCheaplyCopiedBufferManager& result_buffer, bool intermediate_assign) = 0;
+  virtual bool RawPullRequest(tCheapCopyPort& origin, tCheaplyCopiedBufferManager& result_buffer) = 0;
 
 };
 

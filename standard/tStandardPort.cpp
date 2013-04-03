@@ -41,6 +41,7 @@
 #include "plugins/data_ports/common/tPullOperation.h"
 #include "plugins/data_ports/standard/tMultiTypePortBufferPool.h"
 #include "plugins/data_ports/optimized/tCheapCopyPort.h"
+#include "plugins/data_ports/standard/tPullRequestHandlerRaw.h"
 
 //----------------------------------------------------------------------
 // Debugging
@@ -129,6 +130,10 @@ tStandardPort::tStandardPort(common::tAbstractDataPortCreationInfo creation_info
   if (GetFlag(tFlag::HAS_QUEUE))
   {
     input_queue.reset(new common::tPortQueue<tLockingManagerPointer>(!GetFlag(tFlag::HAS_DEQUEUE_ALL_QUEUE)));
+    if (creation_info.max_queue_size > 0)
+    {
+      input_queue->SetMaxQueueLength(creation_info.max_queue_size);
+    }
   }
 
   PropagateStrategy(NULL, NULL);  // initialize strategy
@@ -184,12 +189,20 @@ void tStandardPort::BrowserPublish(tUnusedManagerPointer& data, bool notify_list
   }
 }
 
-void tStandardPort::CallPullRequestHandler(tPublishingData& publishing_data, bool intermediate_assign)
+void tStandardPort::CallPullRequestHandler(tPublishingData& publishing_data)
 {
-  tPortBufferManager* mgr = pull_request_handler->PullRequest(*this, publishing_data.added_locks, intermediate_assign);
+  tUniversalManagerPointer mgr = pull_request_handler->RawPullRequest(*this);
   if (mgr)
   {
-    publishing_data.Init(mgr);
+    if (mgr->IsUnused())
+    {
+      mgr->InitReferenceCounter(publishing_data.added_locks);
+    }
+    else
+    {
+      mgr->AddLocks(publishing_data.added_locks - 1); // -1 because we release lock of this pointer later
+    }
+    publishing_data.Init(mgr.release());
   }
 }
 
@@ -296,10 +309,10 @@ void tStandardPort::PrintStructure(int indent, std::stringstream& output)
   }
 }
 
-tStandardPort::tLockingManagerPointer tStandardPort::PullValueRaw(bool intermediate_assign, bool ignore_pull_request_handler_on_this_port)
+tStandardPort::tLockingManagerPointer tStandardPort::PullValueRaw(bool ignore_pull_request_handler_on_this_port)
 {
   common::tPullOperation<tStandardPort, tPublishingData, tPortBufferManager> pull_operation(200);
-  pull_operation.Execute(*this, intermediate_assign);
+  pull_operation.Execute(*this);
   return tLockingManagerPointer(pull_operation.published_buffer);
 }
 

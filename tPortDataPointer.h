@@ -61,6 +61,11 @@ namespace data_ports
 //----------------------------------------------------------------------
 // Forward declarations / typedefs / enums
 //----------------------------------------------------------------------
+namespace api
+{
+template <typename U, bool>
+class tPullRequestHandlerAdapter;
+}
 
 //----------------------------------------------------------------------
 // Class declaration
@@ -182,6 +187,9 @@ private:
 
   friend struct api::tPortImplementation<tPortData, api::tPortImplementationTypeTrait<tPortData>::type>;
   friend class tGenericPort;
+  template <typename U, bool>
+  friend class api::tPullRequestHandlerAdapter;
+
   template <typename U>
   friend rrlib::serialization::tOutputStream& operator << (rrlib::serialization::tOutputStream& stream, const tPortDataPointer<U>& data);
   template <typename U>

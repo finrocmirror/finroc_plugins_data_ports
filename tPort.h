@@ -245,13 +245,11 @@ public:
   /*!
    * Pulls port data (regardless of strategy)
    *
-   * \param intermediate_assign Assign pulled value to ports in between?
-   *
    * \return Pulled locked data
    */
-  inline tPortDataPointer<const T> GetPull(bool intermediate_assign)
+  inline tPortDataPointer<const T> GetPull()
   {
-    auto buffer_pointer = GetWrapped()->GetPullRaw(intermediate_assign, false);
+    auto buffer_pointer = GetWrapped()->GetPullRaw(false);
     return tPortDataPointer<const T>(buffer_pointer, *GetWrapped());
   }
 

@@ -43,6 +43,9 @@
 //----------------------------------------------------------------------
 // Internal includes with ""
 //----------------------------------------------------------------------
+#include "plugins/data_ports/api/tPullRequestHandlerAdapter.h"
+#include "plugins/data_ports/api/tPullRequestHandlerAdapter.h"
+#include "plugins/data_ports/standard/tStandardPort.h"
 
 //----------------------------------------------------------------------
 // Namespace declaration
@@ -62,20 +65,19 @@ namespace data_ports
 //! Port pull request callback
 /*!
  * Can be used to handle pull requests of - typically - output ports
+ * in a custom way.
  */
 template <typename T>
-class tPullRequestHandler : public api::tPullRequestHandlerAdapter<T, api::tIsCheaplyCopiedType<T>::value>
+class tPullRequestHandler : public api::tPullRequestHandlerAdapter<T, tIsCheaplyCopiedType<T>::value>
 {
 
   /*!
-   * Called whenever a pull request is intercepted
+   * Called whenever a pull request is received
    *
-   * \param origin (Output) Port that pull request comes from
-   * \param result Buffer to store result in
-   * \param timestamp Timestamp of pulled data
-   * \return Was buffer filled? - return false if pull should be handled by port (now)
+   * \param origin Port that pull request comes from (the port that this handler is attached to)
+   * \return Pulled buffer (used or unused) - return NULL if pull request should be handled by port instead (as if no pull handler was present)
    */
-  virtual bool PullRequest(const tPort<T>& origin, T& result, rrlib::time::tTimestamp& timestamp) = 0;
+  virtual tPortDataPointer<const T> PullRequest(common::tAbstractDataPort& origin) = 0;
 
 };
 

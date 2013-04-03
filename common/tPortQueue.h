@@ -165,6 +165,18 @@ public:
     return fifo_queue ? queue_fifo->GetMaxLength() : queue_all->GetMaxLength();
   }
 
+  void SetMaxQueueLength(int new_max_length)
+  {
+    if (fifo_queue)
+    {
+      queue_fifo->SetMaxLength(new_max_length);
+    }
+    else
+    {
+      queue_all->SetMaxLength(new_max_length);
+    }
+  }
+
 //----------------------------------------------------------------------
 // Private fields and methods
 //----------------------------------------------------------------------

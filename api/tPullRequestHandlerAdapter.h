@@ -43,6 +43,8 @@
 //----------------------------------------------------------------------
 // Internal includes with ""
 //----------------------------------------------------------------------
+#include "plugins/data_ports/optimized/tPullRequestHandlerRaw.h"
+#include "plugins/data_ports/standard/tPullRequestHandlerRaw.h"
 
 //----------------------------------------------------------------------
 // Namespace declaration
@@ -65,44 +67,69 @@ namespace api
 /*!
  * Adapts tPortPullRequestHandlerRaw of different port implementations to tPortPullRequestHandler
  */
-template <typename T, tPortImplementationType TPortImplementationType>
+template <typename T, bool CHEAPLY_COPIED_TYPE>
 class tPullRequestHandlerAdapter : public optimized::tPullRequestHandlerRaw
 {
-  typedef tPortImplementation<T, TPortImplementationType> tImplementation;
+  typedef tPortImplementation<T, api::tPortImplementationTypeTrait<T>::type> tImplementation;
 
-  virtual bool PullRequest(const tPort<T>& origin, T& result) = 0;
+  virtual tPortDataPointer<const T> PullRequest(common::tAbstractDataPort& origin) = 0;
 
-  virtual bool PullRequest(optimized::tCheapCopyPort& origin, optimized::tCheaplyCopiedBufferManager& result_buffer, bool intermediate_assign)
+  virtual bool RawPullRequest(optimized::tCheapCopyPort& origin, optimized::tCheaplyCopiedBufferManager& result_buffer)
   {
-    T t = T();
-    rrlib::time::tTimestamp timestamp(rrlib::time::cNO_TIME);
-    bool result = PullRequeust(tPort<T>(origin), t, timestamp);
-    if (result)
+    tPortDataPointer<const T> pulled_buffer = PullRequest(origin);
+    if (pulled_buffer)
     {
-      tImplementation::Assign(result_buffer.GetObject().GetData<typename tImplementation::tPortBuffer>(), t, origin);
+      tImplementation::Assign(result_buffer.GetObject().GetData<typename tImplementation::tPortBuffer>(), *pulled_buffer, origin);
+      result_buffer.SetTimestamp(pulled_buffer->GetTimestamp());
     }
-    return result;
+    return pulled_buffer;
   }
 };
 
 template <typename T>
-class tPullRequestHandlerAdapter<T, tPortImplementationType::STANDARD> : public standard::tPullRequestHandlerRaw
+class tPullRequestHandlerAdapter<T, false> : public standard::tPullRequestHandlerRaw
 {
-  virtual bool PullRequest(const tPort<T>& origin, T& result) = 0;
+  virtual tPortDataPointer<const T> PullRequest(common::tAbstractDataPort& origin) = 0;
 
-  virtual standard::tPortBufferManager* PullRequest(standard::tStandardPort& origin, int add_locks, bool intermediate_assign)
+  virtual typename standard::tStandardPort::tUniversalManagerPointer RawPullRequest(standard::tStandardPort& origin)
   {
-    T t = T();
+    tPortDataPointer<const T> pulled_buffer = PullRequest(origin);
+    typename standard::tStandardPort::tUniversalManagerPointer buffer(pulled_buffer.implementation.Release());
+    return buffer;
+    /*typename standard::tStandardPort::tUnusedManagerPointer buffer(origin.GetUnusedBufferRaw());
     rrlib::time::tTimestamp timestamp(rrlib::time::cNO_TIME);
-    bool result = PullRequeust(tPort<T>(origin), t, timestamp);
+    bool result = PullRequeust(tPort<T>(origin), buffer->GetObject().GetData<T>(), timestamp);
     if (result)
     {
-      typename standard::tStandardPort::tUnusedManagerPointer buffer(origin.GetUnusedBufferRaw());
-      rrlib::rtti::sStaticTypeInfo<T>::DeepCopy(t, buffer.GetObject.GetData<T>());
+      buffer->SetTimestamp(timestamp);
       buffer.InitReferenceCounter(add_locks);
       return buffer.release();
     }
-    return NULL;
+    return NULL;*/
+  }
+};
+
+template <>
+class tPullRequestHandlerAdapter<rrlib::rtti::tGenericObject, false> : public standard::tPullRequestHandlerRaw, public optimized::tPullRequestHandlerRaw
+{
+  virtual tPortDataPointer<const rrlib::rtti::tGenericObject> PullRequest(common::tAbstractDataPort& origin) = 0;
+
+  virtual typename standard::tStandardPort::tUniversalManagerPointer RawPullRequest(standard::tStandardPort& origin)
+  {
+    tPortDataPointer<const rrlib::rtti::tGenericObject> pulled_buffer = PullRequest(origin);
+    typename standard::tStandardPort::tUniversalManagerPointer buffer(static_cast<standard::tPortBufferManager*>(pulled_buffer.implementation.Release()));
+    return buffer;
+  }
+
+  virtual bool RawPullRequest(optimized::tCheapCopyPort& origin, optimized::tCheaplyCopiedBufferManager& result_buffer)
+  {
+    tPortDataPointer<const rrlib::rtti::tGenericObject> pulled_buffer = PullRequest(origin);
+    if (pulled_buffer)
+    {
+      result_buffer.GetObject().DeepCopyFrom(*pulled_buffer, NULL);
+      result_buffer.SetTimestamp(pulled_buffer.GetTimestamp());
+    }
+    return pulled_buffer;
   }
 };
 

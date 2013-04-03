@@ -95,10 +95,24 @@ tPortDataPointerImplementation<rrlib::rtti::tGenericObject, false> tDeserializat
     {
       throw std::runtime_error("No scope created");
     }
-    auto buffer = current_scope->buffer_source.GetUnusedBuffer(type);
+    if (!current_scope->buffer_source)
+    {
+      current_scope->buffer_source = &current_scope->ObtainBufferPool();
+    }
+    auto buffer = current_scope->buffer_source->GetUnusedBuffer(type);
     return tPortDataPointerImplementation<rrlib::rtti::tGenericObject, false>(buffer.release(), true);
   }
 }
+
+standard::tMultiTypePortBufferPool& tDeserializationScope::ObtainBufferPool()
+{
+  if (!buffer_source)
+  {
+    throw std::logic_error("This must be implemented if scope class can be created without providing buffer pool.");
+  }
+  return *buffer_source;
+}
+
 
 
 //----------------------------------------------------------------------

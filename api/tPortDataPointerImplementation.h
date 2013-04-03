@@ -80,7 +80,7 @@ class tPortDataPointerImplementation : boost::noncopyable
 //----------------------------------------------------------------------
 public:
 
-  inline tPortDataPointerImplementation() : buffer_manager(NULL)
+  inline tPortDataPointerImplementation() : buffer_manager()
   {
   }
 
@@ -101,7 +101,7 @@ public:
 
   // Move constructor
   inline tPortDataPointerImplementation(tPortDataPointerImplementation && other) :
-    buffer_manager(NULL)
+    buffer_manager()
   {
     std::swap(buffer_manager, other.buffer_manager);
   }
@@ -113,25 +113,6 @@ public:
     return *this;
   }
 
-  inline ~tPortDataPointerImplementation()
-  {
-    if (buffer_manager)
-    {
-      if (buffer_manager->IsUnused())
-      {
-        // recycle unused buffer
-        typename standard::tStandardPort::tUnusedManagerPointer::deleter_type deleter;
-        deleter(buffer_manager);
-      }
-      else
-      {
-        // reduce reference counter
-        typename standard::tStandardPort::tLockingManagerPointer::deleter_type deleter;
-        deleter(buffer_manager);
-      }
-    }
-  }
-
   void Deserialize(rrlib::serialization::tInputStream& stream)
   {
     if (stream.ReadBoolean())
@@ -139,7 +120,7 @@ public:
       if (!Get())
       {
         *this = tPortDataPointerImplementation();
-        buffer_manager = tDeserializationScope::GetBufferSource().GetUnusedBuffer(rrlib::rtti::tDataType<T>()).release();
+        buffer_manager.reset(tDeserializationScope::GetBufferSource().GetUnusedBuffer(rrlib::rtti::tDataType<T>()).release());
       }
       stream >> *Get();
       rrlib::time::tTimestamp timestamp;
@@ -164,7 +145,7 @@ public:
 
   inline standard::tPortBufferManager* Release()
   {
-    standard::tPortBufferManager* temp = buffer_manager;
+    standard::tPortBufferManager* temp = buffer_manager.release();
     buffer_manager = NULL;
     return temp;
   }
@@ -190,7 +171,7 @@ public:
 private:
 
   /*! Locked buffer */
-  standard::tPortBufferManager* buffer_manager;
+  typename standard::tStandardPort::tUniversalManagerPointer buffer_manager;
 };
 
 template <typename T>

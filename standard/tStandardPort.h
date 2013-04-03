@@ -53,7 +53,6 @@
 #include "plugins/data_ports/common/tPortQueue.h"
 #include "plugins/data_ports/common/tPublishOperation.h"
 #include "plugins/data_ports/standard/tPortBufferManager.h"
-#include "plugins/data_ports/standard/tPullRequestHandlerRaw.h"
 
 //----------------------------------------------------------------------
 // Namespace declaration
@@ -78,6 +77,7 @@ class tPullOperation;
 namespace standard
 {
 class tMultiTypePortBufferPool;
+class tPullRequestHandlerRaw;
 
 //----------------------------------------------------------------------
 // Class declaration
@@ -110,6 +110,28 @@ private:
     }
   };
 
+  struct tUniversalPortBufferUnlocker
+  {
+    void operator()(tPortBufferManager* p) const
+    {
+      if (p)
+      {
+        if (p->IsUnused())
+        {
+          // recycle unused buffer
+          typename standard::tStandardPort::tUnusedManagerPointer::deleter_type deleter;
+          deleter(p);
+        }
+        else
+        {
+          // reduce reference counter
+          typename standard::tStandardPort::tLockingManagerPointer::deleter_type deleter;
+          deleter(p);
+        }
+      }
+    }
+  };
+
 //----------------------------------------------------------------------
 // Public methods and typedefs
 //----------------------------------------------------------------------
@@ -120,6 +142,14 @@ public:
 
   /*! std::unique_ptr that automatically recycles buffer when deleted */
   typedef typename tBufferPool::tPointer tUnusedManagerPointer;
+
+  /*!
+   * std::unique_ptr that automatically releases lock or recycles buffer when deleted
+   * depending on whether this is an (un) used buffer
+   *
+   * Meant for places where unused as well as locked buffers can be used
+   */
+  typedef std::unique_ptr<tPortBufferManager, tUniversalPortBufferUnlocker> tUniversalManagerPointer;
 
   /*! std::unique_ptr Pointer in a queue fragment */
   typedef typename common::tPortQueue<tLockingManagerPointer>::tPortBufferContainerPointer tPortBufferContainerPointer;
@@ -211,13 +241,12 @@ public:
   /*!
    * Pulls port data (regardless of strategy)
    *
-   * \param intermediate_assign Assign pulled value to ports in between?
    * \param ignore_pull_request_handler_on_this_port Ignore any pull request handler on this port?
    * \return Pulled data in locked buffer
    */
-  inline tLockingManagerPointer GetPullRaw(bool intermediate_assign, bool ignore_pull_request_handler_on_this_port)
+  inline tLockingManagerPointer GetPullRaw(bool ignore_pull_request_handler_on_this_port)
   {
-    return PullValueRaw(intermediate_assign, ignore_pull_request_handler_on_this_port);
+    return PullValueRaw(ignore_pull_request_handler_on_this_port);
   }
 
   /*!
@@ -455,10 +484,8 @@ private:
 
   /*!
    * Calls pull request handler
-   *
-   * \param publishing_data Info on current pull operation
    */
-  void CallPullRequestHandler(tPublishingData& publishing_data, bool intermediate_assign);
+  void CallPullRequestHandler(tPublishingData& publishing_data);
 
   /*!
    * \return Created default value (if default value was set in creation_info; buffer comes from buffer pool)
@@ -575,11 +602,10 @@ private:
    * Pull/read current value from source port
    * When multiple source ports are available an arbitrary one of them is used.
    *
-   * \param intermediate_assign Assign pulled value to ports in between?
    * \param ignore_pull_request_handler_on_this_port Ignore pull request handler on first port? (for network port pulling it's good if pullRequestHandler is not called on first port)
    * \return Locked port data
    */
-  tLockingManagerPointer PullValueRaw(bool intermediate_assign = true, bool ignore_pull_request_handler_on_this_port = false);
+  tLockingManagerPointer PullValueRaw(bool ignore_pull_request_handler_on_this_port = false);
 
   //virtual void SetMaxQueueLengthImplementation(int length);
 

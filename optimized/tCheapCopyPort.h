@@ -358,23 +358,21 @@ public:
 //  /*!
 //   * Pulls port data (regardless of strategy) and returns it in interhread container
 //   * (careful: no auto-release of lock)
-//   * \param intermediate_assign Assign pulled value to ports in between?
 //   * \param ignore_pull_request_handler_on_this_port Ignore pull request handler on first port? (for network port pulling it's good if pullRequestHandler is not called on first port)
 //   *
 //   * \return Pulled locked data
 //   */
-//  tCCPortDataManager* GetPullInInterthreadContainerRaw(bool intermediate_assign, bool ignore_pull_request_handler_on_this_port);
+//  tCCPortDataManager* GetPullInInterthreadContainerRaw(bool ignore_pull_request_handler_on_this_port);
 
   /*!
    * Pulls port data (regardless of strategy)
    *
-   * \param intermediate_assign Assign pulled value to ports in between?
    * \param ignore_pull_request_handler_on_this_port Ignore any pull request handler on this port?
    * \return Pulled data in locked buffer
    */
-  inline tLockingManagerPointer GetPullRaw(bool intermediate_assign, bool ignore_pull_request_handler_on_this_port)
+  inline tLockingManagerPointer GetPullRaw(bool ignore_pull_request_handler_on_this_port)
   {
-    return PullValueRaw(intermediate_assign, ignore_pull_request_handler_on_this_port);
+    return PullValueRaw(ignore_pull_request_handler_on_this_port);
   }
 
   /*!
@@ -739,8 +737,8 @@ private:
    *
    * \param publishing_data Info on current pull operation
    */
-  void CallPullRequestHandler(tPublishingDataGlobalBuffer& publishing_data, bool intermediate_assign);
-  void CallPullRequestHandler(tPublishingDataThreadLocalBuffer& publishing_data, bool intermediate_assign);
+  void CallPullRequestHandler(tPublishingDataGlobalBuffer& publishing_data);
+  void CallPullRequestHandler(tPublishingDataThreadLocalBuffer& publishing_data);
 
 //  /*!
 //   * Get current data in container owned by this thread with a lock.
@@ -948,11 +946,10 @@ private:
    * Pull/read current value from source port
    * When multiple source ports are available, an arbitrary one of them is used.
    *
-   * \param intermediate_assign Assign pulled value to ports in between?
    * \param ignore_pull_request_handler_on_this_port Ignore pull request handler on first port? (for network port pulling it's good if pullRequestHandler is not called on first port)
    * \return Locked port data (current thread is owner; there is one additional lock for caller; non-const(!))
    */
-  tLockingManagerPointer PullValueRaw(bool intermediate_assign = true, bool ignore_pull_request_handler_on_this_port = false);
+  tLockingManagerPointer PullValueRaw(bool ignore_pull_request_handler_on_this_port = false);
 
 //  virtual void SetMaxQueueLengthImpl(int length);
 
