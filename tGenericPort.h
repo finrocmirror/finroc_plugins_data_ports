@@ -252,11 +252,11 @@ public:
   {
     if (IsCheaplyCopiedType(GetWrapped()->GetDataType()))
     {
-      static_cast<standard::tStandardPort*>(GetWrapped())->SetPullRequestHandler(pull_request_handler);
+      static_cast<optimized::tCheapCopyPort*>(GetWrapped())->SetPullRequestHandler(pull_request_handler);
     }
     else
     {
-      static_cast<optimized::tCheapCopyPort*>(GetWrapped())->SetPullRequestHandler(pull_request_handler);
+      static_cast<standard::tStandardPort*>(GetWrapped())->SetPullRequestHandler(pull_request_handler);
     }
   }
 

@@ -45,6 +45,7 @@
 //----------------------------------------------------------------------
 #include "plugins/data_ports/optimized/tPullRequestHandlerRaw.h"
 #include "plugins/data_ports/standard/tPullRequestHandlerRaw.h"
+#include "plugins/data_ports/api/tPortImplementation.h"
 
 //----------------------------------------------------------------------
 // Namespace declaration

@@ -58,6 +58,7 @@ namespace optimized
 // Forward declarations / typedefs / enums
 //----------------------------------------------------------------------
 class tCheapCopyPort;
+class tCheaplyCopiedBufferManager;
 
 //----------------------------------------------------------------------
 // Class declaration
