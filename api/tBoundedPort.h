@@ -109,7 +109,7 @@ public:
     }
     bounds = new_bounds;
     tBufferType value_buffer = tBufferType();
-    CopyCurrentValue(value_buffer, true);
+    CopyCurrentValue(value_buffer, tStrategy::NEVER_PULL);
     T value = tImplementationVariation::ToValue(value_buffer, GetUnit());
     if (!bounds.InBounds(value))
     {
@@ -137,7 +137,7 @@ private:
   }
 
   virtual std::string BrowserPublishRaw(tUnusedManagerPointer& buffer, bool notify_listener_on_this_port = true,
-                                        common::tAbstractDataPort::tChangeStatus change_constant = common::tAbstractDataPort::tChangeStatus::CHANGED) // FIXME: explicitly override when we use gcc 4.7
+                                        tChangeStatus change_constant = tChangeStatus::CHANGED) // FIXME: explicitly override when we use gcc 4.7
   {
     if (buffer->GetObject().GetType() != GetDataType())
     {

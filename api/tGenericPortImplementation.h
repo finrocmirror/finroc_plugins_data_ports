@@ -96,6 +96,14 @@ public:
   virtual void Get(core::tAbstractPort& port, rrlib::rtti::tGenericObject& result, rrlib::time::tTimestamp& timestamp) = 0;
 
   /*!
+   * Gets Port's current value buffer
+   *
+   * \param strategy Strategy to use for get operation
+   * \return Buffer with port's current value with read lock.
+   */
+  virtual tPortDataPointer<const rrlib::rtti::tGenericObject> GetPointer(core::tAbstractPort& port, tStrategy strategy) = 0;
+
+  /*!
    * \return Port's default value (NULL if none has been set)
    */
   const rrlib::rtti::tGenericObject* GetDefaultValue(core::tAbstractPort& port)

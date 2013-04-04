@@ -79,8 +79,6 @@ class tPublishOperation : public TPublishingData
 //----------------------------------------------------------------------
 public:
 
-  typedef common::tAbstractDataPort::tChangeStatus tChangeStatus;
-
   template <typename ... TArgs>
   tPublishOperation(TArgs && ... args) : TPublishingData(std::forward<TArgs>(args)...) {}
 

@@ -91,6 +91,8 @@ class tPortDataPointer : boost::noncopyable
   /*! Actual implementation of smart pointer class */
   typedef api::tPortDataPointerImplementation<tPortData, tIsCheaplyCopiedType<tPortData>::value> tImplementation;
 
+  friend class tPortDataPointer<const tPortData>;
+
 //----------------------------------------------------------------------
 // Public methods and typedefs
 //----------------------------------------------------------------------
@@ -118,6 +120,13 @@ public:
   inline tPortDataPointer(tImplementation && impl) : implementation()
   {
     std::swap(implementation, impl);
+  }
+
+  // Move constructor for non-const pointers
+  template < bool ENABLE = !std::is_same<tPortData, T>::value >
+  inline tPortDataPointer(typename std::enable_if<ENABLE, tPortDataPointer<tPortData>>::type && non_const_pointer) :
+    implementation(std::move(non_const_pointer.implementation))
+  {
   }
 
   // Move assignment

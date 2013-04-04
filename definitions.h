@@ -19,23 +19,17 @@
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 //----------------------------------------------------------------------
-/*!\file    plugins/data_ports/tChangeContext.h
+/*!\file    plugins/data_ports/definitions.h
  *
  * \author  Max Reichardt
  *
- * \date    2013-02-25
+ * \date    2013-04-04
  *
- * \brief   Contains tChangeContext
- *
- * \b tChangeContext
- *
- * Contains information on context of a port buffer change
- * (e.g. timestamp, port that changed, type of change)
- *
+ * Various definitions for data_ports plugin.
  */
 //----------------------------------------------------------------------
-#ifndef __plugins__data_ports__tChangeContext_h__
-#define __plugins__data_ports__tChangeContext_h__
+#ifndef __plugins__data_ports__definitions_h__
+#define __plugins__data_ports__definitions_h__
 
 //----------------------------------------------------------------------
 // External includes (system with <>, local with "")
@@ -44,7 +38,6 @@
 //----------------------------------------------------------------------
 // Internal includes with ""
 //----------------------------------------------------------------------
-#include "plugins/data_ports/common/tAbstractDataPort.h"
 
 //----------------------------------------------------------------------
 // Namespace declaration
@@ -58,66 +51,31 @@ namespace data_ports
 // Forward declarations / typedefs / enums
 //----------------------------------------------------------------------
 
-//----------------------------------------------------------------------
-// Class declaration
-//----------------------------------------------------------------------
-//! Information on port buffer change
 /*!
- * Contains information on context of a port buffer change
- * (e.g. timestamp, port that changed, type of change)
+ * Strategy for get operations
  */
-class tChangeContext
+enum tStrategy
 {
-
-//----------------------------------------------------------------------
-// Public methods and typedefs
-//----------------------------------------------------------------------
-public:
-
-  tChangeContext(common::tAbstractDataPort& origin, const rrlib::time::tTimestamp& timestamp, tChangeStatus change_type) :
-    origin(origin),
-    timestamp(timestamp),
-    change_type(change_type)
-  {}
-
-  /*!
-   * \return Is this a change from an ordinary publishing operation - or e.g. an initial push?
-   */
-  tChangeStatus ChangeType()
-  {
-    return change_type;
-  }
-
-  /*!
-   * \return Port that value comes from
-   */
-  common::tAbstractDataPort& Origin()
-  {
-    return origin;
-  }
-
-  /*!
-   * \return Timestamp attached to new port value/buffer
-   */
-  rrlib::time::tTimestamp Timestamp()
-  {
-    return timestamp;
-  }
-
-//----------------------------------------------------------------------
-// Private fields and methods
-//----------------------------------------------------------------------
-private:
-
-  /*! Port that value comes from */
-  common::tAbstractDataPort& origin;
-
-  /*! Timestamp attached to new port value/buffer */
-  rrlib::time::tTimestamp timestamp;
-
-  /*! Is this a change from an ordinary publishing operation - or e.g. an initial push? */
-  tChangeStatus change_type;
+  DEFAULT,                            //!< Use strategy set in port
+  NEVER_PULL,                         //!< Do not attempt to pull data - even if port is on pull strategy
+  PULL,                               //!< Always pull port data (regardless of port's strategy)
+  PULL_IGNORING_HANDLER_ON_THIS_PORT  //!< Always pull port data (regardless of port's strategy). Any pull request handler on this port is ignored.
 };
+
+/*! Constants for port's change flag */
+enum class tChangeStatus : int8_t
+{
+  NO_CHANGE,      //!< Port data has not changed since last reset
+  CHANGED,        //!< Port data has changed since last reset
+  CHANGED_INITIAL //!< Port data has changed since last reset - due to initial pushing on connection
+};
+
+/*! Timeout for pull operations */
+static constexpr rrlib::time::tDuration cPULL_TIMEOUT = std::chrono::seconds(1);
+
+//----------------------------------------------------------------------
+// Function declarations
+//----------------------------------------------------------------------
 
 //----------------------------------------------------------------------
 // End of namespace declaration

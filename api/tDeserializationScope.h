@@ -92,7 +92,7 @@ public:
     current_scope = this;
   }
 
-  ~tDeserializationScope()
+  virtual ~tDeserializationScope()
   {
     current_scope = outer_scope; // restores old scope
   }

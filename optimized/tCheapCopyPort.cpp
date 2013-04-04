@@ -151,7 +151,7 @@ void tCheapCopyPort::ApplyDefaultValue()
   // Publish(*default_value); TODO
 }
 
-std::string tCheapCopyPort::BrowserPublishRaw(tUnusedManagerPointer& buffer, bool notify_listener_on_this_port, common::tAbstractDataPort::tChangeStatus change_constant)
+std::string tCheapCopyPort::BrowserPublishRaw(tUnusedManagerPointer& buffer, bool notify_listener_on_this_port, tChangeStatus change_constant)
 {
   if (buffer->GetThreadLocalOrigin()) // Is current thread the owner?
   {
@@ -235,9 +235,9 @@ void tCheapCopyPort::CallPullRequestHandler(tPublishingDataThreadLocalBuffer& pu
 //  return result;
 //}
 
-void tCheapCopyPort::CopyCurrentValueToGenericObject(rrlib::rtti::tGenericObject& buffer, rrlib::time::tTimestamp& timestamp, bool dont_pull)
+void tCheapCopyPort::CopyCurrentValueToGenericObject(rrlib::rtti::tGenericObject& buffer, rrlib::time::tTimestamp& timestamp, tStrategy strategy)
 {
-  if (PushStrategy() || dont_pull)
+  if ((strategy == tStrategy::DEFAULT && PushStrategy()) || strategy == tStrategy::NEVER_PULL)
   {
     for (; ;)
     {
@@ -253,7 +253,7 @@ void tCheapCopyPort::CopyCurrentValueToGenericObject(rrlib::rtti::tGenericObject
   }
   else
   {
-    tLockingManagerPointer dc = PullValueRaw();
+    tLockingManagerPointer dc = PullValueRaw(strategy == tStrategy::PULL_IGNORING_HANDLER_ON_THIS_PORT);
     buffer.DeepCopyFrom(dc->GetObject(), NULL);
     timestamp = dc->GetTimestamp();
   }
@@ -294,7 +294,7 @@ void tCheapCopyPort::ForwardData(tAbstractPort& other)
   else
   {
     tUnusedManagerPointer unused_manager = tUnusedManagerPointer(tGlobalBufferPools::Instance().GetUnusedBuffer(cheaply_copyable_type_index).release());
-    CopyCurrentValueToManager(*unused_manager, true);
+    CopyCurrentValueToManager(*unused_manager, tStrategy::NEVER_PULL);
     common::tPublishOperation<tCheapCopyPort, tPublishingDataGlobalBuffer> data(unused_manager);
     data.Execute<false, tChangeStatus::CHANGED, false, false>(static_cast<tCheapCopyPort&>(other));
   }
@@ -374,7 +374,7 @@ void tCheapCopyPort::InitialPushTo(tAbstractPort& target, bool reverse)
 {
   // this is a one-time event => use global buffer
   tUnusedManagerPointer unused_manager(tGlobalBufferPools::Instance().GetUnusedBuffer(cheaply_copyable_type_index).release());
-  CopyCurrentValueToManager(*unused_manager, true);
+  CopyCurrentValueToManager(*unused_manager, tStrategy::NEVER_PULL);
   common::tPublishOperation<tCheapCopyPort, tPublishingDataGlobalBuffer> data(unused_manager);
   tCheapCopyPort& target_port = static_cast<tCheapCopyPort&>(target);
   if (reverse)
@@ -395,7 +395,7 @@ void tCheapCopyPort::LockCurrentValueForPublishing(tPublishingDataGlobalBuffer& 
     if (current_buffer->GetThreadLocalOrigin())
     {
       tUnusedManagerPointer unused_manager = tUnusedManagerPointer(tGlobalBufferPools::Instance().GetUnusedBuffer(cheaply_copyable_type_index).release());
-      CopyCurrentValueToManager(*unused_manager, true);
+      CopyCurrentValueToManager(*unused_manager, tStrategy::NEVER_PULL);
       publishing_data.Init(unused_manager);
       return;
     }

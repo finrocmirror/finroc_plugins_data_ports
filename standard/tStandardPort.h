@@ -174,8 +174,7 @@ public:
    * \param notify_listener_on_this_port Notify listener on this port?
    * \param change_constant Change constant to use for publishing operation
    */
-  void BrowserPublish(tUnusedManagerPointer& data, bool notify_listener_on_this_port = true,
-                      common::tAbstractDataPort::tChangeStatus change_constant = common::tAbstractDataPort::tChangeStatus::CHANGED);
+  void BrowserPublish(tUnusedManagerPointer& data, bool notify_listener_on_this_port = true, tChangeStatus change_constant = tChangeStatus::CHANGED);
 
   /*!
    * Dequeue all elements currently in port's input queue
@@ -208,18 +207,20 @@ public:
   virtual void ForwardData(tAbstractPort& other); // TODO either add to AbstractDataPort or remove virtuality and add comment
 
   /*!
-   * \param never_pull Do not attempt to pull data - even if port is on push strategy
+   * Obtain port's current value
+   *
+   * \param strategy Strategy to use for get operation
    * \return Current locked port data buffer
    */
-  inline tLockingManagerPointer GetCurrentValueRaw(bool never_pull = false)
+  inline tLockingManagerPointer GetCurrentValueRaw(tStrategy strategy = tStrategy::DEFAULT)
   {
-    if (PushStrategy() || never_pull)
+    if ((strategy == tStrategy::DEFAULT && PushStrategy()) || strategy == tStrategy::NEVER_PULL)
     {
       return LockCurrentValueForRead();
     }
     else
     {
-      return PullValueRaw();
+      return PullValueRaw(strategy == tStrategy::PULL_IGNORING_HANDLER_ON_THIS_PORT);
     }
   }
 
@@ -236,17 +237,6 @@ public:
   const rrlib::rtti::tGenericObject* GetDefaultValue() const
   {
     return default_value ? &(default_value->GetObject()) : NULL;
-  }
-
-  /*!
-   * Pulls port data (regardless of strategy)
-   *
-   * \param ignore_pull_request_handler_on_this_port Ignore any pull request handler on this port?
-   * \return Pulled data in locked buffer
-   */
-  inline tLockingManagerPointer GetPullRaw(bool ignore_pull_request_handler_on_this_port)
-  {
-    return PullValueRaw(ignore_pull_request_handler_on_this_port);
   }
 
   /*!

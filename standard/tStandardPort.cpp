@@ -163,7 +163,7 @@ void tStandardPort::ApplyDefaultValue()
   Publish(default_value);
 }
 
-void tStandardPort::BrowserPublish(tUnusedManagerPointer& data, bool notify_listener_on_this_port, common::tAbstractDataPort::tChangeStatus change_constant)
+void tStandardPort::BrowserPublish(tUnusedManagerPointer& data, bool notify_listener_on_this_port, tChangeStatus change_constant)
 {
   if (notify_listener_on_this_port)
   {
@@ -259,7 +259,7 @@ tStandardPort::tUnusedManagerPointer tStandardPort::GetUnusedBufferRaw(const rrl
 
 void tStandardPort::InitialPushTo(tAbstractPort& target, bool reverse)
 {
-  tLockingManagerPointer manager = GetCurrentValueRaw(true);
+  tLockingManagerPointer manager = GetCurrentValueRaw(tStrategy::NEVER_PULL);
   assert(IsReady());
 
   common::tPublishOperation<tStandardPort, tPublishingData> data(manager, 1000);

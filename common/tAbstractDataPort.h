@@ -44,6 +44,7 @@
 //----------------------------------------------------------------------
 // Internal includes with ""
 //----------------------------------------------------------------------
+#include "plugins/data_ports/definitions.h"
 #include "plugins/data_ports/common/tAbstractDataPortCreationInfo.h"
 #include "plugins/data_ports/common/tPortListenerRaw.h"
 
@@ -75,22 +76,6 @@ class tAbstractDataPort : public core::tAbstractPort
 // Public methods and typedefs
 //----------------------------------------------------------------------
 public:
-
-  /*! Constants for port's change flag */
-enum class tChangeStatus : int8_t
-  {
-    NO_CHANGE,      //!< Port data has not changed since last reset
-    CHANGED,        //!< Port data has changed since last reset
-    CHANGED_INITIAL //!< Port data has changed since last reset - due to initial pushing on connection
-  };
-
-  /*! Timeout for pull operations */
-#if (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6))
-  static constexpr rrlib::time::tDuration cPULL_TIMEOUT = std::chrono::seconds(1);
-#else
-  static rrlib::time::tDuration cPULL_TIMEOUT;
-#endif
-
 
   tAbstractDataPort(const tAbstractDataPortCreationInfo& create_info);
 

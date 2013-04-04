@@ -3,6 +3,7 @@
 
   <finrocplugin name="data_ports">
     <sources>
+      definitions.h
       tBounds.h
       tChangeContext.h
       tUnit.cpp

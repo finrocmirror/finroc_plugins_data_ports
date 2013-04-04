@@ -184,7 +184,7 @@ public:
    * \return Error message if something did not work
    */
   virtual std::string BrowserPublishRaw(tUnusedManagerPointer& buffer, bool notify_listener_on_this_port = true,
-                                        common::tAbstractDataPort::tChangeStatus change_constant = common::tAbstractDataPort::tChangeStatus::CHANGED);
+                                        tChangeStatus change_constant = tChangeStatus::CHANGED);
 
   /*!
    * \return Does port contain default value?
@@ -196,21 +196,21 @@ public:
    *
    * \param buffer Buffer to copy current data to
    * \param timestamp Buffer to copy attached time stamp to
-   * \param dont_pull Do not attempt to pull data - even if port is on push strategy
+   * \param strategy Strategy to use for get operation
    */
-  void CopyCurrentValueToGenericObject(rrlib::rtti::tGenericObject& buffer, rrlib::time::tTimestamp& timestamp, bool dont_pull = false);
+  void CopyCurrentValueToGenericObject(rrlib::rtti::tGenericObject& buffer, rrlib::time::tTimestamp& timestamp, tStrategy strategy = tStrategy::DEFAULT);
 
   /*!
    * Copy current value to buffer managed by manager (including time stamp)
    *
    * \param buffer Buffer to copy current data
-   * \param dont_pull Do not attempt to pull data - even if port is on push strategy
+   * \param strategy Strategy to use for get operation
    */
   template <typename TManager>
-  inline void CopyCurrentValueToManager(TManager& buffer, bool dont_pull = false)
+  inline void CopyCurrentValueToManager(TManager& buffer, tStrategy strategy = tStrategy::DEFAULT)
   {
     rrlib::time::tTimestamp timestamp;
-    CopyCurrentValueToGenericObject(buffer.GetObject(), timestamp, dont_pull);
+    CopyCurrentValueToGenericObject(buffer.GetObject(), timestamp, strategy);
     buffer.SetTimestamp(timestamp);
   }
 
@@ -218,12 +218,12 @@ public:
    * Copy current value to buffer (Most efficient get()-version)
    *
    * \param buffer Buffer to copy current data to
-   * \param never_pull Do not attempt to pull data - even if port is on push strategy
+   * \param strategy Strategy to use for get operation
    */
   template <typename T>
-  inline void CopyCurrentValue(T& buffer, bool never_pull = false)
+  inline void CopyCurrentValue(T& buffer, tStrategy strategy = tStrategy::DEFAULT)
   {
-    if (never_pull || PushStrategy())
+    if ((strategy == tStrategy::DEFAULT && PushStrategy()) || strategy == tStrategy::NEVER_PULL)
     {
       for (; ;)
       {
@@ -238,7 +238,7 @@ public:
     }
     else
     {
-      tLockingManagerPointer dc = PullValueRaw();
+      tLockingManagerPointer dc = PullValueRaw(strategy == tStrategy::PULL_IGNORING_HANDLER_ON_THIS_PORT);
       rrlib::rtti::sStaticTypeInfo<T>::DeepCopy(dc->GetObject().GetData<T>(), buffer, NULL);
     }
   }
@@ -248,12 +248,12 @@ public:
    *
    * \param buffer Buffer to copy current data to
    * \param timestamp Buffer to copy current timestamp to
-   * \param never_pull Do not attempt to pull data - even if port is on push strategy
+   * \param strategy Strategy to use for get operation
    */
   template <typename T>
-  inline void CopyCurrentValue(T& buffer, rrlib::time::tTimestamp& timestamp, bool never_pull = false)
+  inline void CopyCurrentValue(T& buffer, rrlib::time::tTimestamp& timestamp, tStrategy strategy = tStrategy::DEFAULT)
   {
-    if (never_pull || PushStrategy())
+    if ((strategy == tStrategy::DEFAULT && PushStrategy()) || strategy == tStrategy::NEVER_PULL)
     {
       for (; ;)
       {
@@ -269,7 +269,7 @@ public:
     }
     else
     {
-      tLockingManagerPointer dc = PullValueRaw();
+      tLockingManagerPointer dc = PullValueRaw(strategy == tStrategy::PULL_IGNORING_HANDLER_ON_THIS_PORT);
       rrlib::rtti::sStaticTypeInfo<T>::DeepCopy(dc->GetObject().GetData<T>(), buffer, NULL);
       timestamp = dc->GetTimestamp();
     }

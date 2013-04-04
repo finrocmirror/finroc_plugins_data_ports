@@ -243,17 +243,6 @@ public:
   }
 
   /*!
-   * Pulls port data (regardless of strategy)
-   *
-   * \return Pulled locked data
-   */
-  inline tPortDataPointer<const T> GetPull()
-  {
-    auto buffer_pointer = GetWrapped()->GetPullRaw(false);
-    return tPortDataPointer<const T>(buffer_pointer, *GetWrapped());
-  }
-
-  /*!
    * \return Wrapped port. For rare case that someone really needs to access ports.
    */
   inline tPortBackend* GetWrapped() const

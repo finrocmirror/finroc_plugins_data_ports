@@ -212,7 +212,7 @@ struct tPortImplementation : public tCheapCopyPortImplementation<T, TYPE>
       buffer->SetTimestamp(timestamp);
       tBase::Assign(buffer->GetObject().GetData<typename tBase::tPortBuffer>(), data, port.GetUnit());
       common::tPublishOperation<optimized::tCheapCopyPort, typename optimized::tCheapCopyPort::tPublishingDataThreadLocalBuffer> publish_operation(buffer.release(), true);
-      publish_operation.Execute<false, common::tAbstractDataPort::tChangeStatus::CHANGED, false, false>(port);
+      publish_operation.Execute<false, tChangeStatus::CHANGED, false, false>(port);
     }
     else
     {
@@ -220,7 +220,7 @@ struct tPortImplementation : public tCheapCopyPortImplementation<T, TYPE>
       buffer->SetTimestamp(timestamp);
       tBase::Assign(buffer->GetObject().GetData<typename tBase::tPortBuffer>(), data, port.GetUnit());
       common::tPublishOperation<optimized::tCheapCopyPort, typename optimized::tCheapCopyPort::tPublishingDataGlobalBuffer> publish_operation(buffer);
-      publish_operation.Execute<false, common::tAbstractDataPort::tChangeStatus::CHANGED, false, false>(port);
+      publish_operation.Execute<false, tChangeStatus::CHANGED, false, false>(port);
     }
   }
 

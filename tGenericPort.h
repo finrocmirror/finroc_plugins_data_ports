@@ -162,7 +162,7 @@ public:
    * \return Error message if something did not work
    */
   inline std::string BrowserPublish(tPortDataPointer<rrlib::rtti::tGenericObject>& pointer, bool notify_listener_on_this_port = true,
-                                    common::tAbstractDataPort::tChangeStatus change_constant = common::tAbstractDataPort::tChangeStatus::CHANGED)
+                                    tChangeStatus change_constant = tChangeStatus::CHANGED)
   {
     if (IsCheaplyCopiedType(pointer->GetType()))
     {
@@ -178,19 +178,33 @@ public:
   }
 
   /*!
-   * Gets Port's current value
+   * Gets port's current value
    *
    * \param result Buffer to (deep) copy port's current value to
    * \param timestamp Buffer to copy timestamp attached to data to (optional)
    */
-  inline const void Get(rrlib::rtti::tGenericObject& result)
+  inline void Get(rrlib::rtti::tGenericObject& result)
   {
     rrlib::time::tTimestamp timestamp;
     Get(result, timestamp);
   }
-  inline const void Get(rrlib::rtti::tGenericObject& result, rrlib::time::tTimestamp& timestamp)
+  inline void Get(rrlib::rtti::tGenericObject& result, rrlib::time::tTimestamp& timestamp)
   {
     implementation->Get(*GetWrapped(), result, timestamp);
+  }
+
+  /*!
+   * Gets Port's current value in buffer
+   *
+   * \param strategy Strategy to use for get operation
+   * \return Buffer with port's current value with read lock.
+   *
+   * Note: Buffer always has data type of port backend (e.g. tNumber instead of double)
+   * If this is not desired, use pass-by-value-Get Operation above.
+   */
+  inline tPortDataPointer<const rrlib::rtti::tGenericObject> GetPointer(tStrategy strategy = tStrategy::DEFAULT)
+  {
+    return implementation->GetPointer(*GetWrapped(), strategy);
   }
 
   /*!

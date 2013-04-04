@@ -119,6 +119,24 @@ public:
     tImplementation::CopyCurrentPortValue(static_cast<tPortBase&>(port), result.GetData<T>(), timestamp);
   }
 
+  virtual tPortDataPointer<const rrlib::rtti::tGenericObject> GetPointer(core::tAbstractPort& abstract_port, tStrategy strategy)
+  {
+    tPortBase& port = static_cast<tPortBase&>(abstract_port);
+    if ((strategy == tStrategy::DEFAULT && port.PushStrategy()) || strategy == tStrategy::NEVER_PULL)
+    {
+      tPortDataPointer<rrlib::rtti::tGenericObject> buffer = this->GetUnusedBuffer(port);
+      rrlib::time::tTimestamp timestamp;
+      port.CopyCurrentValueToGenericObject(*buffer.Get(), timestamp, strategy);
+      buffer.SetTimestamp(timestamp);
+      return std::move(buffer);
+    }
+    else
+    {
+      auto buffer_pointer = port.GetPullRaw(strategy == tStrategy::PULL_IGNORING_HANDLER_ON_THIS_PORT);
+      return tPortDataPointerImplementation<rrlib::rtti::tGenericObject, false>(buffer_pointer.release(), false);
+    }
+  }
+
   virtual void Publish(core::tAbstractPort& port, const rrlib::rtti::tGenericObject& data, const rrlib::time::tTimestamp& timestamp)
   {
     tImplementation::CopyAndPublish(static_cast<tPortBase&>(port), data.GetData<T>(), timestamp);
@@ -147,6 +165,24 @@ public:
     static_cast<tPortBase&>(port).CopyCurrentValueToGenericObject(result, timestamp);
   }
 
+  virtual tPortDataPointer<const rrlib::rtti::tGenericObject> GetPointer(core::tAbstractPort& abstract_port, tStrategy strategy)
+  {
+    tPortBase& port = static_cast<tPortBase&>(abstract_port);
+    if ((strategy == tStrategy::DEFAULT && port.PushStrategy()) || strategy == tStrategy::NEVER_PULL)
+    {
+      tPortDataPointer<rrlib::rtti::tGenericObject> buffer = this->GetUnusedBuffer(port);
+      rrlib::time::tTimestamp timestamp;
+      port.CopyCurrentValueToGenericObject(*buffer.Get(), timestamp, strategy);
+      buffer.SetTimestamp(timestamp);
+      return std::move(buffer);
+    }
+    else
+    {
+      auto buffer_pointer = port.GetPullRaw(strategy == tStrategy::PULL_IGNORING_HANDLER_ON_THIS_PORT);
+      return tPortDataPointerImplementation<rrlib::rtti::tGenericObject, false>(buffer_pointer.release(), false);
+    }
+  }
+
   virtual void Publish(core::tAbstractPort& port, const rrlib::rtti::tGenericObject& data, const rrlib::time::tTimestamp& timestamp)
   {
     assert(data.GetType() == port.GetDataType());
@@ -157,7 +193,7 @@ public:
       buffer->SetTimestamp(timestamp);
       buffer->GetObject().DeepCopyFrom(data);
       common::tPublishOperation<optimized::tCheapCopyPort, typename optimized::tCheapCopyPort::tPublishingDataThreadLocalBuffer> publish_operation(buffer.release(), true);
-      publish_operation.Execute<false, common::tAbstractDataPort::tChangeStatus::CHANGED, false, false>(static_cast<tPortBase&>(port));
+      publish_operation.Execute<false, tChangeStatus::CHANGED, false, false>(static_cast<tPortBase&>(port));
     }
     else
     {
@@ -165,7 +201,7 @@ public:
       buffer->SetTimestamp(timestamp);
       buffer->GetObject().DeepCopyFrom(data);
       common::tPublishOperation<optimized::tCheapCopyPort, typename optimized::tCheapCopyPort::tPublishingDataGlobalBuffer> publish_operation(buffer);
-      publish_operation.Execute<false, common::tAbstractDataPort::tChangeStatus::CHANGED, false, false>(static_cast<tPortBase&>(port));
+      publish_operation.Execute<false, tChangeStatus::CHANGED, false, false>(static_cast<tPortBase&>(port));
     }
   }
 
@@ -191,6 +227,12 @@ public:
     typename tPortBase::tLockingManagerPointer mgr = static_cast<tPortBase&>(port).GetCurrentValueRaw();
     result.DeepCopyFrom(mgr->GetObject());
     timestamp = mgr->GetTimestamp();
+  }
+
+  virtual tPortDataPointer<const rrlib::rtti::tGenericObject> GetPointer(core::tAbstractPort& port, tStrategy strategy)
+  {
+    typename tPortBase::tLockingManagerPointer mgr = static_cast<tPortBase&>(port).GetCurrentValueRaw(strategy);
+    return tPortDataPointerImplementation<rrlib::rtti::tGenericObject, false>(mgr.release(), false);
   }
 
   virtual void Publish(core::tAbstractPort& port, const rrlib::rtti::tGenericObject& data, const rrlib::time::tTimestamp& timestamp)

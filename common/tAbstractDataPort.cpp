@@ -65,11 +65,7 @@ namespace common
 //----------------------------------------------------------------------
 // Const values
 //----------------------------------------------------------------------
-#if (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6))
-constexpr rrlib::time::tDuration tAbstractDataPort::cPULL_TIMEOUT;
-#else
-rrlib::time::tDuration tAbstractDataPort::cPULL_TIMEOUT = std::chrono::seconds(1);
-#endif
+constexpr rrlib::time::tDuration cPULL_TIMEOUT;
 
 //----------------------------------------------------------------------
 // Implementation

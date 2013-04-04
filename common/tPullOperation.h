@@ -115,7 +115,7 @@ private:
         typename TPort::tTaggedBufferPointer::tStorage tagged_pointer_raw = this->published_buffer_tagged_pointer;
         if (tagged_pointer_raw != port.current_value.load())
         {
-          if (!port.template Assign<tAbstractDataPort::tChangeStatus::CHANGED>(*this))
+          if (!port.template Assign<tChangeStatus::CHANGED>(*this))
           {
             port.LockCurrentValueForPublishing(*this);
           }
@@ -131,7 +131,7 @@ private:
       typename TPort::tTaggedBufferPointer::tStorage tagged_pointer_raw = this->published_buffer_tagged_pointer;
       if (tagged_pointer_raw != port.current_value.load())
       {
-        if (!port.template Assign<tAbstractDataPort::tChangeStatus::CHANGED>(*this))
+        if (!port.template Assign<tChangeStatus::CHANGED>(*this))
         {
           port.LockCurrentValueForPublishing(*this);
         }
