@@ -85,12 +85,12 @@ public:
   virtual ~tAbstractPortBufferManager() {}
 
   /*!
-   * \return String containing content type and
+   * \return String containing content type and data pointer
    */
-  inline tString GetContentString() const
+  inline tString GetContentString()
   {
     std::ostringstream os;
-    os << GetObjectImplementation()->GetType().GetName() << " (" << GetObjectImplementation()->GetRawDataPtr() << ")";
+    os << GetObjectImplementation().GetType().GetName() << " (" << GetObjectImplementation().GetRawDataPointer() << ")";
     return os.str();
   }
 

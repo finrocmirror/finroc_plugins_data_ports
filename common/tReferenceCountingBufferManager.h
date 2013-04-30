@@ -40,6 +40,7 @@
 //----------------------------------------------------------------------
 // External includes (system with <>, local with "")
 //----------------------------------------------------------------------
+#include "core/log_messages.h"
 
 //----------------------------------------------------------------------
 // Internal includes with ""
@@ -144,6 +145,7 @@ public:
       TDeleterType deleter;
       deleter(static_cast<TThis*>(this));
     }
+    //FINROC_LOG_PRINT(DEBUG, "Locks Left ", (old_counter - locks_to_release), " ", this, " ", GetContentString());
     return old_value;
   }
 
