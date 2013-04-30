@@ -55,12 +55,16 @@ namespace finroc
 {
 namespace data_ports
 {
-namespace api
-{
 
 //----------------------------------------------------------------------
 // Forward declarations / typedefs / enums
 //----------------------------------------------------------------------
+
+template <typename T>
+class tPullRequestHandler;
+
+namespace api
+{
 
 //----------------------------------------------------------------------
 // Class declaration
@@ -169,6 +173,11 @@ public:
    * \param b New Bounds
    */
   virtual void SetBounds(core::tAbstractPort& port, const rrlib::rtti::tGenericObject& min, const rrlib::rtti::tGenericObject& max) = 0;
+
+  /*!
+   * \param pull_request_handler Object that handles any incoming pull requests - null if there is none (typical case)
+   */
+  void SetPullRequestHandler(core::tAbstractPort& port, tPullRequestHandler<rrlib::rtti::tGenericObject>* pull_request_handler);
 
 private:
 

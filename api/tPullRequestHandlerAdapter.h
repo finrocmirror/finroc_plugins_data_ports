@@ -46,6 +46,7 @@
 #include "plugins/data_ports/optimized/tPullRequestHandlerRaw.h"
 #include "plugins/data_ports/standard/tPullRequestHandlerRaw.h"
 #include "plugins/data_ports/api/tPortImplementation.h"
+#include "plugins/data_ports/tGenericPort.h"
 
 //----------------------------------------------------------------------
 // Namespace declaration
@@ -54,12 +55,18 @@ namespace finroc
 {
 namespace data_ports
 {
-namespace api
-{
 
 //----------------------------------------------------------------------
 // Forward declarations / typedefs / enums
 //----------------------------------------------------------------------
+
+template <typename T>
+class tOutputPort;
+
+class tGenericPort;
+
+namespace api
+{
 
 //----------------------------------------------------------------------
 // Class declaration
@@ -73,11 +80,12 @@ class tPullRequestHandlerAdapter : public optimized::tPullRequestHandlerRaw
 {
   typedef tPortImplementation<T, api::tPortImplementationTypeTrait<T>::type> tImplementation;
 
-  virtual tPortDataPointer<const T> PullRequest(common::tAbstractDataPort& origin) = 0;
+  virtual tPortDataPointer<const T> OnPullRequest(tOutputPort<T>& origin) = 0;
 
   virtual bool RawPullRequest(optimized::tCheapCopyPort& origin, optimized::tCheaplyCopiedBufferManager& result_buffer)
   {
-    tPortDataPointer<const T> pulled_buffer = PullRequest(origin);
+    tOutputPort<T> origin_port = tOutputPort<T>::Wrap(origin);
+    tPortDataPointer<const T> pulled_buffer = OnPullRequest(tOutputPort<T>::Wrap(origin_port));
     if (pulled_buffer)
     {
       tImplementation::Assign(result_buffer.GetObject().GetData<typename tImplementation::tPortBuffer>(), *pulled_buffer, origin);
@@ -90,11 +98,12 @@ class tPullRequestHandlerAdapter : public optimized::tPullRequestHandlerRaw
 template <typename T>
 class tPullRequestHandlerAdapter<T, false> : public standard::tPullRequestHandlerRaw
 {
-  virtual tPortDataPointer<const T> PullRequest(common::tAbstractDataPort& origin) = 0;
+  virtual tPortDataPointer<const T> OnPullRequest(tOutputPort<T>& origin) = 0;
 
   virtual typename standard::tStandardPort::tUniversalManagerPointer RawPullRequest(standard::tStandardPort& origin)
   {
-    tPortDataPointer<const T> pulled_buffer = PullRequest(origin);
+    tOutputPort<T> origin_port = tOutputPort<T>::Wrap(origin);
+    tPortDataPointer<const T> pulled_buffer = OnPullRequest(origin_port);
     typename standard::tStandardPort::tUniversalManagerPointer buffer(pulled_buffer.implementation.Release());
     return buffer;
     /*typename standard::tStandardPort::tUnusedManagerPointer buffer(origin.GetUnusedBufferRaw());
@@ -110,21 +119,22 @@ class tPullRequestHandlerAdapter<T, false> : public standard::tPullRequestHandle
   }
 };
 
-template <>
-class tPullRequestHandlerAdapter<rrlib::rtti::tGenericObject, false> : public standard::tPullRequestHandlerRaw, public optimized::tPullRequestHandlerRaw
+class tPullRequestHandlerAdapterGeneric : public standard::tPullRequestHandlerRaw, public optimized::tPullRequestHandlerRaw
 {
-  virtual tPortDataPointer<const rrlib::rtti::tGenericObject> PullRequest(common::tAbstractDataPort& origin) = 0;
+  virtual tPortDataPointer<const rrlib::rtti::tGenericObject> OnPullRequest(tGenericPort& origin) = 0;
 
   virtual typename standard::tStandardPort::tUniversalManagerPointer RawPullRequest(standard::tStandardPort& origin)
   {
-    tPortDataPointer<const rrlib::rtti::tGenericObject> pulled_buffer = PullRequest(origin);
+    tGenericPort origin_port = tGenericPort::Wrap(origin);
+    tPortDataPointer<const rrlib::rtti::tGenericObject> pulled_buffer = OnPullRequest(origin_port);
     typename standard::tStandardPort::tUniversalManagerPointer buffer(static_cast<standard::tPortBufferManager*>(pulled_buffer.implementation.Release()));
     return buffer;
   }
 
   virtual bool RawPullRequest(optimized::tCheapCopyPort& origin, optimized::tCheaplyCopiedBufferManager& result_buffer)
   {
-    tPortDataPointer<const rrlib::rtti::tGenericObject> pulled_buffer = PullRequest(origin);
+    tGenericPort origin_port = tGenericPort::Wrap(origin);
+    tPortDataPointer<const rrlib::rtti::tGenericObject> pulled_buffer = OnPullRequest(origin_port);
     if (pulled_buffer)
     {
       result_buffer.GetObject().DeepCopyFrom(*pulled_buffer, NULL);

@@ -156,9 +156,7 @@ public:
   }
 
   /*!
-   * Is data to this port pushed or pulled?
-   *
-   * \return Answer
+   * \return Is data to this port pushed or pulled?
    */
   inline bool PushStrategy() const
   {
@@ -176,9 +174,7 @@ public:
   }
 
   /*!
-   * Is data to this port pushed or pulled (in reverse direction)?
-   *
-   * \return Answer
+   * \return Is data to this port pushed or pulled (in reverse direction)?
    */
   inline bool ReversePushStrategy() const
   {

@@ -77,7 +77,24 @@ class tPullRequestHandler : public api::tPullRequestHandlerAdapter<T, tIsCheaply
    * \param origin Port that pull request comes from (the port that this handler is attached to)
    * \return Pulled buffer (used or unused) - return NULL if pull request should be handled by port instead (as if no pull handler was present)
    */
-  virtual tPortDataPointer<const T> PullRequest(common::tAbstractDataPort& origin) = 0;
+  virtual tPortDataPointer<const T> OnPullRequest(tOutputPort<T>& origin) = 0;
+
+  //Note: origin used to have type 'common::tAbstractDataPort'. However, this leads to overloading
+  //      conflicts when a class is pull request handler for multiple types)
+};
+
+// Generic variant
+template <>
+class tPullRequestHandler<rrlib::rtti::tGenericObject> : public api::tPullRequestHandlerAdapterGeneric
+{
+
+  /*!
+   * Called whenever a pull request is received
+   *
+   * \param origin Port that pull request comes from (the port that this handler is attached to)
+   * \return Pulled buffer (used or unused) - return NULL if pull request should be handled by port instead (as if no pull handler was present)
+   */
+  virtual tPortDataPointer<const rrlib::rtti::tGenericObject> OnPullRequest(tGenericPort& origin) = 0;
 
 };
 

@@ -167,16 +167,17 @@ public:
 
   /*!
    * \param data_type Data type of buffers in this pool
-   * \return Returns unused buffer. If there are no buffers that can be reused, a new buffer is allocated.
+   * \param possibly_create_buffer Create new buffer if there is none in pool at the moment?
+   * \return Returns unused buffer. If there are no buffers that can be reused, a new buffer is possibly allocated.
    */
-  inline tPointer GetUnusedBuffer(const rrlib::rtti::tType& data_type)
+  inline tPointer GetUnusedBuffer(const rrlib::rtti::tType& data_type, bool possibly_create_buffer = true)
   {
     tPointer buffer = buffer_pool.GetUnusedBuffer();
     if (buffer)
     {
       return std::move(buffer);
     }
-    return CreateBuffer(data_type);
+    return possibly_create_buffer ? CreateBuffer(data_type) : tPointer();
   }
 
   /*!
@@ -193,7 +194,7 @@ public:
 private:
 
   /*! Data Type of buffers in pool */
-  //const rrlib::rtti::tType data_type;  This information is would be redundant
+  //const rrlib::rtti::tType data_type;  This information would be redundant
 
   /*! Wrapped buffer pool */
   tBufferPool buffer_pool;

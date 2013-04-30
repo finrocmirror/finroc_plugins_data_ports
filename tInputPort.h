@@ -191,12 +191,12 @@ public:
   template <bool AVAILABLE = tPort<T>::cPASS_BY_VALUE>
   inline typename std::enable_if<AVAILABLE, bool>::type Dequeue(T& result, rrlib::time::tTimestamp& timestamp)
   {
-    typename tImplementation::tLockingManagerPointer buffer = this->GetWrapped()->DequeueSingleRaw();
+    typename tPort<T>::tPortBackend::tLockingManagerPointer buffer = this->GetWrapped()->DequeueSingleRaw();
     if (buffer)
     {
-      result = tImplementation::ToValue(buffer->GetObject().template GetData<tPort<T>::tPortBuffer>(), this->GetWrapped()->GetUnit());
+      result = tImplementation::ToValue(buffer->GetObject().template GetData<typename tPort<T>::tPortBuffer>(), this->GetWrapped()->GetUnit());
     }
-    return buffer;
+    return buffer.get();
   }
 
   /*!
@@ -217,8 +217,6 @@ public:
   }
 
   /*!
-   * (relevant for input ports only)
-   *
    * \return Has port changed since last changed-flag-reset?
    */
   inline bool HasChanged() const
@@ -227,9 +225,7 @@ public:
   }
 
   /*!
-   * Is data to this port pushed or pulled?
-   *
-   * \return Answer
+   * \return Is data to this port pushed or pulled?
    */
   inline bool PushStrategy() const
   {
@@ -253,8 +249,6 @@ public:
 //  }
 
   /*!
-   * (relevant for input ports only)
-   *
    * Reset changed flag.
    */
   inline void ResetChanged()

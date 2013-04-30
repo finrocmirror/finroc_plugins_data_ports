@@ -37,6 +37,7 @@
 // Internal includes with ""
 //----------------------------------------------------------------------
 #include "plugins/data_ports/tPort.h"
+#include "plugins/data_ports/tPullRequestHandler.h"
 
 //----------------------------------------------------------------------
 // Debugging
@@ -302,6 +303,19 @@ void tGenericPortImplementation::CreateImplementations()
     }
   }
 }
+
+void tGenericPortImplementation::SetPullRequestHandler(core::tAbstractPort& port, tPullRequestHandler<rrlib::rtti::tGenericObject>* pull_request_handler)
+{
+  if (IsCheaplyCopiedType(port.GetDataType()))
+  {
+    static_cast<optimized::tCheapCopyPort&>(port).SetPullRequestHandler(pull_request_handler);
+  }
+  else
+  {
+    static_cast<standard::tStandardPort&>(port).SetPullRequestHandler(pull_request_handler);
+  }
+}
+
 
 //----------------------------------------------------------------------
 // End of namespace declaration

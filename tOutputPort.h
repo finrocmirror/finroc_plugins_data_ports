@@ -163,9 +163,15 @@ public:
   }
 
   /*!
-   * Is data to this port pushed in reverse direction?
-   *
-   * \return Answer
+   * \return Is data from this port pushed or pulled?
+   */
+  inline bool PushStrategy() const
+  {
+    return this->GetWrapped()->PushStrategy();
+  }
+
+  /*!
+   * \return Is data to this port pushed in reverse direction?
    */
   inline bool ReversePushStrategy() const
   {
@@ -178,6 +184,10 @@ public:
   void SetPullRequestHandler(tPullRequestHandler<T>* pull_request_handler)
   {
     this->GetWrapped()->SetPullRequestHandler(pull_request_handler);
+  }
+  void SetPullRequestHandler(tPullRequestHandler<rrlib::rtti::tGenericObject>& pull_request_handler)
+  {
+    this->GetWrapped()->SetPullRequestHandler(&pull_request_handler);
   }
 
   /*!

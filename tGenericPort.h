@@ -47,7 +47,6 @@
 // Internal includes with ""
 //----------------------------------------------------------------------
 #include "plugins/data_ports/api/tGenericPortImplementation.h"
-#include "plugins/data_ports/tPullRequestHandler.h"
 
 //----------------------------------------------------------------------
 // Namespace declaration
@@ -60,6 +59,7 @@ namespace data_ports
 //----------------------------------------------------------------------
 // Forward declarations / typedefs / enums
 //----------------------------------------------------------------------
+
 namespace api
 {
 template <typename LISTENER, bool FIRST_LISTENER>
@@ -264,14 +264,7 @@ public:
    */
   void SetPullRequestHandler(tPullRequestHandler<rrlib::rtti::tGenericObject>* pull_request_handler)
   {
-    if (IsCheaplyCopiedType(GetWrapped()->GetDataType()))
-    {
-      static_cast<optimized::tCheapCopyPort*>(GetWrapped())->SetPullRequestHandler(pull_request_handler);
-    }
-    else
-    {
-      static_cast<standard::tStandardPort*>(GetWrapped())->SetPullRequestHandler(pull_request_handler);
-    }
+    implementation->SetPullRequestHandler(*GetWrapped(), pull_request_handler);
   }
 
   /*!

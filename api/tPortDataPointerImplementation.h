@@ -59,6 +59,9 @@ namespace api
 //----------------------------------------------------------------------
 // Forward declarations / typedefs / enums
 //----------------------------------------------------------------------
+template <typename U, bool>
+class tPullRequestHandlerAdapter;
+class tPullRequestHandlerAdapterGeneric;
 
 //----------------------------------------------------------------------
 // Class declaration
