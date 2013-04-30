@@ -109,6 +109,7 @@ tCheapCopyPort::tCheapCopyPort(common::tAbstractDataPortCreationInfo creation_in
 
   // Initialize value
   tCheaplyCopiedBufferManager* initial = tGlobalBufferPools::Instance().GetUnusedBuffer(cheaply_copyable_type_index).release();
+  assert(initial->GetObject().GetType() == GetDataType());
   initial->InitReferenceCounter(1);
   int pointer_tag = initial->GetPointerTag();
   current_value.store(tTaggedBufferPointer(initial, pointer_tag));

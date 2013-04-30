@@ -152,6 +152,7 @@ uint32_t GetCheaplyCopiedTypeIndex(const rrlib::rtti::tType& type)
 
   uint32_t result = reg.registered_types;
   reg.used_types[result].type = type;
+  reg.registered_types++;
   rrlib::rtti::tType type_copy = type;
   type_copy.AddAnnotation(new internal::tIndexAnnotation(result));
   if (result >= cMAX_CHEAPLY_COPYABLE_TYPES)
