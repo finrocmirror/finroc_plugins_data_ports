@@ -163,23 +163,23 @@ void TestPortListeners(const T& publish_value)
   class tListener
   {
   public:
-    void PortChanged(const T& value, tChangeContext& change_context)
+    void OnPortChange(const T& value, tChangeContext& change_context)
     {
       FINROC_LOG_PRINT(USER, "  Port Changed: ", value);
     }
-    void PortChanged(tPortDataPointer<const T>& value, tChangeContext& change_context)
+    void OnPortChange(tPortDataPointer<const T>& value, tChangeContext& change_context)
     {
       FINROC_LOG_PRINT(USER, "  Port Changed (tPortDataPointer): ", *value);
     }
-    void PortChanged(const rrlib::rtti::tGenericObject& value, tChangeContext& change_context)
+    void OnPortChange(const rrlib::rtti::tGenericObject& value, tChangeContext& change_context)
     {
       FINROC_LOG_PRINT(USER, "  Port Changed Generic: ", value);
     }
-    void PortChanged(tPortDataPointer<const rrlib::rtti::tGenericObject>& value, tChangeContext& change_context)
+    void OnPortChange(tPortDataPointer<const rrlib::rtti::tGenericObject>& value, tChangeContext& change_context)
     {
       FINROC_LOG_PRINT(USER, "  Port Changed Generic (tPortDataPointer): ", *value);
     }
-    void PortChanged(tChangeContext& change_context)
+    void OnPortChange(tChangeContext& change_context)
     {
       FINROC_LOG_PRINT(USER, "  Port Changed Simple");
     }
