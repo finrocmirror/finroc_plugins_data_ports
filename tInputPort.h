@@ -121,7 +121,7 @@ public:
    * \param listener Listener to add
    *
    * \tparam LISTENER Listener class needs to implement a method
-   * void PortChanged(const T& new_value, tChangeContext& change_context)
+   * void OnPortChange(const T& new_value, tChangeContext& change_context)
    *
    * (It's preferred to add listeners before port is initialized)
    */
@@ -132,7 +132,7 @@ public:
    * \param listener Listener to add
    *
    * \tparam LISTENER Listener class needs to implement a method
-   * void PortChanged(tPortDataPointer<const T>& value, tChangeContext& change_context)
+   * void OnPortChange(tPortDataPointer<const T>& value, tChangeContext& change_context)
    *
    * (It's preferred to add listeners before port is initialized)
    */
@@ -143,7 +143,7 @@ public:
    * \param listener Listener to add
    *
    * \tparam LISTENER Listener class needs to implement a method
-   * void PortChanged(tChangeContext& change_context)
+   * void OnPortChange(tChangeContext& change_context)
    *
    * (It's preferred to add listeners before port is initialized)
    */

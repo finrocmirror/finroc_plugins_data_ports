@@ -138,7 +138,7 @@ private:
     T v = tImplementation::ToValue(
             static_cast<optimized::tCheaplyCopiedBufferManager&>(value).GetObject().GetData<typename tImplementation::tPortBuffer>(),
             static_cast<optimized::tCheapCopyPort&>(change_context.Origin()).GetUnit());
-    this->listener.PortChanged(v, change_context);
+    this->listener.OnPortChange(v, change_context);
   }
 };
 
@@ -156,7 +156,7 @@ private:
   virtual void PortChangedRaw(tChangeContext& change_context, int& lock_counter, rrlib::buffer_pools::tBufferManagementInfo& value)
   {
     this->PortChangedRawBase(change_context, lock_counter, value);
-    this->listener.PortChanged(static_cast<standard::tPortBufferManager&>(value).GetObject().GetData<T>(), change_context);
+    this->listener.OnPortChange(static_cast<standard::tPortBufferManager&>(value).GetObject().GetData<T>(), change_context);
   }
 };
 
@@ -176,11 +176,11 @@ private:
     this->PortChangedRawBase(change_context, lock_counter, value);
     if (IsCheaplyCopiedType(change_context.Origin().GetDataType()))
     {
-      this->listener.PortChanged(static_cast<optimized::tCheaplyCopiedBufferManager&>(value).GetObject(), change_context);
+      this->listener.OnPortChange(static_cast<optimized::tCheaplyCopiedBufferManager&>(value).GetObject(), change_context);
     }
     else
     {
-      this->listener.PortChanged(static_cast<standard::tPortBufferManager&>(value).GetObject(), change_context);
+      this->listener.OnPortChange(static_cast<standard::tPortBufferManager&>(value).GetObject(), change_context);
     }
   }
 };
@@ -211,7 +211,7 @@ private:
     lock_counter++;
     tPortDataPointer<const T> pointer(typename standard::tStandardPort::tLockingManagerPointer(&value),
                                       static_cast<standard::tStandardPort&>(change_context.Origin()));
-    this->listener.PortChanged(pointer, change_context);
+    this->listener.OnPortChange(pointer, change_context);
   }
 
   inline void PortChangedRawImplementation(tChangeContext& change_context, int& lock_counter, optimized::tCheaplyCopiedBufferManager& value)
@@ -219,7 +219,7 @@ private:
     T data = tImplementation::ToValue(value.GetObject().GetData<typename tImplementation::tPortBuffer>(),
                                       static_cast<optimized::tCheapCopyPort&>(change_context.Origin()).GetUnit());
     tPortDataPointer<const T> pointer(tPortDataPointerImplementation<T, true>(data, change_context.Timestamp()));
-    this->listener.PortChanged(pointer, change_context);
+    this->listener.OnPortChange(pointer, change_context);
   }
 };
 
@@ -242,13 +242,13 @@ private:
     {
       tPortDataPointer<const rrlib::rtti::tGenericObject> pointer(
         api::tPortDataPointerImplementation<rrlib::rtti::tGenericObject, false>(static_cast<optimized::tCheaplyCopiedBufferManager*>(&value), false));
-      this->listener.PortChanged(pointer, change_context);
+      this->listener.OnPortChange(pointer, change_context);
     }
     else
     {
       tPortDataPointer<const rrlib::rtti::tGenericObject> pointer(
         api::tPortDataPointerImplementation<rrlib::rtti::tGenericObject, false>(static_cast<standard::tPortBufferManager*>(&value), false));
-      this->listener.PortChanged(pointer, change_context);
+      this->listener.OnPortChange(pointer, change_context);
     }
   }
 };
@@ -267,7 +267,7 @@ private:
   virtual void PortChangedRaw(tChangeContext& change_context, int& lock_counter, rrlib::buffer_pools::tBufferManagementInfo& value)
   {
     this->PortChangedRawBase(change_context, lock_counter, value);
-    this->listener.PortChanged(change_context);
+    this->listener.OnPortChange(change_context);
   }
 };
 
