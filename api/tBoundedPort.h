@@ -72,6 +72,8 @@ struct tPortImplementation;
 template <typename T, tPortImplementationType TYPE>
 class tBoundedPort : public optimized::tCheapCopyPort
 {
+  static_assert((!std::is_integral<T>::value) || TYPE == tPortImplementationType::NUMERIC, "Type must be numeric for numeric type");
+
   typedef typename std::conditional<TYPE == tPortImplementationType::NUMERIC, numeric::tNumber, T>::type tBufferType;
   typedef tPortImplementation<T, TYPE> tImplementationVariation;
 

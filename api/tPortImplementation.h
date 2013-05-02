@@ -87,7 +87,7 @@ struct tCheapCopyPortBaseImplementation
     creation_info.UnsetDefaultValue(); // TBuffer might differ from TWrapper => corrupts default value (it is set later in tPort)
     if (creation_info.BoundsSet())
     {
-      return new tBoundedPort<TWrapper, tPortImplementationType::CHEAP_COPY>(creation_info);  // Crashes with release mode in gcc 4.6 :-/
+      return new tBoundedPort<TWrapper, TYPE>(creation_info);  // Crashes with release mode in gcc 4.6 :-/
       //return new optimized::tCheapCopyPort(creation_info);
     }
     else
@@ -136,7 +136,7 @@ struct tCheapCopyPortImplementation :
 // numeric cheap-copy implementation
 template <typename T>
 struct tCheapCopyPortImplementation<T, tPortImplementationType::NUMERIC> :
-  public tCheapCopyPortBaseImplementation<T, numeric::tNumber, tPortImplementationType::CHEAP_COPY, true>
+  public tCheapCopyPortBaseImplementation<T, numeric::tNumber, tPortImplementationType::NUMERIC, true>
 {
   typedef numeric::tNumber tPortBuffer;
 

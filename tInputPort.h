@@ -257,6 +257,18 @@ public:
   }
 
   /*!
+   * Sets port's current value to specified value.
+   * Does not activate change flag.
+   *
+   * \param new_value New value of port. Will be deep-copied.
+   * \param timestamp Timestamp for attached data (optional)
+   */
+  void Set(const T& new_value, const rrlib::time::tTimestamp& timestamp = rrlib::time::cNO_TIME)
+  {
+    tImplementation::CopyAndPublish(*this->GetWrapped(), new_value, timestamp);
+  }
+
+  /*!
    * Set whether data should be pushed or pulled
    *
    * \param push Push data?

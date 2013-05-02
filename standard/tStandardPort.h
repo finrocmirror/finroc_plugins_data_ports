@@ -204,7 +204,7 @@ public:
     return input_queue->Dequeue();
   }
 
-  virtual void ForwardData(tAbstractPort& other); // TODO either add to AbstractDataPort or remove virtuality and add comment
+  virtual void ForwardData(tAbstractDataPort& other); // TODO either add to AbstractDataPort or remove virtuality and add comment
 
   /*!
    * Obtain port's current value

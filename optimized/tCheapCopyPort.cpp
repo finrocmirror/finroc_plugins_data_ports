@@ -260,7 +260,7 @@ void tCheapCopyPort::CopyCurrentValueToGenericObject(rrlib::rtti::tGenericObject
   }
 }
 
-void tCheapCopyPort::ForwardData(tAbstractPort& other)
+void tCheapCopyPort::ForwardData(tAbstractDataPort& other)
 {
   assert(IsDataFlowType(other.GetDataType()) && (IsCheaplyCopiedType(other.GetDataType())));
 

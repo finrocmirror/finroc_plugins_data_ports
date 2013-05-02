@@ -303,7 +303,7 @@ public:
     return input_queue->Dequeue();
   }
 
-  virtual void ForwardData(tAbstractPort& other);
+  virtual void ForwardData(tAbstractDataPort& other);
 
   /*!
    * \return Returns data type's 'cheaply copyable type index'

@@ -80,6 +80,13 @@ public:
   tAbstractDataPort(const tAbstractDataPortCreationInfo& create_info);
 
   /*!
+   * Forwards current data to specified port (publishes the data via this port)
+   *
+   * \param other Port to which data is forwarded
+   */
+  virtual void ForwardData(tAbstractDataPort& other) = 0;
+
+  /*!
    * \return Changed "flag" (has two different values for ordinary and initial data)
    */
   inline tChangeStatus GetChangedFlag() const

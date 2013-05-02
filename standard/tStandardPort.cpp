@@ -222,7 +222,7 @@ tPortBufferManager* tStandardPort::CreateDefaultValue(const common::tAbstractDat
   return NULL;
 }
 
-void tStandardPort::ForwardData(tAbstractPort& other)
+void tStandardPort::ForwardData(tAbstractDataPort& other)
 {
   assert(IsDataFlowType(other.GetDataType()) && (!IsCheaplyCopiedType(other.GetDataType())));
   tLockingManagerPointer pointer = GetCurrentValueRaw();

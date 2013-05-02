@@ -125,13 +125,12 @@ public:
 
   /*!
    * Publish Data Buffer. This data will be forwarded to any connected ports.
-   * Should only be called on output ports.
    *
    * (This pass-by-value Publish()-variant is efficient when using 'cheaply copied' types,
    *  but can be computationally expensive with large data types)
    *
    * \param data Data to publish. It will be deep-copied.
-   * \param teimstamp Timestamp for attached data (optional)
+   * \param timestamp Timestamp for attached data (optional)
    */
   inline void Publish(const T& data, const rrlib::time::tTimestamp& timestamp = rrlib::time::cNO_TIME)
   {
@@ -141,7 +140,6 @@ public:
   /*!
    * Publish Data Buffer. This data will be forwarded to any connected ports.
    * It should not be modified thereafter (tPortDataPointer will be reset).
-   * Should only be called on output ports.
    *
    * \param data Data buffer acquired from a port using getUnusedBuffer (or locked data received from another port)
    */
