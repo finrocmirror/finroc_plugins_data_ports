@@ -19,11 +19,13 @@
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 //----------------------------------------------------------------------
-/*!\file    plugins/data_ports/common/type_traits.h
+/*!\file    plugins/data_ports/type_traits.h
  *
  * \author  Max Reichardt
  *
  * \date    2012-10-21
+ *
+ * \brief
  *
  * Various type traits relevant for data ports.
  * May be specialized for certain types.

@@ -25,6 +25,8 @@
  *
  * \date    2012-11-03
  *
+ * \brief
+ *
  * Utility functions with respect to cheaply copied types.
  * They keep track of cheaply copied types used in ports
  * and assign unique index to each of them.
