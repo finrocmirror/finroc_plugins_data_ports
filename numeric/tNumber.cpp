@@ -217,7 +217,7 @@ rrlib::serialization::tStringInputStream &operator >> (rrlib::serialization::tSt
     char c = complete_string[i];
     if (isalpha(c))
     {
-      if ((c == 'e' || c == 'E') && (complete_string.length() > i + 1) && (c == '-' || isdigit(complete_string[i + 1])))
+      if ((c == 'e' || c == 'E') && (complete_string.length() > i + 1) && (complete_string[i + 1] == '-' || isdigit(complete_string[i + 1])))
       {
         continue;  // exponent in decimal notation
       }
