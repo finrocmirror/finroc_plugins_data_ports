@@ -163,7 +163,7 @@ void TestInitialPushing(const std::array<T, 9>& test_values)
   tOutputPort<T> o7("o7", tFrameworkElement::tFlag::ACCEPTS_DATA, parent); // flag makes this also a proxy port
   tFrameworkElement::InitAll();
   o7.Publish(test_values[7]);
-  tInputPort<T> o8("o8", parent, 5, 5, tFrameworkElement::tFlag::HAS_DEQUEUE_ALL_QUEUE);
+  tInputPort<T> o8("o8", parent, tQueueSettings(true, 5));
   tFrameworkElement::InitAll();
   o7.ConnectTo(o8);
   CheckPortValue(o8, test_values[7]);

@@ -92,18 +92,14 @@ public:
    * The first string is interpreted as port name, the second possibly as config entry (relevant for parameters only).
    * A framework element pointer is interpreted as parent.
    * tFrameworkElement::tFlags arguments are interpreted as flags.
-   * int argument is interpreted as queue length.
+   * A tQueueSettings argument creates an input queue with the specified settings.
    * tBounds<T> are port's bounds.
    * tUnit argument is port's unit.
-   * int16/short argument is interpreted as minimum network update interval.
    * const T& is interpreted as port's default value.
    * tPortCreationInfo<T> argument is copied. This is only allowed as first argument.
    *
-   * This becomes a little tricky when port has numeric or string type.
-   * There we have these rules:
-   *
-   * string type: The second string argument is interpreted as default_value. The third as config entry.
-   * numeric type: The first numeric argument is interpreted as default_value.
+   * This becomes a little tricky when T is a string type. There we have these rules:
+   * The second string argument is interpreted as default_value. The third as config entry.
    */
   template <typename ... ARGS>
   tOutputPort(const ARGS& ... args) :

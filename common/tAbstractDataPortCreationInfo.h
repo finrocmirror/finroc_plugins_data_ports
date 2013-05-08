@@ -44,8 +44,9 @@
 //----------------------------------------------------------------------
 // Internal includes with ""
 //----------------------------------------------------------------------
-#include "plugins/data_ports/tUnit.h"
 #include "plugins/data_ports/tBounds.h"
+#include "plugins/data_ports/tQueueSettings.h"
+#include "plugins/data_ports/tUnit.h"
 
 //----------------------------------------------------------------------
 // Namespace declaration
@@ -111,10 +112,9 @@ public:
    * The first string is interpreted as port name, the second possibly as config entry (relevant for parameters only).
    * A framework element pointer is interpreted as parent.
    * tFrameworkElementFlag arguments are interpreted as flags.
-   * int argument is interpreted as queue length.
+   * A tQueueSettings argument creates an input queue with the specified settings.
    * tBounds<T> are port's bounds.
    * tUnit argument is port's unit.
-   * int16/short argument is interpreted as minimum network update interval.
    * tAbstractPortCreationInfo argument is copied. This is only allowed as first argument.
    */
   template <typename ARG1, typename ... TArgs>
@@ -190,10 +190,14 @@ public:
     SetString(s);
   }
 
-  void Set(int queue_size)
+  void Set(const tQueueSettings& queue_settings)
   {
-    max_queue_size = queue_size;
+    max_queue_size = queue_settings.GetMaximumQueueLength();
     flags |= core::tFrameworkElement::tFlag::HAS_QUEUE | core::tFrameworkElement::tFlag::USES_QUEUE;
+    if (queue_settings.DequeueAllQueue())
+    {
+      flags |= core::tFrameworkElement::tFlag::HAS_DEQUEUE_ALL_QUEUE;
+    }
   }
 
   void Set(core::tFrameworkElement::tFlags flags)
@@ -201,20 +205,16 @@ public:
     this->flags |= flags;
   }
 
-  void Set(short min_net_update_interval)
-  {
-    this->min_net_update_interval = min_net_update_interval;
-  }
-
   void Set(const tUnit& unit)
   {
     this->unit = unit;
   }
 
-  void Set(const tLockOrder& lo)
-  {
-    this->lock_order = lo.wrapped;
-  }
+// This only catches int arguments - and should be used very rarely
+//  void Set(const tLockOrder& lo)
+//  {
+//    this->lock_order = lo.wrapped;
+//  }
 
   void Set(const rrlib::rtti::tType& dt)
   {

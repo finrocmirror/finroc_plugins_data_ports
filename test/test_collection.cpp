@@ -120,8 +120,8 @@ void TestPortQueues(const T& value1, const T& value2, const T& value3)
   tFrameworkElement* parent = new tFrameworkElement(&finroc::core::tRuntimeEnvironment::GetInstance(), "TestPortQueue");
 
   tOutputPort<T> output_port("Output Port", parent);
-  tInputPort<T> input_port_fifo("Input Port FIFO", parent, finroc::core::tFrameworkElement::tFlag::HAS_QUEUE | finroc::core::tFrameworkElement::tFlag::USES_QUEUE);
-  tInputPort<T> input_port_all("Input Port ALL", parent, finroc::core::tFrameworkElement::tFlag::HAS_QUEUE | finroc::core::tFrameworkElement::tFlag::USES_QUEUE | finroc::core::tFrameworkElement::tFlag::HAS_DEQUEUE_ALL_QUEUE);
+  tInputPort<T> input_port_fifo("Input Port FIFO", parent, tQueueSettings(false));
+  tInputPort<T> input_port_all("Input Port ALL", parent, tQueueSettings(true));
   output_port.ConnectTo(input_port_fifo);
   output_port.ConnectTo(input_port_all);
   parent->Init();

@@ -99,10 +99,9 @@ public:
    * The first string is interpreted as port name, the second possibly as config entry (relevant for parameters only).
    * A framework element pointer is interpreted as parent.
    * unsigned int arguments are interpreted as flags.
-   * int argument is interpreted as queue length.
+   * A tQueueSettings argument creates an input queue with the specified settings.
    * tBounds<T> are port's bounds.
    * tUnit argument is port's unit.
-   * int16/short argument is interpreted as minimum network update interval.
    * tPortCreationBase argument is copied. This is only allowed as first argument.
    */
   template <typename ... ARGS>

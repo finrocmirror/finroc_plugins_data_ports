@@ -90,18 +90,14 @@ public:
    * The first string is interpreted as port name, the second possibly as config entry (relevant for parameters only).
    * A framework element pointer is interpreted as parent.
    * tFrameworkElement::tFlags arguments are interpreted as flags.
-   * int argument is interpreted as queue length.
+   * A tQueueSettings argument creates an input queue with the specified settings.
    * tBounds<T> are port's bounds.
    * tUnit argument is port's unit.
-   * int16/short argument is interpreted as minimum network update interval.
    * const T& is interpreted as port's default value.
    * tPortCreationInfo<T> argument is copied. This is only allowed as first argument.
    *
-   * This becomes a little tricky when port has numeric or string type.
-   * There we have these rules:
-   *
-   * string type: The second string argument is interpreted as default_value. The third as config entry.
-   * numeric type: The first numeric argument is interpreted as default_value.
+   * This becomes a little tricky when T is a string type. There we have these rules:
+   * The second string argument is interpreted as default_value. The third as config entry.
    */
   template <typename ARG1, typename ... TArgs>
   explicit tPortCreationInfo(const ARG1& arg1, const TArgs&... rest) :
@@ -155,7 +151,7 @@ public:
 
   using common::tAbstractDataPortCreationInfo::Set;
 
-  template < bool DISABLE = (std::is_integral<T>::value && (!std::is_same<T, bool>::value) && sizeof(T) <= 4) || tIsString<T>::value >
+  template < bool DISABLE = tIsString<T>::value >
   void Set(const typename std::enable_if < !DISABLE, T >::type& default_value)
   {
     SetDefault(default_value);
@@ -203,7 +199,7 @@ private:
 
   /*! Process single argument */
   template <typename A>
-  void ProcessArg(const typename std::enable_if < !(tIsString<A>::value || (tIsNumeric<T>::value && tIsNumeric<A>::value)), A >::type& arg)
+  void ProcessArg(const typename std::enable_if < !(tIsString<A>::value), A >::type& arg)
   {
     // standard case
     Set(arg);
@@ -214,20 +210,6 @@ private:
   {
     // string argument, handling it here (no method overloading), produces some nicer compiler error messages
     SetString(arg);
-  }
-
-  template <typename A>
-  void ProcessArg(const typename std::enable_if < tIsNumeric<T>::value && tIsNumeric<A>::value, A >::type& arg)
-  {
-    // numeric type and numeric argument => first numeric argument is default value
-    if (!DefaultValueSet())
-    {
-      SetDefault((T)arg);
-    }
-    else
-    {
-      Set(arg);
-    }
   }
 
   /*!

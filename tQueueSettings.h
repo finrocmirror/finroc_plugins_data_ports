@@ -19,23 +19,23 @@
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 //----------------------------------------------------------------------
-/*!\file    plugins/data_ports/tProxyPort.h
+/*!\file    plugins/data_ports/tQueueSettings.h
  *
  * \author  Max Reichardt
  *
- * \date    2012-11-25
+ * \date    2013-05-08
  *
- * \brief   Contains tProxyPort
+ * \brief   Contains tQueueSettings
  *
- * \b tProxyPort
+ * \b tQueueSettings
  *
- * This port class is used in applications.
- * It provides a convenient API for creating proxy (or 'routing') ports.
+ * Contains all relevant settings for input port queues.
+ * Can be passed to port constructors in order to create ports with input queues.
  *
  */
 //----------------------------------------------------------------------
-#ifndef __plugins__data_ports__tProxyPort_h__
-#define __plugins__data_ports__tProxyPort_h__
+#ifndef __plugins__data_ports__tQueueSettings_h__
+#define __plugins__data_ports__tQueueSettings_h__
 
 //----------------------------------------------------------------------
 // External includes (system with <>, local with "")
@@ -44,7 +44,6 @@
 //----------------------------------------------------------------------
 // Internal includes with ""
 //----------------------------------------------------------------------
-#include "plugins/data_ports/tPort.h"
 
 //----------------------------------------------------------------------
 // Namespace declaration
@@ -61,16 +60,12 @@ namespace data_ports
 //----------------------------------------------------------------------
 // Class declaration
 //----------------------------------------------------------------------
-//! Proxy port
+//! Queue Settings
 /*!
- * This port class is used in applications.
- * It provides a convenient API for creating proxy (or 'routing') ports.
- *
- * \tparam T T is the data type of the port (see tPort)
- * \tparam OUTPUT_PORT True, if this an output proxy port? (otherwise it is an input proxy port)
+ * Contains all relevant settings for input port queues.
+ * Can be passed to port constructors in order to create ports with input queues.
  */
-template <typename T, bool OUTPUT_PORT>
-class tProxyPort : public tPort<T>
+class tQueueSettings
 {
 
 //----------------------------------------------------------------------
@@ -78,41 +73,59 @@ class tProxyPort : public tPort<T>
 //----------------------------------------------------------------------
 public:
 
-  /*! Creates no wrapped port */
-  tProxyPort() {}
+  /*!
+   * @param dequeue_all_queue Should queue support dequeueing all elements at once?
+   *                          (or rather dequeueing elements one after the other)
+   *                          (All at once is more efficient)
+   * @param maximum_queue_length Maximum number of elements in queue.
+   *                             A value of -1 indicates that the queue has (virtually) no size limit.
+   *                             This is somewhat dangerous: If elements in a queue of unlimited size are
+   *                             not fetched, this causes continuous memory allocation for new buffers.
+   */
+  explicit tQueueSettings(bool dequeue_all_queue, int maximum_queue_length = -1) :
+    dequeue_all_queue(dequeue_all_queue),
+    maximum_queue_length(maximum_queue_length)
+  {}
 
   /*!
-   * Constructor takes variadic argument list... just any properties you want to assign to port.
-   *
-   * The first string is interpreted as port name, the second possibly as config entry (relevant for parameters only).
-   * A framework element pointer is interpreted as parent.
-   * tFrameworkElement::tFlags arguments are interpreted as flags.
-   * A tQueueSettings argument creates an input queue with the specified settings.
-   * tBounds<T> are port's bounds.
-   * tUnit argument is port's unit.
-   * const T& is interpreted as port's default value.
-   * tPortCreationInfo<T> argument is copied. This is only allowed as first argument.
-   *
-   * This becomes a little tricky when T is a string type. There we have these rules:
-   * The second string argument is interpreted as default_value. The third as config entry.
+   * \return Should queue support dequeueing all elements at once?
    */
-  template <typename ... ARGS>
-  tProxyPort(const ARGS& ... args) :
-    tPort<T>(std::forward<const ARGS>(args)..., core::tFrameworkElement::tFlag::EMITS_DATA | core::tFrameworkElement::tFlag::ACCEPTS_DATA |
-             (OUTPUT_PORT ? core::tFrameworkElement::tFlag::OUTPUT_PORT : core::tFrameworkElement::tFlag::EMITS_DATA))
-  {}
+  bool DequeueAllQueue() const
+  {
+    return dequeue_all_queue;
+  }
+
+  /*!
+   * \return Maximum number of elements in queue
+   */
+  int GetMaximumQueueLength() const
+  {
+    return maximum_queue_length;
+  }
 
 //----------------------------------------------------------------------
 // Private fields and methods
 //----------------------------------------------------------------------
-private :
+private:
+
+  /*!
+   * Should queue support dequeueing all elements at once?
+   * (or rather dequeueing elements one after the other)
+   * (All at once is more efficient)
+   */
+  bool dequeue_all_queue;
+
+  /*!
+   * Maximum number of elements in queue.
+   * A value of -1 indicates that queue has (virtually) no size limit
+   */
+  int maximum_queue_length;
 
 };
 
 //----------------------------------------------------------------------
 // End of namespace declaration
 //----------------------------------------------------------------------
-
 }
 }
 
