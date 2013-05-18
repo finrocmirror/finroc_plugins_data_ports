@@ -295,7 +295,7 @@ protected:
   /*!
    * Temporary set of variables with info on current publishing operation
    */
-  struct tPublishingData : boost::noncopyable
+  struct tPublishingData : private rrlib::util::tNoncopyable
   {
     enum { cCOPY_ON_RECEIVE = 0 };
 

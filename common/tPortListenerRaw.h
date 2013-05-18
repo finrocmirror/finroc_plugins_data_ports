@@ -72,7 +72,7 @@ class tAbstractDataPort;
 /*!
  * Can register at port to receive callbacks whenever the port's value changes
  */
-class tPortListenerRaw : public boost::noncopyable
+class tPortListenerRaw : private rrlib::util::tNoncopyable
 {
 
 //----------------------------------------------------------------------

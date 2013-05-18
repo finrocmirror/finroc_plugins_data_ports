@@ -79,7 +79,7 @@ namespace common
  * \tparam CONCURRENCY specifies if threads can return (write) and retrieve (read) buffers from the pool concurrently.
  */
 template <typename TBufferManager, rrlib::concurrent_containers::tConcurrency CONCURRENCY>
-class tPortBufferPool : boost::noncopyable
+class tPortBufferPool : private rrlib::util::tNoncopyable
 {
 
   /*!

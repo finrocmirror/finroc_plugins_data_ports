@@ -73,7 +73,7 @@ class tPortDataPointerImplementation;
  * contains information where to get the empty/unused buffers from.
  * This buffer source will be used until the object goes out of scope.
  */
-class tDeserializationScope : boost::noncopyable
+class tDeserializationScope : private rrlib::util::tNoncopyable
 {
 
 //----------------------------------------------------------------------

@@ -76,7 +76,7 @@ namespace data_ports
  * For cheaply copied types, contains an internal buffer of Type T.
  */
 template <typename T>
-class tPortDataPointer : boost::noncopyable
+class tPortDataPointer : private rrlib::util::tNoncopyable
 {
   typedef typename std::remove_const<T>::type tPortData;
 

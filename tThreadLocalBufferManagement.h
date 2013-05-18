@@ -77,7 +77,7 @@ namespace data_ports
  * (Alternatively, it can be attached to thread object to ensure deletion - using
  *  tThread::LockObject(...)  )
  */
-class tThreadLocalBufferManagement : boost::noncopyable
+class tThreadLocalBufferManagement : private rrlib::util::tNoncopyable
 {
 public:
 

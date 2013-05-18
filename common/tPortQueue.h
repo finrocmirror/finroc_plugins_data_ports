@@ -68,7 +68,7 @@ namespace common
  * \tparam TLockingPointer Unique pointer to port buffer that unlocks buffer on release
  */
 template <typename TLockingPointer>
-class tPortQueue : boost::noncopyable
+class tPortQueue : private rrlib::util::tNoncopyable
 {
 
   /*! Extra container class, since port buffers may enqueued in multiple queues */

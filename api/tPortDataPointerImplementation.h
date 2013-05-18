@@ -71,7 +71,7 @@ class tPullRequestHandlerAdapterGeneric;
  * Actual implementation of smart pointer class.
  */
 template <typename T, bool CHEAPLY_COPIED_TYPE>
-class tPortDataPointerImplementation : boost::noncopyable
+class tPortDataPointerImplementation : private rrlib::util::tNoncopyable
 {
   typedef typename std::remove_const<T>::type tPortData;
 
@@ -178,7 +178,7 @@ private:
 };
 
 template <typename T>
-class tPortDataPointerImplementation<T, true> : boost::noncopyable
+class tPortDataPointerImplementation<T, true> : private rrlib::util::tNoncopyable
 {
   /*! Port-related functionality for type T */
   typedef api::tPortImplementation<T, api::tPortImplementationTypeTrait<T>::type> tPortImplementation;
@@ -270,7 +270,7 @@ private:
 };
 
 template <>
-class tPortDataPointerImplementation<rrlib::rtti::tGenericObject, false> : boost::noncopyable
+class tPortDataPointerImplementation<rrlib::rtti::tGenericObject, false> : private rrlib::util::tNoncopyable
 {
   typedef rrlib::rtti::tGenericObject tPortData;
 
@@ -357,7 +357,7 @@ public:
         tPortDataPointerImplementation<rrlib::rtti::tGenericObject, false> buffer = tDeserializationScope::GetUnusedBuffer(type);
         std::swap(*this, buffer);
       }
-      stream >> *Get();
+      Get()->Deserialize(stream);
       rrlib::time::tTimestamp timestamp;
       stream >> timestamp;
       SetTimestamp(timestamp);
@@ -396,7 +396,7 @@ public:
     if (Get())
     {
       stream << Get()->GetType();
-      stream << *Get();
+      Get()->Serialize(stream);
       stream << GetTimestamp();
     }
   }

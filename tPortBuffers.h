@@ -68,7 +68,7 @@ namespace data_ports
  *           Can alternatively be tPortDataPointer<const ...> to get pointer to buffer.
  */
 template <typename T>
-class tPortBuffers : boost::noncopyable
+class tPortBuffers : private rrlib::util::tNoncopyable
 {
   /*! Class that contains implementation of buffer access */
   typedef api::tPortBufferReturnCustomization<T> tImplementation;

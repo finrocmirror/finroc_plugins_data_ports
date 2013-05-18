@@ -231,15 +231,17 @@ public:
   void SetBoundsGeneric(const rrlib::rtti::tGenericObject& min, const rrlib::rtti::tGenericObject& max,
                         tOutOfBoundsAction out_of_bounds_action = tOutOfBoundsAction::ADJUST_TO_RANGE)
   {
-    rrlib::serialization::tOutputStream os(bounds);
+    rrlib::serialization::tOutputStream stream(bounds);
     // critical: needs to be the same serialization as used in tBounds
-    os << min << max << out_of_bounds_action;
+    min.Serialize(stream);
+    max.Serialize(stream);
+    stream << out_of_bounds_action;
   }
 
   void SetDefaultGeneric(const rrlib::rtti::tGenericObject& default_val)
   {
-    rrlib::serialization::tOutputStream os(default_value);
-    os << default_val;
+    rrlib::serialization::tOutputStream stream(default_value);
+    default_val.Serialize(stream);
   }
 
   /*!

@@ -35,6 +35,7 @@
 #include "rrlib/rtti/rtti.h"
 #include "core/definitions.h"
 #include "core/log_messages.h"
+#include <boost/algorithm/string.hpp>
 
 //----------------------------------------------------------------------
 // Internal includes with ""

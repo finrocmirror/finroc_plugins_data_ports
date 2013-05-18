@@ -66,7 +66,7 @@ namespace standard
 /*!
  * Can be used to handle pull requests of - typically - output ports
  */
-class tPullRequestHandlerRaw : boost::noncopyable
+class tPullRequestHandlerRaw : private rrlib::util::tNoncopyable
 {
 
 //----------------------------------------------------------------------

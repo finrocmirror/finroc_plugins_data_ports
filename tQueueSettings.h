@@ -74,10 +74,10 @@ class tQueueSettings
 public:
 
   /*!
-   * @param dequeue_all_queue Should queue support dequeueing all elements at once?
+   * \param dequeue_all_queue Should queue support dequeueing all elements at once?
    *                          (or rather dequeueing elements one after the other)
    *                          (All at once is more efficient)
-   * @param maximum_queue_length Maximum number of elements in queue.
+   * \param maximum_queue_length Maximum number of elements in queue.
    *                             A value of -1 indicates that the queue has (virtually) no size limit.
    *                             This is somewhat dangerous: If elements in a queue of unlimited size are
    *                             not fetched, this causes continuous memory allocation for new buffers.
