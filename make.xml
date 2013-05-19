@@ -25,6 +25,7 @@
       tPortBuffers.h
       tPortCreationInfo.h
       tPortDataPointer.h
+      tPortPack.h
       tProxyPort.h
       tPullRequestHandler.h
       tThreadLocalBufferManagement.h
