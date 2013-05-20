@@ -218,7 +218,7 @@ public:
     return static_cast<tBoundedPort*>(GetWrapped())->GetBounds();
   }
 
-//  /*!
+//  /*
 //   * \return Buffer with default value. Can be used to change default value
 //   * for port. However, this should be done before the port is used.
 //   */
@@ -290,7 +290,7 @@ public:
     GetWrapped()->SetMinNetUpdateInterval(new_interval);
   }
 
-//  /*!
+//  /*
 //   * Set default value
 //   * This must be done before the port is used/initialized.
 //   *
