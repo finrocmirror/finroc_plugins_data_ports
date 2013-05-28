@@ -142,7 +142,6 @@ tStandardPort::tStandardPort(common::tAbstractDataPortCreationInfo creation_info
 
 tStandardPort::~tStandardPort()
 {
-  tLock lock(*this);
   tTaggedBufferPointer cur_pointer = current_value.load();
   tPortBufferUnlocker unlocker;
   unlocker(cur_pointer.GetPointer()); // thread safe, since nobody should publish to port anymore

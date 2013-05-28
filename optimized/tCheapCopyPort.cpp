@@ -135,8 +135,6 @@ tCheapCopyPort::tCheapCopyPort(common::tAbstractDataPortCreationInfo creation_in
 
 tCheapCopyPort::~tCheapCopyPort()
 {
-  tLock lock(*this);
-
   tTaggedBufferPointer cur_pointer = current_value.exchange(0);
   tPortBufferUnlocker unlocker;
   unlocker(cur_pointer.GetPointer());
