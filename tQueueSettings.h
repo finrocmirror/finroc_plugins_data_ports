@@ -74,9 +74,11 @@ class tQueueSettings
 public:
 
   /*!
-   * \param dequeue_all_queue Should queue support dequeueing all elements at once?
-   *                          (or rather dequeueing elements one after the other)
-   *                          (All at once is more efficient)
+   * \param dequeue_all_queue How can elements be dequeued from the port?
+   *                          (one element after the other or all elements at once?)
+   *                          If this parameter is false, only Dequeue() may be called.
+   *                          If this parameter is true, only DequeueAll() and DequeueAllBuffers() may be called.
+   *                          (Dequeueing all elements at once is more efficient)
    * \param maximum_queue_length Maximum number of elements in queue.
    *                             A value of -1 indicates that the queue has (virtually) no size limit.
    *                             This is somewhat dangerous: If elements in a queue of unlimited size are
