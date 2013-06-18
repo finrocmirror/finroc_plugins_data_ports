@@ -119,6 +119,11 @@ tCheapCopyPort::tCheapCopyPort(common::tAbstractDataPortCreationInfo creation_in
   {
     initial->GetObject().DeepCopyFrom(*default_value);
   }
+  else
+  {
+    std::unique_ptr<rrlib::rtti::tGenericObject> object_with_default_value(GetDataType().CreateInstanceGeneric());
+    initial->GetObject().DeepCopyFrom(*object_with_default_value);
+  }
 
   // Initialize queue
   if (GetFlag(tFlag::HAS_QUEUE))
