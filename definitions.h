@@ -69,7 +69,7 @@ enum class tChangeStatus : int8_t
 {
   NO_CHANGE,      //!< Port data has not changed since last reset
   CHANGED,        //!< Port data has changed since last reset
-  CHANGED_INITIAL //!< Port data has changed since last reset - due to initial pushing on connection
+  CHANGED_INITIAL //!< Port data has changed since last reset - due to initial pushing on new connection. Also set after port construction.
 };
 
 /*! Timeout for pull operations */

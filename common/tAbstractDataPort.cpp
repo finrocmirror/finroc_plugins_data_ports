@@ -74,8 +74,8 @@ constexpr rrlib::time::tDuration cPULL_TIMEOUT;
 
 tAbstractDataPort::tAbstractDataPort(const tAbstractDataPortCreationInfo& create_info) :
   core::tAbstractPort(AdjustPortCreationInfo(create_info)),
-  changed(static_cast<int8_t>(tChangeStatus::NO_CHANGE)),
-  custom_changed_flag(tChangeStatus::NO_CHANGE),
+  changed(static_cast<int8_t>(tChangeStatus::CHANGED_INITIAL)),
+  custom_changed_flag(tChangeStatus::CHANGED_INITIAL),
   strategy(-1),
   min_net_update_time(create_info.min_net_update_interval),
   port_listener(NULL)
