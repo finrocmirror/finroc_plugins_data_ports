@@ -130,7 +130,7 @@ public:
    */
   T GetDefault() const
   {
-    T t;
+    T t = T();
     GetDefault(t);
     return t;
   }
