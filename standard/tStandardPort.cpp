@@ -299,7 +299,7 @@ void tStandardPort::NotifyDisconnect()
   }
 }
 
-void tStandardPort::PrintStructure(int indent, std::stringstream& output)
+void tStandardPort::PrintStructure(int indent, std::stringstream& output) const
 {
   tFrameworkElement::PrintStructure(indent, output);
   if (multi_type_buffer_pool)

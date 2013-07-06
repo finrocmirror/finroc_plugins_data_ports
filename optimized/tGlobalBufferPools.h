@@ -87,7 +87,7 @@ public:
 //----------------------------------------------------------------------
 private:
 
-  friend class rrlib::design_patterns::singleton::CreateUsingNew<tGlobalBufferPools>;
+  friend struct rrlib::design_patterns::singleton::CreateUsingNew<tGlobalBufferPools>;
 
   tGlobalBufferPools();
 

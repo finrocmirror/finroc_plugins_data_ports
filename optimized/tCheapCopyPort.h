@@ -417,10 +417,6 @@ public:
    */
   void SetPullRequestHandler(tPullRequestHandlerRaw* pull_request_handler);
 
-//----------------------------------------------------------------------
-// Protected methods
-//----------------------------------------------------------------------
-protected:
 
   /*!
    * Temporary set of variables with info on current publishing operation
@@ -613,6 +609,11 @@ protected:
       return published_buffer->ThreadLocalReferenceCounter();
     }
   };
+
+//----------------------------------------------------------------------
+// Protected methods
+//----------------------------------------------------------------------
+protected:
 
   /*!
    * Convenience methods to retrieve unused buffer for specified publishing mode

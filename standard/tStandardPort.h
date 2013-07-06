@@ -528,7 +528,7 @@ private:
     }
   }
 
-  virtual void PrintStructure(int indent, std::stringstream& output); // FIXME: add override with gcc 4.7
+  virtual void PrintStructure(int indent, std::stringstream& output) const; // FIXME: add override with gcc 4.7
 
   /*!
    * Publish data

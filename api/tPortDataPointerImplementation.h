@@ -138,7 +138,7 @@ public:
 
   inline T* Get() const
   {
-    return buffer_manager ? (&buffer_manager->GetObject().GetData<T>()) : NULL;
+    return buffer_manager ? (&buffer_manager->GetObject().template GetData<T>()) : NULL;
   }
 
   inline rrlib::time::tTimestamp GetTimestamp() const
