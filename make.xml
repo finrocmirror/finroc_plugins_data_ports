@@ -6,6 +6,7 @@
       definitions.h
       tBounds.h
       tChangeContext.h
+      tEvent.h
       tQueueSettings.h
       tUnit.cpp
       type_traits.h

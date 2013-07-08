@@ -19,15 +19,27 @@
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 //----------------------------------------------------------------------
-/*!\file    plugins/data_ports/tPort.cpp
+/*!\file    plugins/data_ports/tEvent.h
  *
  * \author  Max Reichardt
  *
- * \date    2012-10-21
+ * \date    2013-07-07
+ *
+ * \brief   Contains tEvent
+ *
+ * \b tEvent
+ *
+ * Simple data type that signals that an event has occured.
+ * Event data types clearly indicate that ports are not used for transferring a
+ * continuous flow of data, but only occasional events.
+ * This event type without any attached data can be used to e.g. trigger certain
+ * actions.
+ * Furthermore, it can be used as base type for more complex event types.
  *
  */
 //----------------------------------------------------------------------
-#include "plugins/data_ports/tPort.h"
+#ifndef __plugins__data_ports__tEvent_h__
+#define __plugins__data_ports__tEvent_h__
 
 //----------------------------------------------------------------------
 // External includes (system with <>, local with "")
@@ -35,16 +47,6 @@
 
 //----------------------------------------------------------------------
 // Internal includes with ""
-//----------------------------------------------------------------------
-#include "plugins/data_ports/tEvent.h"
-
-//----------------------------------------------------------------------
-// Debugging
-//----------------------------------------------------------------------
-#include <cassert>
-
-//----------------------------------------------------------------------
-// Namespace usage
 //----------------------------------------------------------------------
 
 //----------------------------------------------------------------------
@@ -60,26 +62,49 @@ namespace data_ports
 //----------------------------------------------------------------------
 
 //----------------------------------------------------------------------
-// Const values
+// Class declaration
 //----------------------------------------------------------------------
+//! Event data type
+/*!
+ * Simple data type that signals that an event has occured.
+ * Event data types clearly indicate that ports are not used for transferring a
+ * continuous flow of data, but only occasional events.
+ * This event type without any attached data can be used to e.g. trigger certain
+ * actions.
+ * Furthermore, it can be used as base type for more complex event types.
+ */
+class tEvent
+{
 
-/*! Initializes tEvent data type */
-static rrlib::rtti::tDataType<tEvent> cINIT_EVENT_DATA_TYPE;
+//----------------------------------------------------------------------
+// Public methods and typedefs
+//----------------------------------------------------------------------
+public:
+
+  tEvent() {}
 
 //----------------------------------------------------------------------
-// Implementation
+// Private fields and methods
 //----------------------------------------------------------------------
-template class tPort<int>;
-template class tPort<long long int>;
-template class tPort<float>;
-template class tPort<double>;
-template class tPort<numeric::tNumber>;
-template class tPort<std::string>;
-template class tPort<bool>;
-template class tPort<rrlib::serialization::tMemoryBuffer>;
+private:
+
+};
+
+inline rrlib::serialization::tOutputStream& operator << (rrlib::serialization::tOutputStream& stream, const tEvent& number)
+{
+  return stream;
+}
+
+inline rrlib::serialization::tInputStream& operator >> (rrlib::serialization::tInputStream& stream, tEvent& number)
+{
+  return stream;
+}
 
 //----------------------------------------------------------------------
 // End of namespace declaration
 //----------------------------------------------------------------------
 }
 }
+
+
+#endif
