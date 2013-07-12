@@ -286,6 +286,7 @@ void tGenericPortImplementation::CreateImplementations()
       internal::CheckCreateImplementationForType<unsigned long long int>(type);
       internal::CheckCreateImplementationForType<double>(type);
       internal::CheckCreateImplementationForType<float>(type);
+      internal::CheckCreateImplementationForType<char>(type);  // is neither int8_t nor uint8_t
       internal::CheckCreateImplementationForType<numeric::tNumber>(type);
 
       if (!type.GetAnnotation<tGenericPortImplementation>())
