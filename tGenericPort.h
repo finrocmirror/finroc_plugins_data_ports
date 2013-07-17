@@ -280,7 +280,7 @@ public:
     }
     tGenericPort port;
     port.SetWrapped(&wrap);
-    port.implementation = api::tGenericPortImplementation::GetImplementation(wrap.GetDataType());
+    port.implementation = api::tGenericPortImplementation::GetImplementation(wrap.GetWrapperDataType() != NULL ? wrap.GetWrapperDataType() : wrap.GetDataType());
     return port;
   }
 
