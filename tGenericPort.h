@@ -271,8 +271,9 @@ public:
    * Throws std::runtime_error if port to wrap has invalid type.
    *
    * \param wrap Type-less tAbstractPort to wrap as tGenericPort
+   * \param use_backend_type_only Use only the internal data type that used in the port backend? (e.g. tNumber instead of double; relevant e.g. for Get() and Publish() methods)
    */
-  static tGenericPort Wrap(core::tAbstractPort& wrap)
+  static tGenericPort Wrap(core::tAbstractPort& wrap, bool use_backend_type_only = false)
   {
     if (!IsDataFlowType(wrap.GetDataType()))
     {
@@ -280,7 +281,8 @@ public:
     }
     tGenericPort port;
     port.SetWrapped(&wrap);
-    port.implementation = api::tGenericPortImplementation::GetImplementation(wrap.GetWrapperDataType() != NULL ? wrap.GetWrapperDataType() : wrap.GetDataType());
+    port.implementation = api::tGenericPortImplementation::GetImplementation(
+                            ((!use_backend_type_only) && wrap.GetWrapperDataType() != NULL) ? wrap.GetWrapperDataType() : wrap.GetDataType());
     return port;
   }
 
