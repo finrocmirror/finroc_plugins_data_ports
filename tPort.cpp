@@ -64,7 +64,7 @@ namespace data_ports
 //----------------------------------------------------------------------
 
 /*! Initializes tEvent data type */
-static rrlib::rtti::tDataType<tEvent> cINIT_EVENT_DATA_TYPE;
+static rrlib::rtti::tDataType<tEvent> cINIT_EVENT_DATA_TYPE("Event");
 
 //----------------------------------------------------------------------
 // Implementation

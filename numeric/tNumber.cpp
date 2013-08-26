@@ -72,7 +72,7 @@ namespace numeric
 static const int8_t cINT64 = -64, cINT32 = -63, cINT16 = -62, cFLOAT64 = -61, cFLOAT32 = -60, cCONST = -59, cMIN_BARRIER = -58;
 
 /*! Initializes tNumber data type */
-static rrlib::rtti::tDataType<tNumber> cINIT_DATA_TYPE;
+static rrlib::rtti::tDataType<tNumber> cINIT_DATA_TYPE("Number");
 
 //----------------------------------------------------------------------
 // Implementation
