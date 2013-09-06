@@ -61,13 +61,6 @@ namespace common
 //----------------------------------------------------------------------
 // Forward declarations / typedefs / enums
 //----------------------------------------------------------------------
-/*! Can be used to wrap lock order for tAbstractPortCreationInfo variadic template constructor */
-struct tLockOrder
-{
-  int wrapped;
-
-  tLockOrder(int i) : wrapped(i) {}
-};
 
 //----------------------------------------------------------------------
 // Class declaration
@@ -88,6 +81,9 @@ class tAbstractDataPortCreationInfo : public core::tAbstractPortCreationInfo
 //----------------------------------------------------------------------
 public:
 
+  /*! Base class */
+  typedef core::tAbstractPortCreationInfo tBase;
+
   /*! SI Unit of port. NULL for no unit = provides raw numbers */
   tUnit unit;
 
@@ -107,31 +103,6 @@ public:
   tAbstractDataPortCreationInfo();
 
   /*!
-   * Constructor takes variadic argument list... just any properties you want to assign to port.
-   *
-   * The first string is interpreted as port name, the second possibly as config entry (relevant for parameters only).
-   * A framework element pointer is interpreted as parent.
-   * tFrameworkElementFlag arguments are interpreted as flags.
-   * A tQueueSettings argument creates an input queue with the specified settings.
-   * tBounds<T> are port's bounds.
-   * tUnit argument is port's unit.
-   * tAbstractPortCreationInfo argument is copied. This is only allowed as first argument.
-   */
-  template <typename ARG1, typename ... TArgs>
-  explicit tAbstractDataPortCreationInfo(const ARG1& arg1, const TArgs&... rest) :
-    unit(),
-    max_queue_size(-1),
-    min_net_update_interval(-1),
-    config_entry(),
-    default_value(),
-    bounds(),
-    name_set(false)
-  {
-    ProcessFirstArg<ARG1>(arg1);
-    ProcessArgs(rest...);
-  }
-
-  /*!
    * \return Have bounds for port been set?
    */
   bool BoundsSet() const
@@ -145,17 +116,6 @@ public:
   bool DefaultValueSet() const
   {
     return default_value.GetSize() > 0;
-  }
-
-  /*!
-   * Derive method: Copy port creation info and change specified parameters
-   * (Basically, the same arguments as in the constructor are possible)
-   */
-  template <typename ... TArgs>
-  tAbstractDataPortCreationInfo Derive(const TArgs&... rest) const
-  {
-    ProcessArgs(rest...);
-    return *this;
   }
 
   /*!
@@ -174,22 +134,7 @@ public:
     return default_value;
   }
 
-  /*! Various set methods for different port properties */
-  void Set(core::tFrameworkElement* parent)
-  {
-    this->parent = parent;
-  }
-
-  void Set(const char* c)
-  {
-    SetString(c);
-  }
-
-  void Set(const tString& s)
-  {
-    SetString(s);
-  }
-
+  /*! Various Set methods for different port properties */
   void Set(const tQueueSettings& queue_settings)
   {
     max_queue_size = queue_settings.GetMaximumQueueLength();
@@ -200,25 +145,14 @@ public:
     }
   }
 
-  void Set(core::tFrameworkElement::tFlags flags)
-  {
-    this->flags |= flags;
-  }
-
   void Set(const tUnit& unit)
   {
     this->unit = unit;
   }
 
-// This only catches int arguments - and should be used very rarely
-//  void Set(const tLockOrder& lo)
-//  {
-//    this->lock_order = lo.wrapped;
-//  }
-
-  void Set(const rrlib::rtti::tType& dt)
+  void Set(const tAbstractDataPortCreationInfo& other)
   {
-    this->data_type = dt;
+    *this = other;
   }
 
   /*!
@@ -243,14 +177,6 @@ public:
     rrlib::serialization::tOutputStream stream(default_value);
     default_val.Serialize(stream);
   }
-
-  /*!
-   * Set Port flag
-   *
-   * \param flag Flag to set
-   * \param value Value to set flag to
-   */
-  void SetFlag(uint flag, bool value);
 
   /*!
    * Removes default value from port creation info
@@ -307,39 +233,6 @@ protected:
 // Private fields and methods
 //----------------------------------------------------------------------
 private:
-
-  /*!
-   * Processes first argument (only here tPortCreationInfoBase argument is allowed)
-   */
-  template <typename A>
-  void ProcessFirstArg(const typename std::enable_if<std::is_base_of<tAbstractPortCreationInfo, A>::value, A>::type& a)
-  {
-    (*this) = a;
-  }
-
-  template <typename A>
-  void ProcessFirstArg(const typename std::enable_if < !std::is_base_of<tAbstractPortCreationInfo, A>::value, A >::type& a)
-  {
-    ProcessArg<A>(a);
-  }
-
-  /*! Process constructor arguments */
-  void ProcessArgs() {}
-
-  template <typename A, typename ... ARest>
-  void ProcessArgs(const A& arg, const ARest&... args)
-  {
-    ProcessArg<A>(arg);
-    ProcessArgs(args...);
-  }
-
-  /*! Process single constructor argument */
-  template <typename A>
-  void ProcessArg(const A& arg)
-  {
-    // standard case
-    Set(arg);
-  }
 
 };
 

@@ -72,6 +72,7 @@ namespace data_ports
 template <typename T, bool OUTPUT_PORT>
 class tProxyPort : public tPort<T>
 {
+  typedef core::tPortWrapperBase::tNoArgument tNoArgument;
 
 //----------------------------------------------------------------------
 // Public methods and typedefs
@@ -96,9 +97,16 @@ public:
    * This becomes a little tricky when T is a string type. There we have these rules:
    * The second string argument is interpreted as default_value. The third as config entry.
    */
-  template <typename ... ARGS>
-  tProxyPort(const ARGS& ... args) :
-    tPort<T>(std::forward<const ARGS>(args)..., core::tFrameworkElement::tFlag::EMITS_DATA | core::tFrameworkElement::tFlag::ACCEPTS_DATA |
+  template <typename TArg1, typename TArg2, typename ... TRest>
+  tProxyPort(const TArg1& arg1, const TArg2& arg2, const TRest&... args) :
+    tPort<T>(arg1, arg2, args..., core::tFrameworkElement::tFlag::EMITS_DATA | core::tFrameworkElement::tFlag::ACCEPTS_DATA |
+             (OUTPUT_PORT ? core::tFrameworkElement::tFlag::OUTPUT_PORT : core::tFrameworkElement::tFlag::EMITS_DATA))
+  {}
+
+  // with a single argument, we do not want catch calls for copy construction
+  template < typename TArgument1, bool ENABLE = !std::is_base_of<tProxyPort, TArgument1>::value >
+  tProxyPort(const TArgument1& argument1, typename std::enable_if<ENABLE, tNoArgument>::type no_argument = tNoArgument()) :
+    tPort<T>(argument1, core::tFrameworkElement::tFlag::EMITS_DATA | core::tFrameworkElement::tFlag::ACCEPTS_DATA |
              (OUTPUT_PORT ? core::tFrameworkElement::tFlag::OUTPUT_PORT : core::tFrameworkElement::tFlag::EMITS_DATA))
   {}
 

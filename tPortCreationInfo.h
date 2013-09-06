@@ -79,33 +79,8 @@ class tPortCreationInfo : public common::tAbstractDataPortCreationInfo
 //----------------------------------------------------------------------
 public:
 
-  tPortCreationInfo() :
-    common::tAbstractDataPortCreationInfo()
-  {
-  }
-
-  /*!
-   * Constructor takes variadic argument list... just any properties you want to assign to port.
-   *
-   * The first string is interpreted as port name, the second possibly as config entry (relevant for parameters only).
-   * A framework element pointer is interpreted as parent.
-   * tFrameworkElement::tFlags arguments are interpreted as flags.
-   * A tQueueSettings argument creates an input queue with the specified settings.
-   * tBounds<T> are port's bounds.
-   * tUnit argument is port's unit.
-   * const T& is interpreted as port's default value.
-   * tPortCreationInfo<T> argument is copied. This is only allowed as first argument.
-   *
-   * This becomes a little tricky when T is a string type. There we have these rules:
-   * The second string argument is interpreted as default_value. The third as config entry.
-   */
-  template <typename ARG1, typename ... TArgs>
-  explicit tPortCreationInfo(const ARG1& arg1, const TArgs&... rest) :
-    common::tAbstractDataPortCreationInfo()
-  {
-    ProcessFirstArg<ARG1>(arg1);
-    ProcessArgs(rest...);
-  }
+  /*! Base class */
+  typedef common::tAbstractDataPortCreationInfo tBase;
 
   /*!
    * \return Bounds for port
@@ -149,8 +124,7 @@ public:
     is >> buffer;
   }
 
-  using common::tAbstractDataPortCreationInfo::Set;
-
+  /*! Various Set methods for different port properties */
   template < bool DISABLE = tIsString<T>::value >
   void Set(const typename std::enable_if < !DISABLE, T >::type& default_value)
   {
@@ -164,64 +138,31 @@ public:
     os << bounds;
   }
 
+  void Set(const tPortCreationInfo& other)
+  {
+    *this = other;
+  }
+
+  void Set(const std::string& string)
+  {
+    SetString(string);
+  }
+
+  // we replicate this here, since Set() for default values catches pointers if T is bool
+  void Set(core::tFrameworkElement* parent)
+  {
+    this->parent = parent;
+  }
+  void Set(const char* string)
+  {
+    SetString(string);
+  }
+
 //----------------------------------------------------------------------
 // Private fields and methods
 //----------------------------------------------------------------------
 private:
 
-  /*! Process first constructor argument (tPortCreationInfo allowed) */
-  template <typename A>
-  void ProcessFirstArg(const typename std::enable_if<std::is_same<A, tPortCreationInfo>::value, A>::type& a)
-  {
-    *this = a;
-  }
-  template <typename A>
-  void ProcessFirstArg(const typename std::enable_if<std::is_same<A, common::tAbstractDataPortCreationInfo>::value, A>::type& a)
-  {
-    static_cast<common::tAbstractDataPortCreationInfo&>(*this) = a;
-  }
-
-  template <typename A>
-  void ProcessFirstArg(const typename std::enable_if < !(std::is_same<A, tPortCreationInfo>::value || std::is_same<A, common::tAbstractDataPortCreationInfo>::value), A >::type& a)
-  {
-    ProcessArg<A>(a);
-  }
-
-  /*! Process constructor arguments */
-  void ProcessArgs() {}
-
-  template <typename A, typename ... TRest>
-  void ProcessArgs(const A& arg, const TRest&... args)
-  {
-    ProcessArg<A>(arg);
-    ProcessArgs(args...);
-  }
-
-  /*! Process single argument */
-  template <typename A>
-  void ProcessArg(const typename std::enable_if < !(tIsString<A>::value), A >::type& arg)
-  {
-    // standard case
-    Set(arg);
-  }
-
-  template <typename A>
-  void ProcessArg(const typename std::enable_if<tIsString<A>::value, A>::type& arg)
-  {
-    // string argument, handling it here (no method overloading), produces some nicer compiler error messages
-    SetString(arg);
-  }
-
-  /*!
-   * This exists so that the copy construction works/compiles with the varargs constructor.
-   * At runtime, however, tPortWrapperBase::CopyConstruction should return true - and this is never called
-   */
-  void Set(const core::tPortWrapperBase& base)
-  {
-    throw std::logic_error("This should never be called");
-  }
-
-  // various helper methods
   template < bool STRING = tIsString<T>::value >
   void SetString(const typename std::enable_if < !STRING, tString >::type& s)
   {

@@ -77,6 +77,7 @@ template <typename T>
 class tOutputPort : public tPort<T>
 {
   typedef typename tPort<T>::tImplementation tImplementation;
+  typedef core::tPortWrapperBase::tNoArgument tNoArgument;
 
 //----------------------------------------------------------------------
 // Public methods and typedefs
@@ -101,9 +102,15 @@ public:
    * This becomes a little tricky when T is a string type. There we have these rules:
    * The second string argument is interpreted as default_value. The third as config entry.
    */
-  template <typename ... ARGS>
-  tOutputPort(const ARGS& ... args) :
-    tPort<T>(args..., core::tFrameworkElement::tFlag::EMITS_DATA | core::tFrameworkElement::tFlag::OUTPUT_PORT)
+  template <typename TArg1, typename TArg2, typename ... TRest>
+  tOutputPort(const TArg1& arg1, const TArg2& arg2, const TRest&... args) :
+    tPort<T>(arg1, arg2, args..., core::tFrameworkElement::tFlag::EMITS_DATA | core::tFrameworkElement::tFlag::OUTPUT_PORT)
+  {}
+
+  // with a single argument, we do not want catch calls for copy construction
+  template < typename TArgument1, bool ENABLE = !std::is_base_of<tOutputPort, TArgument1>::value >
+  tOutputPort(const TArgument1& argument1, typename std::enable_if<ENABLE, tNoArgument>::type no_argument = tNoArgument()) :
+    tPort<T>(argument1, core::tFrameworkElement::tFlag::EMITS_DATA | core::tFrameworkElement::tFlag::OUTPUT_PORT)
   {}
 
   /*!

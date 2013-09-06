@@ -33,6 +33,7 @@
 // External includes (system with <>, local with "")
 //----------------------------------------------------------------------
 #include "core/port/tPortFactory.h"
+#include "core/port/tPortWrapperBase.h"
 
 //----------------------------------------------------------------------
 // Internal includes with ""
@@ -80,7 +81,7 @@ class tDataPortFactory : public core::tPortFactory
   virtual core::tAbstractPort& CreatePortImplementation(const std::string& port_name, core::tFrameworkElement& parent,
       const rrlib::rtti::tType& type, core::tFrameworkElement::tFlags flags)
   {
-    common::tAbstractDataPortCreationInfo creation_info(port_name, &parent, type, flags);
+    core::tPortWrapperBase::tConstructorArguments<common::tAbstractDataPortCreationInfo> creation_info(port_name, &parent, type, flags);
     return IsCheaplyCopiedType(type) ? // TODO: put it
            *static_cast<core::tAbstractPort*>(new optimized::tCheapCopyPort(creation_info)) :
            *static_cast<core::tAbstractPort*>(new tStandardPort(creation_info));

@@ -107,7 +107,7 @@ public:
   template <typename ... ARGS>
   tGenericPort(const ARGS&... args)
   {
-    common::tAbstractDataPortCreationInfo creation_info(args...);
+    tConstructorArguments<common::tAbstractDataPortCreationInfo> creation_info(args...);
     if ((creation_info.data_type.GetTypeTraits() & rrlib::rtti::trait_flags::cIS_BINARY_SERIALIZABLE) == 0)
     {
       throw std::runtime_error("Only binary serializable types may be used in data ports");

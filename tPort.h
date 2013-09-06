@@ -141,22 +141,27 @@ public:
    * This becomes a little tricky when T is a string type. There we have these rules:
    * The second string argument is interpreted as default_value. The third as config entry.
    */
-  template <typename TArg1, typename ... TRest>
-  tPort(const TArg1& arg1, const TRest&... args)
+  template <typename TArg1, typename TArg2, typename ... TRest>
+  tPort(const TArg1& arg1, const TArg2& arg2, const TRest&... args)
   {
-    if (!this->CopyConstruction<tPort>(&arg1))
+    tConstructorArguments<tPortCreationInfo<T>> creation_info(arg1, arg2, args...);
+    creation_info.data_type = rrlib::rtti::tDataType<tPortBuffer>();
+    SetWrapped(tImplementation::CreatePort(creation_info));
+    GetWrapped()->SetWrapperDataType(rrlib::rtti::tDataType<T>());
+    if (creation_info.DefaultValueSet())
     {
-      tPortCreationInfo<T> creation_info(arg1, args...);
-      creation_info.data_type = rrlib::rtti::tDataType<tPortBuffer>();
-      SetWrapped(tImplementation::CreatePort(creation_info));
-      GetWrapped()->SetWrapperDataType(rrlib::rtti::tDataType<T>());
-      if (creation_info.DefaultValueSet())
-      {
-        T t = rrlib::rtti::sStaticTypeInfo<T>::CreateByValue();
-        creation_info.GetDefault(t);
-        SetDefault(t);
-      }
+      T t = rrlib::rtti::sStaticTypeInfo<T>::CreateByValue();
+      creation_info.GetDefault(t);
+      SetDefault(t);
     }
+  }
+
+  // with a single argument, we do not want catch calls for copy construction
+  template < typename TArgument1, bool ENABLE = !std::is_base_of<tPort, TArgument1>::value >
+  tPort(const TArgument1& argument1, typename std::enable_if<ENABLE, tNoArgument>::type no_argument = tNoArgument())
+  {
+    // Call the above constructor
+    *this = tPort(tFlags(), argument1);
   }
 
   /*!
