@@ -115,10 +115,11 @@ public:
   /*! Should methods dealing with bounds be available? */
   enum { cBOUNDABLE = tIsBoundable<T>::value };
 
-  /*!
-   * Smart pointer class returned by various methods
-   */
+  /*! Smart pointer class returned by various methods */
   typedef tPortDataPointer<T> tDataPointer;
+
+  /*! Bundles all possible constructor parameters of tPort */
+  typedef tPortCreationInfo<T> tConstructorParameters;
 
 
   /*!
@@ -136,7 +137,7 @@ public:
    * tBounds<T> are port's bounds.
    * tUnit argument is port's unit.
    * const T& is interpreted as port's default value.
-   * tPortCreationInfo<T> argument is copied. This is only allowed as first argument.
+   * tPortCreationInfo<T> argument is copied.
    *
    * This becomes a little tricky when T is a string type. There we have these rules:
    * The second string argument is interpreted as default_value. The third as config entry.
