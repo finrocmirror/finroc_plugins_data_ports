@@ -335,6 +335,7 @@ struct tPortImplementation<T, tPortImplementationType::STANDARD>
   static void SetDefault(standard::tStandardPort& port, const T& new_default)
   {
     rrlib::rtti::sStaticTypeInfo<T>::DeepCopy(new_default, port.GetDefaultBufferRaw().GetData<T>());
+    BrowserPublish(port, new_default, rrlib::time::cNO_TIME);
   }
 };
 
