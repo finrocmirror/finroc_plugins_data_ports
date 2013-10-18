@@ -77,7 +77,11 @@ class tNumber;
 template <typename T>
 struct tIsCheaplyCopiedType
 {
+#if __GNUC__ == 4 && __GNUC_MINOR__ >= 8
+  enum { value = std::is_trivially_destructible<T>::value && (sizeof(T) <= 256) };
+#else
   enum { value = std::has_trivial_destructor<T>::value && (sizeof(T) <= 256) };
+#endif
 };
 
 /*!
