@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <targets>
 
-  <finrocplugin name="data_ports">
+  <finrocplugin>
     <sources>
       definitions.h
       tBounds.h
@@ -17,7 +17,7 @@
     </sources>
   </finrocplugin>
 
-  <finrocplugin name="port_api">
+  <finrocplugin name="api">
     <sources>
       tGenericPort.h
       tInputPort.h
