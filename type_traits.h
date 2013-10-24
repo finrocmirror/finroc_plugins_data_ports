@@ -120,7 +120,7 @@ static_assert(!tIsNumeric<bool>::value, "Bool should not be handled as numeric t
 template <typename T>
 struct tHasSmallerThanOperator
 {
-  template < typename U = T >
+  template <typename U = T>
   static int16_t Test(decltype((*(U*)(NULL)) < (*(U*)(NULL))))
   {
     return 0;

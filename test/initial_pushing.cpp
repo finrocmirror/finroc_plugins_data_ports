@@ -193,8 +193,8 @@ void TestInitialPushing(const std::array<T, 9>& test_values)
 
 int main(int, char**)
 {
-  TestInitialPushing<int>( {{11, 22, 33, 44, 55, 66, 77, 88, 99}});
-  TestInitialPushing<finroc::data_ports::numeric::tNumber>( {{11, 22, 33, 44, 55, 66, 77, 88, 99}});
-  TestInitialPushing<std::string>( {{"11", "22", "33", "44", "55", "66", "77", "88", "99"}});
+  TestInitialPushing<int>({{11, 22, 33, 44, 55, 66, 77, 88, 99}});
+  TestInitialPushing<finroc::data_ports::numeric::tNumber>({{11, 22, 33, 44, 55, 66, 77, 88, 99}});
+  TestInitialPushing<std::string>({{"11", "22", "33", "44", "55", "66", "77", "88", "99"}});
   return 0;
 }

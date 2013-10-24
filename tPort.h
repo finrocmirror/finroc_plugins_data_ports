@@ -213,7 +213,7 @@ public:
    *
    * \return Bounds as they are currently set
    */
-  template < bool AVAILABLE = cBOUNDABLE >
+  template <bool AVAILABLE = cBOUNDABLE>
   inline typename std::enable_if<AVAILABLE, tBounds<T>>::type GetBounds() const
   {
     typedef api::tBoundedPort<T, api::tPortImplementationTypeTrait<T>::type> tBoundedPort;
@@ -266,7 +266,7 @@ public:
    *
    * \param new_bounds New Bounds
    */
-  template < bool AVAILABLE = cBOUNDABLE >
+  template <bool AVAILABLE = cBOUNDABLE>
   inline void SetBounds(const typename std::enable_if<AVAILABLE, tBounds<T>>::type& new_bounds)
   {
     typedef api::tBoundedPort<T, api::tPortImplementationTypeTrait<T>::type> tBoundedPort;

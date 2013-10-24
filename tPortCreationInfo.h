@@ -85,7 +85,7 @@ public:
   /*!
    * \return Bounds for port
    */
-  template < bool AVAILABLE = cBOUNDABLE >
+  template <bool AVAILABLE = cBOUNDABLE>
   typename std::enable_if<AVAILABLE, tBounds<T>>::type GetBounds() const
   {
     T t = T();
@@ -125,13 +125,13 @@ public:
   }
 
   /*! Various Set methods for different port properties */
-  template < bool DISABLE = tIsString<T>::value >
+  template <bool DISABLE = tIsString<T>::value>
   void Set(const typename std::enable_if < !DISABLE, T >::type& default_value)
   {
     SetDefault(default_value);
   }
 
-  template < bool AVAILABLE = cBOUNDABLE >
+  template <bool AVAILABLE = cBOUNDABLE>
   void Set(const typename std::enable_if<AVAILABLE, tBounds<T>>::type& bounds)
   {
     rrlib::serialization::tOutputStream os(this->bounds);
@@ -163,13 +163,13 @@ public:
 //----------------------------------------------------------------------
 private:
 
-  template < bool STRING = tIsString<T>::value >
+  template <bool STRING = tIsString<T>::value>
   void SetString(const typename std::enable_if < !STRING, tString >::type& s)
   {
     common::tAbstractDataPortCreationInfo::SetString(s);
   }
 
-  template < bool STRING = tIsString<T>::value >
+  template <bool STRING = tIsString<T>::value>
   void SetString(const typename std::enable_if<STRING, tString>::type& s)
   {
     if (!name_set)
