@@ -77,7 +77,7 @@ class tNumber;
 template <typename T>
 struct tIsCheaplyCopiedType
 {
-  enum { value = std::has_trivial_destructor<T>::value && (sizeof(T) <= 256) };
+  enum { value = std::is_trivially_destructible<T>::value && (sizeof(T) <= 256) };
 };
 
 /*!
