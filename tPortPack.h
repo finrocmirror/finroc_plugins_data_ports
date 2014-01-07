@@ -69,10 +69,10 @@ namespace data_ports
  *
  * \param TPort       A port class template to use for every packed port
  * \param TTypeList   A list of the data types used in the ports. e.g. rrlib::util::tTypeList
- * \param Tindex      The pack creates ports using TTypeList[0] to TTypeList[Tindex]. This parameter must not be greater than TTypeList::cSIZE - 1 and is typically inferred and not set by the user.
+ * \param Tsize       The pack creates ports using TTypeList[0] to TTypeList[Tsize - 1]. This parameter must not be greater than TTypeList::cSIZE - 1 and is typically inferred and not set by the user.
  */
-template < template <typename> class TPort, typename TTypeList, size_t Tindex = TTypeList::cSIZE - 1 >
-class tPortPack : private tPortPack < TPort, TTypeList, Tindex - 1 >
+template <template <typename> class TPort, typename TTypeList, size_t Tsize = rrlib::util::type_list::tSizeOf<TTypeList>::cVALUE>
+class tPortPack : private tPortPack < TPort, TTypeList, Tsize - 1 >
 {
 
 //----------------------------------------------------------------------
@@ -81,15 +81,15 @@ class tPortPack : private tPortPack < TPort, TTypeList, Tindex - 1 >
 public:
 
   inline tPortPack(core::tFrameworkElement *parent, const std::string &name_prefix) :
-    tPortPack < TPort, TTypeList, Tindex - 1 > (parent, name_prefix),
-    port(name_prefix + std::to_string(Tindex + 1), parent)
+    tPortPack < TPort, TTypeList, Tsize - 1 > (parent, name_prefix),
+    port(name_prefix + std::to_string(Tsize), parent)
   {
     this->port.Init();
   }
 
   template <typename TIterator>
   inline tPortPack(core::tFrameworkElement *parent, TIterator names_begin, TIterator names_end) :
-    tPortPack < TPort, TTypeList, Tindex - 1 > (parent, names_begin, names_end - 1),
+    tPortPack < TPort, TTypeList, Tsize - 1 > (parent, names_begin, names_end - 1),
     port(names_end - 1, parent)
   {
     this->port.Init();
@@ -97,23 +97,23 @@ public:
 
   inline size_t NumberOfPorts() const
   {
-    return Tindex + 1;
+    return Tsize;
   }
 
   inline core::tPortWrapperBase &GetPort(size_t index)
   {
     assert(index < this->NumberOfPorts());
-    if (index == Tindex)
+    if (index == Tsize - 1)
     {
       return this->port;
     }
-    return tPortPack < TPort, TTypeList, Tindex - 1 >::GetPort(index);
+    return tPortPack < TPort, TTypeList, Tsize - 1 >::GetPort(index);
   }
 
   inline void ManagedDelete()
   {
     this->port.GetWrapped()->ManagedDelete();
-    tPortPack < TPort, TTypeList, Tindex - 1 >::ManagedDelete();
+    tPortPack < TPort, TTypeList, Tsize - 1 >::ManagedDelete();
   }
 
 //----------------------------------------------------------------------
@@ -122,13 +122,13 @@ public:
 
 private:
 
-  TPort<typename TTypeList::template tAt<Tindex>::tResult> port;
+  TPort < typename TTypeList::template tAt < Tsize - 1 >::tResult > port;
 
 };
 
 //! The partial specialization of tPortPack to terminate recursion
 template <template <typename> class TPort, typename TTypeList>
-struct tPortPack < TPort, TTypeList, -1 >
+struct tPortPack <TPort, TTypeList, 0>
 {
   inline tPortPack(core::tFrameworkElement *parent, const std::string &name_prefix)
   {}
