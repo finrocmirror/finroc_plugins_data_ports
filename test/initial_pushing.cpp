@@ -34,6 +34,8 @@
 //----------------------------------------------------------------------
 #include "core/tRuntimeEnvironment.h"
 
+#include "rrlib/util/demangle.h"
+
 //----------------------------------------------------------------------
 // Internal includes with ""
 //----------------------------------------------------------------------
@@ -82,7 +84,7 @@ template <typename T>
 void TestInitialPushing(const std::array<T, 9>& test_values)
 {
   tFrameworkElement* parent = new tFrameworkElement(&tRuntimeEnvironment::GetInstance(), "Test");
-  FINROC_LOG_PRINT(USER, "\nChecking initial pushing for type ", rrlib::rtti::Demangle(typeid(T).name()));
+  FINROC_LOG_PRINT(USER, "\nChecking initial pushing for type ", rrlib::util::Demangle(typeid(T).name()));
 
   // Create initial set of ports
   tOutputPort<T> output_port("Output Port", parent);

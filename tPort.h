@@ -41,6 +41,8 @@
 //----------------------------------------------------------------------
 #include "core/port/tPortWrapperBase.h"
 
+#include "rrlib/util/demangle.h"
+
 //----------------------------------------------------------------------
 // Internal includes with ""
 //----------------------------------------------------------------------
@@ -320,7 +322,7 @@ public:
     if (wrap.GetDataType().GetRttiName() != typeid(tPortBuffer).name())
     {
       //FINROC_LOG_PRINT(ERROR, "tPort<", rrlib::rtti::Demangle(typeid(T).name()), "> cannot wrap port with buffer type '", wrap.GetDataType().GetName(), "'.");
-      throw std::runtime_error("tPort<" + rrlib::rtti::Demangle(typeid(T).name()) + "> cannot wrap port with buffer type '" + wrap.GetDataType().GetName() + "'.");
+      throw std::runtime_error("tPort<" + rrlib::util::Demangle(typeid(T).name()) + "> cannot wrap port with buffer type '" + wrap.GetDataType().GetName() + "'.");
     }
     tPort port;
     port.SetWrapped(&wrap);
