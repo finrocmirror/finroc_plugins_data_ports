@@ -109,18 +109,18 @@ public:
 
   typedef optimized::tCheapCopyPort tPortBase;
 
-  virtual core::tAbstractPort* CreatePort(const common::tAbstractDataPortCreationInfo& creation_info)
+  virtual core::tAbstractPort* CreatePort(const common::tAbstractDataPortCreationInfo& creation_info) override
   {
     tPort<T> port(creation_info);
     return port.GetWrapped();
   }
 
-  virtual void Get(core::tAbstractPort& port, rrlib::rtti::tGenericObject& result, rrlib::time::tTimestamp& timestamp)
+  virtual void Get(core::tAbstractPort& port, rrlib::rtti::tGenericObject& result, rrlib::time::tTimestamp& timestamp) override
   {
     tImplementation::CopyCurrentPortValue(static_cast<tPortBase&>(port), result.GetData<T>(), timestamp);
   }
 
-  virtual tPortDataPointer<const rrlib::rtti::tGenericObject> GetPointer(core::tAbstractPort& abstract_port, tStrategy strategy)
+  virtual tPortDataPointer<const rrlib::rtti::tGenericObject> GetPointer(core::tAbstractPort& abstract_port, tStrategy strategy) override
   {
     tPortBase& port = static_cast<tPortBase&>(abstract_port);
     if ((strategy == tStrategy::DEFAULT && port.PushStrategy()) || strategy == tStrategy::NEVER_PULL)
@@ -138,12 +138,12 @@ public:
     }
   }
 
-  virtual void Publish(core::tAbstractPort& port, const rrlib::rtti::tGenericObject& data, const rrlib::time::tTimestamp& timestamp)
+  virtual void Publish(core::tAbstractPort& port, const rrlib::rtti::tGenericObject& data, const rrlib::time::tTimestamp& timestamp) override
   {
     tImplementation::CopyAndPublish(static_cast<tPortBase&>(port), data.GetData<T>(), timestamp);
   }
 
-  virtual void SetBounds(core::tAbstractPort& port, const rrlib::rtti::tGenericObject& min, const rrlib::rtti::tGenericObject& max)
+  virtual void SetBounds(core::tAbstractPort& port, const rrlib::rtti::tGenericObject& min, const rrlib::rtti::tGenericObject& max) override
   {
     std::conditional<cBOUNDABLE, tBoundsSetter<T>, tNoBoundsSetter>::type::SetBounds(port, min, max);
   }
@@ -156,17 +156,17 @@ public:
 
   typedef optimized::tCheapCopyPort tPortBase;
 
-  virtual core::tAbstractPort* CreatePort(const common::tAbstractDataPortCreationInfo& creation_info)
+  virtual core::tAbstractPort* CreatePort(const common::tAbstractDataPortCreationInfo& creation_info) override
   {
     return new tPortBase(creation_info);
   }
 
-  virtual void Get(core::tAbstractPort& port, rrlib::rtti::tGenericObject& result, rrlib::time::tTimestamp& timestamp)
+  virtual void Get(core::tAbstractPort& port, rrlib::rtti::tGenericObject& result, rrlib::time::tTimestamp& timestamp) override
   {
     static_cast<tPortBase&>(port).CopyCurrentValueToGenericObject(result, timestamp);
   }
 
-  virtual tPortDataPointer<const rrlib::rtti::tGenericObject> GetPointer(core::tAbstractPort& abstract_port, tStrategy strategy)
+  virtual tPortDataPointer<const rrlib::rtti::tGenericObject> GetPointer(core::tAbstractPort& abstract_port, tStrategy strategy) override
   {
     tPortBase& port = static_cast<tPortBase&>(abstract_port);
     if ((strategy == tStrategy::DEFAULT && port.PushStrategy()) || strategy == tStrategy::NEVER_PULL)
@@ -184,7 +184,7 @@ public:
     }
   }
 
-  virtual void Publish(core::tAbstractPort& port, const rrlib::rtti::tGenericObject& data, const rrlib::time::tTimestamp& timestamp)
+  virtual void Publish(core::tAbstractPort& port, const rrlib::rtti::tGenericObject& data, const rrlib::time::tTimestamp& timestamp) override
   {
     assert(data.GetType() == port.GetDataType());
     optimized::tThreadLocalBufferPools* thread_local_pools = optimized::tThreadLocalBufferPools::Get();
@@ -206,7 +206,7 @@ public:
     }
   }
 
-  virtual void SetBounds(core::tAbstractPort& port, const rrlib::rtti::tGenericObject& min, const rrlib::rtti::tGenericObject& max)
+  virtual void SetBounds(core::tAbstractPort& port, const rrlib::rtti::tGenericObject& min, const rrlib::rtti::tGenericObject& max) override
   {
     FINROC_LOG_PRINT(ERROR, "Cannot set bounds for type ", port.GetDataType().GetName());
   }
@@ -218,25 +218,25 @@ public:
 
   typedef standard::tStandardPort tPortBase;
 
-  virtual core::tAbstractPort* CreatePort(const common::tAbstractDataPortCreationInfo& creation_info)
+  virtual core::tAbstractPort* CreatePort(const common::tAbstractDataPortCreationInfo& creation_info) override
   {
     return new tPortBase(creation_info);
   }
 
-  virtual void Get(core::tAbstractPort& port, rrlib::rtti::tGenericObject& result, rrlib::time::tTimestamp& timestamp)
+  virtual void Get(core::tAbstractPort& port, rrlib::rtti::tGenericObject& result, rrlib::time::tTimestamp& timestamp) override
   {
     typename tPortBase::tLockingManagerPointer mgr = static_cast<tPortBase&>(port).GetCurrentValueRaw();
     result.DeepCopyFrom(mgr->GetObject());
     timestamp = mgr->GetTimestamp();
   }
 
-  virtual tPortDataPointer<const rrlib::rtti::tGenericObject> GetPointer(core::tAbstractPort& port, tStrategy strategy)
+  virtual tPortDataPointer<const rrlib::rtti::tGenericObject> GetPointer(core::tAbstractPort& port, tStrategy strategy) override
   {
     typename tPortBase::tLockingManagerPointer mgr = static_cast<tPortBase&>(port).GetCurrentValueRaw(strategy);
     return tPortDataPointerImplementation<rrlib::rtti::tGenericObject, false>(mgr.release(), false);
   }
 
-  virtual void Publish(core::tAbstractPort& port, const rrlib::rtti::tGenericObject& data, const rrlib::time::tTimestamp& timestamp)
+  virtual void Publish(core::tAbstractPort& port, const rrlib::rtti::tGenericObject& data, const rrlib::time::tTimestamp& timestamp) override
   {
     assert(data.GetType() == port.GetDataType());
     typename tPortBase::tUnusedManagerPointer mgr = static_cast<tPortBase&>(port).GetUnusedBufferRaw();
@@ -245,7 +245,7 @@ public:
     static_cast<tPortBase&>(port).Publish(mgr);
   }
 
-  virtual void SetBounds(core::tAbstractPort& port, const rrlib::rtti::tGenericObject& min, const rrlib::rtti::tGenericObject& max)
+  virtual void SetBounds(core::tAbstractPort& port, const rrlib::rtti::tGenericObject& min, const rrlib::rtti::tGenericObject& max) override
   {
     FINROC_LOG_PRINT(ERROR, "Cannot set bounds for type ", port.GetDataType().GetName());
   }

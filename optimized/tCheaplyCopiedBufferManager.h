@@ -134,7 +134,7 @@ private:
   /*! Buffer pools, this buffer originates from. Null if it's a global buffer. */
   tThreadLocalBufferPools* const origin;
 
-  virtual rrlib::rtti::tGenericObject& GetObjectImplementation();
+  virtual rrlib::rtti::tGenericObject& GetObjectImplementation() override;
 };
 
 //----------------------------------------------------------------------

@@ -84,7 +84,7 @@ public:
     SetName(name);
   }
 
-  virtual void MainLoopCallback()
+  virtual void MainLoopCallback() override
   {
     rrlib::time::tDuration diff = rrlib::time::Now() - tLoopThread::GetCurrentCycleStartTime();
     if (max_latency.Load() < diff)

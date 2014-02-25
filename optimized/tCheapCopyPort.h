@@ -303,7 +303,7 @@ public:
     return input_queue->Dequeue();
   }
 
-  virtual void ForwardData(tAbstractDataPort& other);
+  virtual void ForwardData(tAbstractDataPort& other) override;
 
   /*!
    * \return Returns data type's 'cheaply copyable type index'
@@ -383,7 +383,7 @@ public:
     return unit;
   }
 
-  virtual void NotifyDisconnect();
+  virtual void NotifyDisconnect(); // TODO: why is this virtual?
 
 //  /*!
 //   * Publish data
@@ -813,7 +813,7 @@ private:
 //    }
 //  }
 
-  virtual int GetMaxQueueLengthImplementation() const;
+  virtual int GetMaxQueueLengthImplementation() const override;
 
 //  /*!
 //   * (Meant for internal use)
@@ -826,7 +826,7 @@ private:
 //    return tc->GetUnusedBuffer(cc_type_index);
 //  }
 
-  virtual void InitialPushTo(tAbstractPort& target, bool reverse);
+  virtual void InitialPushTo(tAbstractPort& target, bool reverse) override;
 
   /*!
    * Notify any port listeners of data change

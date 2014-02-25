@@ -204,7 +204,7 @@ public:
     return input_queue->Dequeue();
   }
 
-  virtual void ForwardData(tAbstractDataPort& other); // TODO either add to AbstractDataPort or remove virtuality and add comment
+  virtual void ForwardData(tAbstractDataPort& other) override;
 
   /*!
    * Obtain port's current value
@@ -252,7 +252,7 @@ public:
 
   virtual tUnusedManagerPointer GetUnusedBufferRaw(const rrlib::rtti::tType& dt);
 
-  virtual void NotifyDisconnect();
+  virtual void NotifyDisconnect(); // TODO: why is this virtual?
 
   /*!
    * Publish Data Buffer. This data will be forwarded to any connected ports.
@@ -482,10 +482,10 @@ private:
    */
   static tPortBufferManager* CreateDefaultValue(const common::tAbstractDataPortCreationInfo& creation_info, tBufferPool& buffer_pool);
 
-  virtual int GetMaxQueueLengthImplementation() const;
+  virtual int GetMaxQueueLengthImplementation() const override;
 
   // quite similar to publish
-  virtual void InitialPushTo(tAbstractPort& target, bool reverse);
+  virtual void InitialPushTo(tAbstractPort& target, bool reverse) override;
 
   /*!
    * \param publishing_data Info on current publish/pull operation
@@ -528,7 +528,7 @@ private:
     }
   }
 
-  virtual void PrintStructure(int indent, std::stringstream& output) const; // FIXME: add override with gcc 4.7
+  virtual void PrintStructure(int indent, std::stringstream& output) const override;
 
   /*!
    * Publish data

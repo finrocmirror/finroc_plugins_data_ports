@@ -139,7 +139,7 @@ private:
   }
 
   virtual std::string BrowserPublishRaw(tUnusedManagerPointer& buffer, bool notify_listener_on_this_port = true,
-                                        tChangeStatus change_constant = tChangeStatus::CHANGED) // FIXME: explicitly override when we use gcc 4.7
+                                        tChangeStatus change_constant = tChangeStatus::CHANGED) override
   {
     if (buffer->GetObject().GetType() != GetDataType())
     {
@@ -173,12 +173,12 @@ private:
     return "Value is out of bounds";
   }
 
-  virtual bool NonStandardAssign(tPublishingDataGlobalBuffer& publishing_data, tChangeStatus change_constant) // FIXME: explicitly override when we use gcc 4.7
+  virtual bool NonStandardAssign(tPublishingDataGlobalBuffer& publishing_data, tChangeStatus change_constant) override
   {
     return NonStandardAssignImplementation(publishing_data, change_constant);
   }
 
-  virtual bool NonStandardAssign(tPublishingDataThreadLocalBuffer& publishing_data, tChangeStatus change_constant) // FIXME: explicitly override when we use gcc 4.7
+  virtual bool NonStandardAssign(tPublishingDataThreadLocalBuffer& publishing_data, tChangeStatus change_constant) override
   {
     return NonStandardAssignImplementation(publishing_data, change_constant);
   }

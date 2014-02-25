@@ -83,7 +83,7 @@ public:
   inline void PortChangedRawBase(tChangeContext& change_context, int& lock_counter, rrlib::buffer_pools::tBufferManagementInfo& value)
   {}
 
-  virtual void PortDeleted()
+  virtual void PortDeleted() override
   {
     delete this;
   }
@@ -108,7 +108,7 @@ public:
     previous_listener.PortChangedRaw(change_context, lock_counter, value);
   }
 
-  virtual void PortDeleted()
+  virtual void PortDeleted() override
   {
     previous_listener.PortDeleted();
     delete this;
@@ -132,7 +132,7 @@ private:
 
   typedef tPortImplementation<T, TPortImplementationType> tImplementation;
 
-  virtual void PortChangedRaw(tChangeContext& change_context, int& lock_counter, rrlib::buffer_pools::tBufferManagementInfo& value)
+  virtual void PortChangedRaw(tChangeContext& change_context, int& lock_counter, rrlib::buffer_pools::tBufferManagementInfo& value) override
   {
     this->PortChangedRawBase(change_context, lock_counter, value);
     T v = tImplementation::ToValue(
@@ -153,7 +153,7 @@ public:
 
 private:
 
-  virtual void PortChangedRaw(tChangeContext& change_context, int& lock_counter, rrlib::buffer_pools::tBufferManagementInfo& value)
+  virtual void PortChangedRaw(tChangeContext& change_context, int& lock_counter, rrlib::buffer_pools::tBufferManagementInfo& value) override
   {
     this->PortChangedRawBase(change_context, lock_counter, value);
     this->listener.OnPortChange(static_cast<standard::tPortBufferManager&>(value).GetObject().GetData<T>(), change_context);
@@ -171,7 +171,7 @@ public:
 
 private:
 
-  virtual void PortChangedRaw(tChangeContext& change_context, int& lock_counter, rrlib::buffer_pools::tBufferManagementInfo& value)
+  virtual void PortChangedRaw(tChangeContext& change_context, int& lock_counter, rrlib::buffer_pools::tBufferManagementInfo& value) override
   {
     this->PortChangedRawBase(change_context, lock_counter, value);
     if (IsCheaplyCopiedType(change_context.Origin().GetDataType()))
@@ -199,7 +199,7 @@ private:
   typedef typename std::conditional<tIsCheaplyCopiedType<T>::value, optimized::tCheaplyCopiedBufferManager, standard::tPortBufferManager>::type tBufferManager;
   typedef tPortImplementation<T, tPortImplementationTypeTrait<T>::type> tImplementation;
 
-  virtual void PortChangedRaw(tChangeContext& change_context, int& lock_counter, rrlib::buffer_pools::tBufferManagementInfo& value)
+  virtual void PortChangedRaw(tChangeContext& change_context, int& lock_counter, rrlib::buffer_pools::tBufferManagementInfo& value) override
   {
     this->PortChangedRawBase(change_context, lock_counter, value);
     tBufferManager& manager = static_cast<tBufferManager&>(value);
@@ -234,7 +234,7 @@ public:
 
 private:
 
-  virtual void PortChangedRaw(tChangeContext& change_context, int& lock_counter, rrlib::buffer_pools::tBufferManagementInfo& value)
+  virtual void PortChangedRaw(tChangeContext& change_context, int& lock_counter, rrlib::buffer_pools::tBufferManagementInfo& value) override
   {
     this->PortChangedRawBase(change_context, lock_counter, value);
     lock_counter++;
@@ -264,7 +264,7 @@ public:
 
 private:
 
-  virtual void PortChangedRaw(tChangeContext& change_context, int& lock_counter, rrlib::buffer_pools::tBufferManagementInfo& value)
+  virtual void PortChangedRaw(tChangeContext& change_context, int& lock_counter, rrlib::buffer_pools::tBufferManagementInfo& value) override
   {
     this->PortChangedRawBase(change_context, lock_counter, value);
     this->listener.OnPortChange(change_context);

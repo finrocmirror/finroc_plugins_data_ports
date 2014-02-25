@@ -136,7 +136,7 @@ private:
 
   tPortBufferManager();
 
-  virtual rrlib::rtti::tGenericObject& GetObjectImplementation();
+  virtual rrlib::rtti::tGenericObject& GetObjectImplementation() override;
 };
 
 //----------------------------------------------------------------------

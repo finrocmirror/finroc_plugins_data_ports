@@ -79,7 +79,7 @@ namespace internal
 class tDataPortFactory : public core::tPortFactory
 {
   virtual core::tAbstractPort& CreatePortImplementation(const std::string& port_name, core::tFrameworkElement& parent,
-      const rrlib::rtti::tType& type, core::tFrameworkElement::tFlags flags)
+      const rrlib::rtti::tType& type, core::tFrameworkElement::tFlags flags) override
   {
     core::tPortWrapperBase::tConstructorArguments<common::tAbstractDataPortCreationInfo> creation_info(port_name, &parent, type, flags);
     return IsCheaplyCopiedType(type) ? // TODO: put it
@@ -88,7 +88,7 @@ class tDataPortFactory : public core::tPortFactory
     //return *static_cast<core::tAbstractPort*>(new tStandardPort(creation_info));
   }
 
-  virtual bool HandlesDataType(const rrlib::rtti::tType& dt)
+  virtual bool HandlesDataType(const rrlib::rtti::tType& dt) override
   {
     return IsDataFlowType(dt);
   }

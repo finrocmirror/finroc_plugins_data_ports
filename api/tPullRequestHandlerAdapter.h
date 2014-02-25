@@ -82,7 +82,7 @@ class tPullRequestHandlerAdapter : public optimized::tPullRequestHandlerRaw
 
   virtual tPortDataPointer<const T> OnPullRequest(tOutputPort<T>& origin) = 0;
 
-  virtual bool RawPullRequest(optimized::tCheapCopyPort& origin, optimized::tCheaplyCopiedBufferManager& result_buffer)
+  virtual bool RawPullRequest(optimized::tCheapCopyPort& origin, optimized::tCheaplyCopiedBufferManager& result_buffer) override
   {
     tOutputPort<T> origin_port = tOutputPort<T>::Wrap(origin);
     tPortDataPointer<const T> pulled_buffer = OnPullRequest(tOutputPort<T>::Wrap(origin_port));
@@ -100,7 +100,7 @@ class tPullRequestHandlerAdapter<T, false> : public standard::tPullRequestHandle
 {
   virtual tPortDataPointer<const T> OnPullRequest(tOutputPort<T>& origin) = 0;
 
-  virtual typename standard::tStandardPort::tUniversalManagerPointer RawPullRequest(standard::tStandardPort& origin)
+  virtual typename standard::tStandardPort::tUniversalManagerPointer RawPullRequest(standard::tStandardPort& origin) override
   {
     tOutputPort<T> origin_port = tOutputPort<T>::Wrap(origin);
     tPortDataPointer<const T> pulled_buffer = OnPullRequest(origin_port);
@@ -123,7 +123,7 @@ class tPullRequestHandlerAdapterGeneric : public standard::tPullRequestHandlerRa
 {
   virtual tPortDataPointer<const rrlib::rtti::tGenericObject> OnPullRequest(tGenericPort& origin) = 0;
 
-  virtual typename standard::tStandardPort::tUniversalManagerPointer RawPullRequest(standard::tStandardPort& origin)
+  virtual typename standard::tStandardPort::tUniversalManagerPointer RawPullRequest(standard::tStandardPort& origin) override
   {
     tGenericPort origin_port = tGenericPort::Wrap(origin);
     tPortDataPointer<const rrlib::rtti::tGenericObject> pulled_buffer = OnPullRequest(origin_port);
@@ -131,7 +131,7 @@ class tPullRequestHandlerAdapterGeneric : public standard::tPullRequestHandlerRa
     return buffer;
   }
 
-  virtual bool RawPullRequest(optimized::tCheapCopyPort& origin, optimized::tCheaplyCopiedBufferManager& result_buffer)
+  virtual bool RawPullRequest(optimized::tCheapCopyPort& origin, optimized::tCheaplyCopiedBufferManager& result_buffer) override
   {
     tGenericPort origin_port = tGenericPort::Wrap(origin);
     tPortDataPointer<const rrlib::rtti::tGenericObject> pulled_buffer = OnPullRequest(origin_port);

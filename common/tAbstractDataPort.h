@@ -336,9 +336,9 @@ private:
    */
   static core::tAbstractPortCreationInfo AdjustPortCreationInfo(const tAbstractDataPortCreationInfo& create_info);
 
-  virtual void ConnectionAdded(tAbstractPort& partner, bool partner_is_destination); // FIXME: add "override" when we use gcc 4.7
+  virtual void ConnectionAdded(tAbstractPort& partner, bool partner_is_destination) override;
 
-  virtual void ConnectionRemoved(tAbstractPort& partner, bool partner_is_destination); // FIXME: add "override" when we use gcc 4.7
+  virtual void ConnectionRemoved(tAbstractPort& partner, bool partner_is_destination) override;
 
   /*!
    * Should be called in situations where there might need to be an initial push
