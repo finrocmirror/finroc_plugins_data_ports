@@ -35,7 +35,6 @@
 #include "rrlib/rtti/rtti.h"
 #include "core/definitions.h"
 #include "core/log_messages.h"
-#include <boost/algorithm/string.hpp>
 
 //----------------------------------------------------------------------
 // Internal includes with ""
@@ -206,11 +205,11 @@ rrlib::serialization::tStringOutputStream &operator << (rrlib::serialization::tS
   return stream;
 }
 
-// TODO: This implementation is could be nicer
+// TODO: This implementation could be nicer
 rrlib::serialization::tStringInputStream &operator >> (rrlib::serialization::tStringInputStream& stream, tNumber& number)
 {
   // scan for unit
-  tString complete_string = stream.ReadWhile("-.", rrlib::serialization::tStringInputStream::cDIGIT | rrlib::serialization::tStringInputStream::cWHITESPACE | rrlib::serialization::tStringInputStream::cLETTER, true);
+  tString complete_string = stream.ReadWhile("-./", rrlib::serialization::tStringInputStream::cDIGIT | rrlib::serialization::tStringInputStream::cWHITESPACE | rrlib::serialization::tStringInputStream::cLETTER, true);
   tString number_string = complete_string;
   tUnit unit;
   for (size_t i = 0; i < complete_string.length(); i++)
@@ -222,8 +221,13 @@ rrlib::serialization::tStringInputStream &operator >> (rrlib::serialization::tSt
       {
         continue;  // exponent in decimal notation
       }
-      number_string = boost::trim_copy(complete_string.substr(0, i));
-      tString unit_string = boost::trim_copy(complete_string.substr(i));
+      number_string = complete_string.substr(0, i); // trimming not necessary, as ato* functions do this
+      tString unit_string = complete_string.substr(i); // first character is letter
+      assert(unit_string.length() > 0 && isalpha(unit_string[0]));
+      while (isspace(unit_string.back())) // trim back
+      {
+        unit_string.erase(unit_string.length() - 1);
+      }
       unit = tUnit::GetUnit(unit_string);
       break;
     }
