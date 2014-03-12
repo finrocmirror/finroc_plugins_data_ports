@@ -120,7 +120,7 @@ public:
    * \param listener Listener to add
    *
    * \tparam LISTENER Listener class needs to implement a method
-   * void PortChanged(const rrlib::rtti::tGenericObject& value, tChangeContext& change_context)
+   * void OnPortChange(const rrlib::rtti::tGenericObject& value, tChangeContext& change_context)
    *
    * (It's preferred to add listeners before port is initialized)
    * (Note: Buffer in 'value' always has data type of port backend (e.g. tNumber instead of double)
@@ -132,7 +132,7 @@ public:
    * \param listener Listener to add
    *
    * \tparam LISTENER Listener class needs to implement a method
-   * void PortChanged(tPortDataPointer<const rrlib::rtti::tGenericObject>& value, tChangeContext& change_context)
+   * void OnPortChange(tPortDataPointer<const rrlib::rtti::tGenericObject>& value, tChangeContext& change_context)
    *
    * (It's preferred to add listeners before port is initialized)
    * (Note: Buffer in 'value' always has data type of port backend (e.g. tNumber instead of double)
@@ -144,7 +144,7 @@ public:
    * \param listener Listener to add
    *
    * \tparam LISTENER Listener class needs to implement a method
-   * void PortChanged(tChangeContext& change_context)
+   * void OnPortChange(tChangeContext& change_context)
    *
    * (It's preferred to add listeners before port is initialized)
    */
