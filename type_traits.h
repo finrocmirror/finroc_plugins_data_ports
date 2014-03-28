@@ -103,22 +103,22 @@ inline static bool IsDataFlowType(const rrlib::rtti::tType& type)
  * For the latter, this template needs to be specialized.
  */
 template <typename T>
-struct tIsNumeric
+struct IsNumeric
 {
   enum { value = std::is_integral<T>::value || std::is_floating_point<T>::value || std::is_same<T, numeric::tNumber>::value };
 };
 template <>
-struct tIsNumeric<bool>
+struct IsNumeric<bool>
 {
   enum { value = 0 };
 };
-static_assert(!tIsNumeric<bool>::value, "Bool should not be handled as numeric type");
+static_assert(!IsNumeric<bool>::value, "Bool should not be handled as numeric type");
 
 /*!
  * This type-trait is used to determine whether a type supports operator '<' .
  */
 template <typename T>
-struct tHasSmallerThanOperator
+struct HasSmallerThanOperator
 {
   template <typename U = T>
   static int16_t Test(decltype((*(U*)(NULL)) < (*(U*)(NULL))))
@@ -138,16 +138,16 @@ struct tHasSmallerThanOperator
  * This type-trait determines whether a type is boundable in ports
  */
 template <typename T>
-struct tIsBoundable
+struct IsBoundable
 {
-  enum { value = tIsCheaplyCopiedType<T>::value && tHasSmallerThanOperator<T>::value && (!std::is_same<bool, T>::value) };
+  enum { value = tIsCheaplyCopiedType<T>::value && HasSmallerThanOperator<T>::value && (!std::is_same<bool, T>::value) };
 };
 
 /*!
  * This type-trait determines whether a type is a string type
  */
 template <typename T>
-struct tIsString
+struct IsString
 {
   enum { value = std::is_same<T, std::string>::value || std::is_same<T, tString>::value || std::is_same<T, char*>::value || std::is_same<T, const char*>::value || std::is_same<typename std::remove_extent<T>::type, char>::value };
 };

@@ -82,7 +82,7 @@ enum class tOutOfBoundsAction
 template <typename T>
 class tBounds
 {
-  static_assert(tIsBoundable<T>::value, "Type T is not boundable");
+  static_assert(IsBoundable<T>::value, "Type T is not boundable");
 
 //----------------------------------------------------------------------
 // Public methods and typedefs

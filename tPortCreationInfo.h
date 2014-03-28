@@ -72,7 +72,7 @@ namespace data_ports
 template <typename T>
 class tPortCreationInfo : public common::tAbstractDataPortCreationInfo
 {
-  enum { cBOUNDABLE = tIsBoundable<T>::value };
+  enum { cBOUNDABLE = IsBoundable<T>::value };
 
 //----------------------------------------------------------------------
 // Public methods and typedefs
@@ -125,7 +125,7 @@ public:
   }
 
   /*! Various Set methods for different port properties */
-  template <bool DISABLE = tIsString<T>::value>
+  template <bool DISABLE = IsString<T>::value>
   void Set(const typename std::enable_if < !DISABLE, T >::type& default_value)
   {
     SetDefault(default_value);
@@ -163,13 +163,13 @@ public:
 //----------------------------------------------------------------------
 private:
 
-  template <bool STRING = tIsString<T>::value>
+  template <bool STRING = IsString<T>::value>
   void SetString(const typename std::enable_if < !STRING, tString >::type& s)
   {
     common::tAbstractDataPortCreationInfo::SetString(s);
   }
 
-  template <bool STRING = tIsString<T>::value>
+  template <bool STRING = IsString<T>::value>
   void SetString(const typename std::enable_if<STRING, tString>::type& s)
   {
     if (!name_set)

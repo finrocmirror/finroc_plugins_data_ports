@@ -92,7 +92,7 @@ class tPort : public core::tPortWrapperBase
 {
 protected:
 
-  static_assert(rrlib::serialization::tIsBinarySerializable<T>::value, "Type T needs to be binary serializable for use in ports.");
+  static_assert(rrlib::serialization::IsBinarySerializable<T>::value, "Type T needs to be binary serializable for use in ports.");
 
   /*! Class that contains actual implementation of most functionality */
   typedef api::tPortImplementation<T, api::tPortImplementationTypeTrait<T>::type> tImplementation;
@@ -115,7 +115,7 @@ public:
   enum { cPASS_BY_VALUE = tIsCheaplyCopiedType<T>::value };
 
   /*! Should methods dealing with bounds be available? */
-  enum { cBOUNDABLE = tIsBoundable<T>::value };
+  enum { cBOUNDABLE = IsBoundable<T>::value };
 
   /*! Smart pointer class returned by various methods */
   typedef tPortDataPointer<T> tDataPointer;
@@ -153,7 +153,7 @@ public:
     GetWrapped()->SetWrapperDataType(rrlib::rtti::tDataType<T>());
     if (creation_info.DefaultValueSet())
     {
-      T t = rrlib::rtti::sStaticTypeInfo<T>::CreateByValue();
+      T t(rrlib::serialization::DefaultInstantiation<T>::Create());
       creation_info.GetDefault(t);
       SetDefault(t);
     }

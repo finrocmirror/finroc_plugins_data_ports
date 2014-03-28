@@ -160,14 +160,14 @@ private:
    * \param current_vale Value to generate out of bounds error message for
    * \return Error message that value is out of bounds
    */
-  template <bool ENABLE = rrlib::serialization::tIsStringSerializable<T>::value>
+  template <bool ENABLE = rrlib::serialization::IsStringSerializable<T>::value>
   std::string GenerateErrorMessage(const typename std::enable_if<ENABLE, T>::type& current_value)
   {
     rrlib::serialization::tStringOutputStream sos;
     sos << "Value " << current_value << " is out of bounds [" << bounds.GetMin() << "; " << bounds.GetMax() << "]";
     return sos.ToString();
   }
-  template <bool ENABLE = rrlib::serialization::tIsStringSerializable<T>::value>
+  template <bool ENABLE = rrlib::serialization::IsStringSerializable<T>::value>
   std::string GenerateErrorMessage(const typename std::enable_if < !ENABLE, T >::type& current_value)
   {
     return "Value is out of bounds";

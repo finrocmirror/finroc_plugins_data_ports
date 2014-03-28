@@ -118,7 +118,7 @@ struct tCheapCopyPortBaseImplementation<TWrapper, TBuffer, TYPE, false>
 // standard cheap-copy implementation
 template <typename T, tPortImplementationType TYPE>
 struct tCheapCopyPortImplementation :
-  public tCheapCopyPortBaseImplementation<T, T, tPortImplementationType::CHEAP_COPY, tIsBoundable<T>::value>
+  public tCheapCopyPortBaseImplementation<T, T, tPortImplementationType::CHEAP_COPY, IsBoundable<T>::value>
 {
   typedef T tPortBuffer;
 
@@ -276,7 +276,7 @@ struct tPortImplementation<T, tPortImplementationType::STANDARD>
   {
     typename tPortBase::tUnusedManagerPointer buffer = port.GetUnusedBufferRaw();
     buffer->SetTimestamp(timestamp);
-    rrlib::rtti::sStaticTypeInfo<T>::DeepCopy(data, buffer->GetObject().GetData<T>());
+    rrlib::rtti::GenericOperations<T>::DeepCopy(data, buffer->GetObject().GetData<T>());
     port.BrowserPublish(buffer);
   }
 
@@ -284,14 +284,14 @@ struct tPortImplementation<T, tPortImplementationType::STANDARD>
   {
     typename tPortBase::tUnusedManagerPointer buffer = port.GetUnusedBufferRaw();
     buffer->SetTimestamp(timestamp);
-    rrlib::rtti::sStaticTypeInfo<T>::DeepCopy(data, buffer->GetObject().GetData<T>());
+    rrlib::rtti::GenericOperations<T>::DeepCopy(data, buffer->GetObject().GetData<T>());
     port.Publish(buffer);
   }
 
   static inline void CopyCurrentPortValue(tPortBase& port, T& result_buffer, rrlib::time::tTimestamp& timestamp_buffer)
   {
     typename standard::tStandardPort::tLockingManagerPointer pointer = port.GetCurrentValueRaw();
-    rrlib::rtti::sStaticTypeInfo<T>::DeepCopy(pointer->GetObject().GetData<T>(), result_buffer);
+    rrlib::rtti::GenericOperations<T>::DeepCopy(pointer->GetObject().GetData<T>(), result_buffer);
     timestamp_buffer = pointer->GetTimestamp();
   }
 
@@ -334,7 +334,7 @@ struct tPortImplementation<T, tPortImplementationType::STANDARD>
 
   static void SetDefault(standard::tStandardPort& port, const T& new_default)
   {
-    rrlib::rtti::sStaticTypeInfo<T>::DeepCopy(new_default, port.GetDefaultBufferRaw().GetData<T>());
+    rrlib::rtti::GenericOperations<T>::DeepCopy(new_default, port.GetDefaultBufferRaw().GetData<T>());
     BrowserPublish(port, new_default, rrlib::time::cNO_TIME);
   }
 };

@@ -102,7 +102,7 @@ class tGenericPortImplementationTyped : public tGenericPortImplementation
 public:
 
   /*! Should methods dealing with bounds be available? */
-  enum { cBOUNDABLE = tIsBoundable<T>::value };
+  enum { cBOUNDABLE = IsBoundable<T>::value };
 
   /*! Class that contains actual implementation of most functionality */
   typedef api::tPortImplementation<T, api::tPortImplementationTypeTrait<T>::type> tImplementation;

@@ -80,7 +80,7 @@ template <typename T>
 struct tPortImplementationTypeTrait
 {
   /*! Port implementation to use */
-  static const tPortImplementationType type = tIsNumeric<T>::value ? tPortImplementationType::NUMERIC :
+  static const tPortImplementationType type = IsNumeric<T>::value ? tPortImplementationType::NUMERIC :
       (tIsCheaplyCopiedType<T>::value ? tPortImplementationType::CHEAP_COPY : tPortImplementationType::STANDARD);
 };
 

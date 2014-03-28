@@ -239,7 +239,7 @@ public:
     else
     {
       tLockingManagerPointer dc = PullValueRaw(strategy == tStrategy::PULL_IGNORING_HANDLER_ON_THIS_PORT);
-      rrlib::rtti::sStaticTypeInfo<T>::DeepCopy(dc->GetObject().GetData<T>(), buffer, NULL);
+      rrlib::rtti::GenericOperations<T>::DeepCopy(dc->GetObject().GetData<T>(), buffer);
     }
   }
 
@@ -270,7 +270,7 @@ public:
     else
     {
       tLockingManagerPointer dc = PullValueRaw(strategy == tStrategy::PULL_IGNORING_HANDLER_ON_THIS_PORT);
-      rrlib::rtti::sStaticTypeInfo<T>::DeepCopy(dc->GetObject().GetData<T>(), buffer, NULL);
+      rrlib::rtti::GenericOperations<T>::DeepCopy(dc->GetObject().GetData<T>(), buffer);
       timestamp = dc->GetTimestamp();
     }
   }
