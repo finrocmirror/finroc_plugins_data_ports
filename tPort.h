@@ -149,13 +149,16 @@ public:
   {
     tConstructorArguments<tPortCreationInfo<T>> creation_info(arg1, arg2, args...);
     creation_info.data_type = rrlib::rtti::tDataType<tPortBuffer>();
-    SetWrapped(tImplementation::CreatePort(creation_info));
-    GetWrapped()->SetWrapperDataType(rrlib::rtti::tDataType<T>());
-    if (creation_info.DefaultValueSet())
+    if (!(creation_info.flags.Raw() & core::tFrameworkElementFlags(core::tFrameworkElementFlag::DELETED).Raw())) // do not create port, if deleted flag is set
     {
-      T t(rrlib::serialization::DefaultInstantiation<T>::Create());
-      creation_info.GetDefault(t);
-      SetDefault(t);
+      SetWrapped(tImplementation::CreatePort(creation_info));
+      GetWrapped()->SetWrapperDataType(rrlib::rtti::tDataType<T>());
+      if (creation_info.DefaultValueSet())
+      {
+        T t(rrlib::serialization::DefaultInstantiation<T>::Create());
+        creation_info.GetDefault(t);
+        SetDefault(t);
+      }
     }
   }
 
