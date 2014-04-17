@@ -152,6 +152,20 @@ struct IsString
   enum { value = std::is_same<T, std::string>::value || std::is_same<T, tString>::value || std::is_same<T, char*>::value || std::is_same<T, const char*>::value || std::is_same<typename std::remove_extent<T>::type, char>::value };
 };
 
+template <size_t Tsize>
+struct IsString<char(&) [Tsize]>
+{
+  enum { value = 1 };
+};
+
+template <size_t Tsize>
+struct IsString<const char(&) [Tsize]>
+{
+  enum { value = 1 };
+};
+
+static_assert(IsString<char const(&) [9]>::value, "Error in trait implementation");
+
 //----------------------------------------------------------------------
 // End of namespace declaration
 //----------------------------------------------------------------------
