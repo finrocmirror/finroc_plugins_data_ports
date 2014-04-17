@@ -149,22 +149,13 @@ struct IsBoundable
 template <typename T>
 struct IsString
 {
-  enum { value = std::is_same<T, std::string>::value || std::is_same<T, tString>::value || std::is_same<T, char*>::value || std::is_same<T, const char*>::value || std::is_same<typename std::remove_extent<T>::type, char>::value };
-};
+  typedef typename std::remove_const<typename std::remove_reference<T>::type>::type U;
 
-template <size_t Tsize>
-struct IsString<char(&) [Tsize]>
-{
-  enum { value = 1 };
-};
-
-template <size_t Tsize>
-struct IsString<const char(&) [Tsize]>
-{
-  enum { value = 1 };
+  enum { value = std::is_same<U, std::string>::value || std::is_same<U, tString>::value || std::is_same<U, char*>::value || std::is_same<U, const char*>::value || std::is_same<typename std::remove_extent<U>::type, char>::value };
 };
 
 static_assert(IsString<char const(&) [9]>::value, "Error in trait implementation");
+static_assert(IsString<std::string const&>::value, "Error in trait implementation");
 
 //----------------------------------------------------------------------
 // End of namespace declaration
