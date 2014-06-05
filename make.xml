@@ -1,7 +1,8 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE targets PUBLIC "-//RRLIB//DTD make 14.05" "http://finroc.org/xml/14.05/make.dtd">
 <targets>
 
-  <finrocplugin>
+  <library>
     <sources>
       definitions.h
       tBounds.h
@@ -15,9 +16,9 @@
       standard/*
       optimized/*
     </sources>
-  </finrocplugin>
+  </library>
 
-  <finrocplugin name="api">
+  <library name="api">
     <sources>
       tGenericPort.h
       tInputPort.h
@@ -32,43 +33,25 @@
       tThreadLocalBufferManagement.h
       api/*
     </sources>
-  </finrocplugin>
+  </library>
 
-  <testprogram name="benchmark_simple">
+  <program name="initial_pushing">
     <sources>
-      test/benchmark_simple.cpp
+      tests/initial_pushing.cpp
     </sources>
-  </testprogram>
-  
-  <!--testprogram name="port_queues">
-    <sources>
-      test/port_queues.cpp
-    </sources>
-  </testprogram-->
+  </program>
 
-  <testprogram name="initial_pushing">
-    <sources>
-      test/initial_pushing.cpp
-    </sources>
-  </testprogram>
-  
-  <testprogram name="basic_realtime">
-    <sources>
-      test/basic_realtime.cpp
-    </sources>
-  </testprogram>
-
-  <testprogram name="configuration">
+  <!--program name="configuration">
     <sources>
       test/configuration.cpp
     </sources>
-  </testprogram>
+  </program-->
   
-  <testprogram name="collection">
+  <program name="collection">
     <sources>
-      test/test_collection.cpp
+      tests/test_collection.cpp
     </sources>
-  </testprogram>
+  </program>
   
 
 </targets>

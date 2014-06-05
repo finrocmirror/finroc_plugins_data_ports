@@ -188,31 +188,36 @@ class tPortDataPointerImplementation<T, true> : private rrlib::util::tNoncopyabl
 //----------------------------------------------------------------------
 public:
 
-  inline tPortDataPointerImplementation() :
+  inline tPortDataPointerImplementation(bool null_pointer = true) :
     buffer(), // Initializes even fundamental types
-    timestamp(rrlib::time::cNO_TIME)
+    timestamp(rrlib::time::cNO_TIME),
+    null_pointer(null_pointer)
   {
   }
 
   inline tPortDataPointerImplementation(typename tPortImplementation::tPortBase::tLockingManagerPointer& pointer, optimized::tCheapCopyPort& port) :
     buffer(tPortImplementation::ToValue(pointer->GetObject().template GetData<typename tPortImplementation::tPortBuffer>(), port.GetUnit())),
-    timestamp(pointer->GetTimestamp())
+    timestamp(pointer->GetTimestamp()),
+    null_pointer(false)
   {
   }
 
   inline tPortDataPointerImplementation(const T& value, const rrlib::time::tTimestamp timestamp) :
     buffer(value),
-    timestamp(timestamp)
+    timestamp(timestamp),
+    null_pointer(false)
   {
   }
 
   // Move constructor
   inline tPortDataPointerImplementation(tPortDataPointerImplementation && other) :
     buffer(), // Initializes even fundamental types
-    timestamp(rrlib::time::cNO_TIME)
+    timestamp(rrlib::time::cNO_TIME),
+    null_pointer(false)
   {
     std::swap(buffer, other.buffer);
     std::swap(timestamp, other.timestamp);
+    std::swap(null_pointer, other.null_pointer);
   }
 
   // Move assignment
@@ -220,24 +225,28 @@ public:
   {
     std::swap(buffer, other.buffer);
     std::swap(timestamp, other.timestamp);
+    std::swap(null_pointer, other.null_pointer);
     return *this;
   }
 
   void Deserialize(rrlib::serialization::tInputStream& stream)
   {
-    stream.ReadBoolean();
-    stream >> *Get();
-    stream >> this->timestamp;
+    this->null_pointer = !stream.ReadBoolean();
+    if (!this->null_pointer)
+    {
+      stream >> buffer;
+      stream >> timestamp;
+    }
   }
 
   inline T* Get()
   {
-    return &buffer;
+    return null_pointer ? nullptr : &buffer;
   }
 
   inline const T* Get() const
   {
-    return &buffer;
+    return null_pointer ? nullptr : &buffer;
   }
 
   inline rrlib::time::tTimestamp GetTimestamp() const
@@ -247,9 +256,12 @@ public:
 
   void Serialize(rrlib::serialization::tOutputStream& stream) const
   {
-    stream.WriteBoolean(true);
-    stream << *Get();
-    stream << GetTimestamp();
+    stream.WriteBoolean(Get());
+    if (Get())
+    {
+      stream << buffer;
+      stream << timestamp;
+    }
   }
 
   inline void SetTimestamp(const rrlib::time::tTimestamp& timestamp)
@@ -267,6 +279,9 @@ private:
 
   /*! Wrapped time stamp */
   rrlib::time::tTimestamp timestamp;
+
+  /*! Is this a null pointer? (required for dequeueing) */
+  bool null_pointer;
 };
 
 template <>

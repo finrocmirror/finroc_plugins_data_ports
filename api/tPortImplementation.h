@@ -241,7 +241,7 @@ struct tPortImplementation : public tCheapCopyPortImplementation<T, TYPE>
 
   static inline tPortDataPointer<T> GetUnusedBuffer(optimized::tCheapCopyPort& port)
   {
-    return tPortDataPointerImplementation<T, true>();
+    return tPortDataPointerImplementation<T, true>(false);
   }
 
   template <typename TPointer>

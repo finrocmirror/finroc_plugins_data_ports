@@ -19,7 +19,7 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 //
 //----------------------------------------------------------------------
-/*!\file    plugins/data_ports/test/test_collection.cpp
+/*!\file    plugins/data_ports/tests/test_collection.cpp
  *
  * \author  Max Reichardt
  *
@@ -34,6 +34,7 @@
 // External includes (system with <>, local with "")
 //----------------------------------------------------------------------
 #include "core/tRuntimeEnvironment.h"
+#include "rrlib/util/tUnitTestSuite.h"
 
 //----------------------------------------------------------------------
 // Internal includes with ""
@@ -51,8 +52,14 @@
 //----------------------------------------------------------------------
 // Namespace usage
 //----------------------------------------------------------------------
-using namespace finroc::core;
-using namespace finroc::data_ports;
+
+//----------------------------------------------------------------------
+// Namespace declaration
+//----------------------------------------------------------------------
+namespace finroc
+{
+namespace data_ports
+{
 
 //----------------------------------------------------------------------
 // Forward declarations / typedefs / enums
@@ -68,8 +75,8 @@ using namespace finroc::data_ports;
 
 void TestPortChains()
 {
-  FINROC_LOG_PRINT(USER, "\nTesting forwarding data among port chains");
-  tFrameworkElement* parent = new tFrameworkElement(&finroc::core::tRuntimeEnvironment::GetInstance(), "TestPortChains");
+  FINROC_LOG_PRINT(DEBUG_VERBOSE_1, "\nTesting forwarding data among port chains");
+  core::tFrameworkElement* parent = new core::tFrameworkElement(&core::tRuntimeEnvironment::GetInstance(), "TestPortChains");
 
   // Create ports
   tOutputPort<std::string> output_port1("Output Port 1", parent);
@@ -96,17 +103,22 @@ void TestPortChains()
   {
     // Publish data
     tPortDataPointer<std::string> unused_buffer = output_port1.GetUnusedBuffer();
-    *unused_buffer = "Test";
+    std::string test_string2 = "Test" + std::to_string(i);
+    *unused_buffer = test_string2;
     output_port1.Publish(unused_buffer);
 
     // Forward data to second and third chain
     output_port2.Publish(input_port1.GetPointer());
     output_port3.Publish(input_port2.GetPointer());
+    RRLIB_UNIT_TESTS_ASSERT(test_string2 == *input_port3.GetPointer());
 
     if (i > 10)
     {
       output_port2.Publish(test_string);
       output_port3.Publish(input_port2.GetPointer());
+      RRLIB_UNIT_TESTS_ASSERT(test_string == *input_port3.GetPointer());
+      RRLIB_UNIT_TESTS_ASSERT(test_string == *input_port2.GetPointer());
+      RRLIB_UNIT_TESTS_ASSERT(test_string2 == *input_port1.GetPointer());
     }
   }
 
@@ -116,8 +128,8 @@ void TestPortChains()
 template <typename T>
 void TestPortQueues(const T& value1, const T& value2, const T& value3)
 {
-  FINROC_LOG_PRINT(USER, "\nTesting port queue basic operation for type ", (rrlib::rtti::tDataType<T>()).GetName());
-  tFrameworkElement* parent = new tFrameworkElement(&finroc::core::tRuntimeEnvironment::GetInstance(), "TestPortQueue");
+  FINROC_LOG_PRINT(DEBUG_VERBOSE_1, "\nTesting port queue basic operation for type ", (rrlib::rtti::tDataType<T>()).GetName());
+  core::tFrameworkElement* parent = new core::tFrameworkElement(&core::tRuntimeEnvironment::GetInstance(), "TestPortQueue");
 
   tOutputPort<T> output_port("Output Port", parent);
   tInputPort<T> input_port_fifo("Input Port FIFO", parent, tQueueSettings(false));
@@ -126,30 +138,35 @@ void TestPortQueues(const T& value1, const T& value2, const T& value3)
   output_port.ConnectTo(input_port_all);
   parent->Init();
 
-  FINROC_LOG_PRINT(USER, " Enqueueing three values");
+  FINROC_LOG_PRINT(DEBUG_VERBOSE_1, " Enqueueing three values");
   output_port.Publish(value1);
   output_port.Publish(value2);
   output_port.Publish(value3);
 
-  FINROC_LOG_PRINT(USER, " Dequeueing five values FIFO");
+  FINROC_LOG_PRINT(DEBUG_VERBOSE_1, " Dequeueing five values FIFO");
   for (size_t i = 0; i < 5; ++i)
   {
     tPortDataPointer<const T> result = input_port_fifo.Dequeue();
     if (result)
     {
-      FINROC_LOG_PRINT(USER, "  Dequeued ", *result);
+      FINROC_LOG_PRINT(DEBUG_VERBOSE_1, "  Dequeued ", *result);
     }
     else
     {
-      FINROC_LOG_PRINT(USER, "  Dequeued nothing");
+      FINROC_LOG_PRINT(DEBUG_VERBOSE_1, "  Dequeued nothing");
     }
+    RRLIB_UNIT_TESTS_ASSERT((i == 0 && value1 == *result) || (i == 1 && value2 == *result) || (i == 2 && value3 == *result) || (i > 2 && (!result)));
   }
 
-  FINROC_LOG_PRINT(USER, " Dequeueing all values at once");
+  FINROC_LOG_PRINT(DEBUG_VERBOSE_1, " Dequeueing all values at once");
   tPortBuffers<tPortDataPointer<const T>> dequeued = input_port_all.DequeueAllBuffers();
+  size_t i = 0;
   while (!dequeued.Empty())
   {
-    FINROC_LOG_PRINT(USER, "  Dequeued ", *dequeued.PopFront());
+    T result = *dequeued.PopFront();
+    FINROC_LOG_PRINT(DEBUG_VERBOSE_1, "  Dequeued ", result);
+    RRLIB_UNIT_TESTS_ASSERT((i == 0 && value1 == result) || (i == 1 && value2 == result) || (i == 2 && value3 == result));
+    i++;
   }
 
   parent->ManagedDelete();
@@ -165,29 +182,41 @@ void TestPortListeners(const T& publish_value)
   public:
     void OnPortChange(const T& value, tChangeContext& change_context)
     {
-      FINROC_LOG_PRINT(USER, "  Port Changed: ", value);
+      FINROC_LOG_PRINT(DEBUG_VERBOSE_1, "  Port Changed: ", value);
+      value1 = value;
+      calls++;
     }
     void OnPortChange(tPortDataPointer<const T>& value, tChangeContext& change_context)
     {
-      FINROC_LOG_PRINT(USER, "  Port Changed (tPortDataPointer): ", *value);
+      FINROC_LOG_PRINT(DEBUG_VERBOSE_1, "  Port Changed (tPortDataPointer): ", *value);
+      value2 = *value;
+      calls++;
     }
     void OnPortChange(const rrlib::rtti::tGenericObject& value, tChangeContext& change_context)
     {
-      FINROC_LOG_PRINT(USER, "  Port Changed Generic: ", value);
+      FINROC_LOG_PRINT(DEBUG_VERBOSE_1, "  Port Changed Generic: ", value);
+      calls++;
     }
     void OnPortChange(tPortDataPointer<const rrlib::rtti::tGenericObject>& value, tChangeContext& change_context)
     {
-      FINROC_LOG_PRINT(USER, "  Port Changed Generic (tPortDataPointer): ", *value);
+      FINROC_LOG_PRINT(DEBUG_VERBOSE_1, "  Port Changed Generic (tPortDataPointer): ", *value);
+      calls++;
     }
     void OnPortChange(tChangeContext& change_context)
     {
-      FINROC_LOG_PRINT(USER, "  Port Changed Simple");
+      FINROC_LOG_PRINT(DEBUG_VERBOSE_1, "  Port Changed Simple");
+      calls++;
     }
+
+    T value1, value2;
+    size_t calls;
+
+    tListener() : value1(), value2(), calls(0) {}
   };
 
-  FINROC_LOG_PRINT(USER, "\nTesting port listeners for type ", (rrlib::rtti::tDataType<T>()).GetName());
+  FINROC_LOG_PRINT(DEBUG_VERBOSE_1, "\nTesting port listeners for type ", (rrlib::rtti::tDataType<T>()).GetName());
   tListener listener;
-  tFrameworkElement* parent = new tFrameworkElement(&finroc::core::tRuntimeEnvironment::GetInstance(), "TestPortListeners");
+  core::tFrameworkElement* parent = new core::tFrameworkElement(&core::tRuntimeEnvironment::GetInstance(), "TestPortListeners");
 
   tOutputPort<T> output_port("Output Port", parent);
   tInputPort<T> input_port("Input Port", parent);
@@ -203,21 +232,36 @@ void TestPortListeners(const T& publish_value)
 
   output_port.Publish(publish_value);
 
+  RRLIB_UNIT_TESTS_ASSERT(listener.value1 == publish_value && listener.value2 == publish_value && listener.calls == 6);
+
   parent->ManagedDelete();
 }
 
-int main(int, char**)
+class DataPortsTestCollection : public rrlib::util::tUnitTestSuite
 {
-  TestPortChains();
-  TestPortQueues<int>(1, 2, 3);
-  TestPortQueues<std::string>("1", "2", "3");
-  TestPortListeners<int>(1);
-  TestPortListeners<std::string>("test");
+  RRLIB_UNIT_TESTS_BEGIN_SUITE(DataPortsTestCollection);
+  RRLIB_UNIT_TESTS_ADD_TEST(Test);
+  RRLIB_UNIT_TESTS_END_SUITE;
 
-  tThreadLocalBufferManagement local_buffers;
-  TestPortChains();
-  TestPortQueues<int>(1, 2, 3);
-  TestPortListeners<int>(1);
+  void Test()
+  {
+    TestPortChains();
+    TestPortQueues<int>(1, 2, 3);
+    TestPortQueues<std::string>("1", "2", "3");
+    TestPortListeners<int>(1);
+    TestPortListeners<std::string>("test");
 
-  return 0;
+    tThreadLocalBufferManagement local_buffers;
+    TestPortChains();
+    TestPortQueues<int>(1, 2, 3);
+    TestPortListeners<int>(1);
+  }
+};
+
+RRLIB_UNIT_TESTS_REGISTER_SUITE(DataPortsTestCollection);
+
+//----------------------------------------------------------------------
+// End of namespace declaration
+//----------------------------------------------------------------------
+}
 }
