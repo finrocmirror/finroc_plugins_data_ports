@@ -183,29 +183,29 @@ void TestPortListeners(const T& publish_value)
     void OnPortChange(const T& value, tChangeContext& change_context)
     {
       FINROC_LOG_PRINT(DEBUG_VERBOSE_1, "  Port Changed: ", value);
-      value1 = value;
-      calls++;
+      this->value1 = value;
+      this->calls++;
     }
     void OnPortChange(tPortDataPointer<const T>& value, tChangeContext& change_context)
     {
       FINROC_LOG_PRINT(DEBUG_VERBOSE_1, "  Port Changed (tPortDataPointer): ", *value);
-      value2 = *value;
-      calls++;
+      this->value2 = *value;
+      this->calls++;
     }
     void OnPortChange(const rrlib::rtti::tGenericObject& value, tChangeContext& change_context)
     {
       FINROC_LOG_PRINT(DEBUG_VERBOSE_1, "  Port Changed Generic: ", value);
-      calls++;
+      this->calls++;
     }
     void OnPortChange(tPortDataPointer<const rrlib::rtti::tGenericObject>& value, tChangeContext& change_context)
     {
       FINROC_LOG_PRINT(DEBUG_VERBOSE_1, "  Port Changed Generic (tPortDataPointer): ", *value);
-      calls++;
+      this->calls++;
     }
     void OnPortChange(tChangeContext& change_context)
     {
       FINROC_LOG_PRINT(DEBUG_VERBOSE_1, "  Port Changed Simple");
-      calls++;
+      this->calls++;
     }
 
     T value1, value2;
