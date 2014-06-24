@@ -276,6 +276,13 @@ struct tPortImplementation<T, tPortImplementationType::CHEAP_COPY_SINGLE_THREADE
   typedef api::tSingleThreadedCheapCopyPort<T> tPortBase;
   typedef T tPortBuffer;
 
+  static inline void BrowserPublish(tPortBase& port, const T& data, const rrlib::time::tTimestamp& timestamp)
+  {
+    T t = data;
+    rrlib::rtti::tGenericObjectWrapper<T> wrapper(t);
+    port.BrowserPublishRaw(wrapper, timestamp);
+  }
+
   static inline void CopyCurrentPortValue(tPortBase& port, T& result_buffer, rrlib::time::tTimestamp& timestamp_buffer)
   {
     timestamp_buffer = port.CurrentValueTimestamp();
