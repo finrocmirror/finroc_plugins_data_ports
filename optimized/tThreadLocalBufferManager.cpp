@@ -72,7 +72,7 @@ namespace optimized
 tThreadLocalBufferManager::tThreadLocalBufferManager() :
   tCheaplyCopiedBufferManager(tThreadLocalBufferPools::Get())
 {
-  assert(GetThreadLocalOrigin());
+  assert(GetThreadLocalOrigin() || definitions::cSINGLE_THREADED);
 }
 
 tThreadLocalBufferManager::~tThreadLocalBufferManager()

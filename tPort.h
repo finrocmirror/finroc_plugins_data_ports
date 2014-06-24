@@ -181,17 +181,26 @@ public:
   template <bool AVAILABLE = cPASS_BY_VALUE>
   inline T Get(typename std::enable_if<AVAILABLE, void>::type* v = NULL) const
   {
+#ifndef RRLIB_SINGLE_THREADED
     tPortBuffer t;
     GetWrapped()->CopyCurrentValue(t);
     return tImplementation::ToValue(t, GetWrapped()->GetUnit());
+#else
+    return GetWrapped()->CurrentValue();
+#endif
   }
 
   template <bool AVAILABLE = cPASS_BY_VALUE>
   inline T Get(typename std::enable_if<AVAILABLE, rrlib::time::tTimestamp&>::type& timestamp) const
   {
+#ifndef RRLIB_SINGLE_THREADED
     tPortBuffer t;
     GetWrapped()->CopyCurrentValue(t, timestamp);
     return tImplementation::ToValue(t, GetWrapped()->GetUnit());
+#else
+    timestamp = GetWrapped()->CurrentTimestamp();
+    return GetWrapped()->CurrentValue();
+#endif
   }
 
   /*!

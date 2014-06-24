@@ -195,12 +195,29 @@ public:
   {
   }
 
+#ifndef RRLIB_SINGLE_THREADED
   inline tPortDataPointerImplementation(typename tPortImplementation::tPortBase::tLockingManagerPointer& pointer, optimized::tCheapCopyPort& port) :
     buffer(tPortImplementation::ToValue(pointer->GetObject().template GetData<typename tPortImplementation::tPortBuffer>(), port.GetUnit())),
     timestamp(pointer->GetTimestamp()),
     null_pointer(false)
   {
   }
+#else
+  inline tPortDataPointerImplementation(const typename optimized::tSingleThreadedCheapCopyPortGeneric::tCurrentValueBuffer& value) :
+    buffer(*static_cast<T*>(value.data_pointer)),
+    timestamp(value.timestamp),
+    null_pointer(false)
+  {
+  }
+
+  inline tPortDataPointerImplementation(typename tPortImplementation::tPortBase::tLockingManagerPointer& pointer, api::tSingleThreadedCheapCopyPort<T>& port) :
+    buffer(pointer.implementation.buffer),
+    timestamp(pointer.implementation.timestamp),
+    null_pointer(pointer.implementation.null_pointer)
+  {
+  }
+
+#endif
 
   inline tPortDataPointerImplementation(const T& value, const rrlib::time::tTimestamp timestamp) :
     buffer(value),
@@ -333,8 +350,12 @@ public:
         if (IsCheaplyCopiedType(object->GetType()))
         {
           // recycle unused buffer
+#ifndef RRLIB_SINGLE_THREADED
           typename optimized::tCheapCopyPort::tUnusedManagerPointer::deleter_type deleter;
-          deleter(static_cast<optimized::tCheaplyCopiedBufferManager*>(buffer_manager));
+#else
+          typename optimized::tGlobalBufferPools::tBufferPointer::deleter_type deleter;
+#endif
+          deleter(static_cast<optimized::tGlobalBufferPools::tBufferType*>(buffer_manager));
         }
         else
         {
@@ -348,8 +369,12 @@ public:
         if (IsCheaplyCopiedType(object->GetType()))
         {
           // reduce reference counter
+#ifndef RRLIB_SINGLE_THREADED
           typename optimized::tCheapCopyPort::tLockingManagerPointer::deleter_type deleter;
-          deleter(static_cast<optimized::tCheaplyCopiedBufferManager*>(buffer_manager));
+#else
+          typename optimized::tGlobalBufferPools::tBufferPointer::deleter_type deleter;
+#endif
+          deleter(static_cast<optimized::tGlobalBufferPools::tBufferType*>(buffer_manager));
         }
         else
         {

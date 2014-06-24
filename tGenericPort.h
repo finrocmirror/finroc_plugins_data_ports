@@ -165,8 +165,12 @@ public:
   {
     if (IsCheaplyCopiedType(pointer->GetType()))
     {
+#ifndef RRLIB_SINGLE_THREADED
       typename optimized::tCheapCopyPort::tUnusedManagerPointer pointer2(static_cast<optimized::tCheaplyCopiedBufferManager*>(pointer.implementation.Release()));
       return static_cast<optimized::tCheapCopyPort*>(GetWrapped())->BrowserPublishRaw(pointer2, notify_listener_on_this_port, change_constant);
+#else
+      return static_cast<optimized::tSingleThreadedCheapCopyPortGeneric*>(GetWrapped())->BrowserPublishRaw(*pointer, pointer.GetTimestamp(), notify_listener_on_this_port, change_constant);
+#endif
     }
     else
     {

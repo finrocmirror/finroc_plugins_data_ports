@@ -119,7 +119,9 @@ struct tInitRegularDeleteTask
 {
   tInitRegularDeleteTask()
   {
+#ifndef RRLIB_SINGLE_THREADED
     core::internal::tGarbageDeleter::AddRegularTask(DeleteGarbage);
+#endif
   }
 };
 

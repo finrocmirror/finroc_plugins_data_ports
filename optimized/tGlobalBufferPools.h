@@ -66,7 +66,7 @@ namespace optimized
 /*!
  * Global set of buffer pools for 'cheaply copied' types.
  */
-class tGlobalBufferPools : public tThreadSpecificBufferPools<true>
+class tGlobalBufferPools : public tThreadSpecificBufferPools < !definitions::cSINGLE_THREADED >
 {
 
 //----------------------------------------------------------------------

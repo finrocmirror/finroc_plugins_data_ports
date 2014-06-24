@@ -107,6 +107,32 @@ struct tPortBufferReturnCustomization<tPortDataPointer<T>> : public tPortImpleme
   }
 };
 
+// plain-type implementation
+template <typename T>
+struct tPortBufferReturnCustomizationSingleThreaded
+{
+  typedef typename std::remove_const<T>::type tPortDataType;
+
+  template <typename U>
+  static T ToDesiredType(const U& u)
+  {
+    return u.first;
+  }
+};
+
+// tPortDataPointer<T> implementation
+template <typename T>
+struct tPortBufferReturnCustomizationSingleThreaded<tPortDataPointer<T>>
+{
+  typedef typename std::remove_const<T>::type tPortDataType;
+
+  template <typename U>
+  static tPortDataPointer<T> ToDesiredType(const U& u)
+  {
+    return tPortDataPointer<T>(api::tPortDataPointerImplementation<tPortDataType, true>(u.first, u.second));
+  }
+};
+
 //----------------------------------------------------------------------
 // End of namespace declaration
 //----------------------------------------------------------------------

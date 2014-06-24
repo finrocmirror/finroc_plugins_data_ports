@@ -75,11 +75,12 @@ namespace api
  */
 class tGenericPortImplementation : public rrlib::rtti::tTypeAnnotation
 {
-
 //----------------------------------------------------------------------
 // Public methods and typedefs
 //----------------------------------------------------------------------
 public:
+
+  typedef typename std::conditional<definitions::cSINGLE_THREADED, optimized::tSingleThreadedCheapCopyPortGeneric, optimized::tCheapCopyPort>::type tCheapCopyPort;
 
   /*!
    * Creates port backend for specified port creation info
@@ -112,7 +113,7 @@ public:
    */
   const rrlib::rtti::tGenericObject* GetDefaultValue(core::tAbstractPort& port)
   {
-    return IsCheaplyCopiedType(port.GetDataType()) ? static_cast<optimized::tCheapCopyPort&>(port).GetDefaultValue() : static_cast<standard::tStandardPort&>(port).GetDefaultValue();
+    return IsCheaplyCopiedType(port.GetDataType()) ? static_cast<tCheapCopyPort&>(port).GetDefaultValue() : static_cast<standard::tStandardPort&>(port).GetDefaultValue();
   }
 
   /*!
@@ -141,7 +142,7 @@ public:
   {
     if (IsCheaplyCopiedType(port.GetDataType()))
     {
-      optimized::tCheapCopyPort& cc_port = static_cast<optimized::tCheapCopyPort&>(port);
+      tCheapCopyPort& cc_port = static_cast<tCheapCopyPort&>(port);
       if (optimized::tThreadLocalBufferPools::Get())
       {
         return tPortDataPointerImplementation<rrlib::rtti::tGenericObject, false>(optimized::tThreadLocalBufferPools::Get()->GetUnusedBuffer(cc_port.GetCheaplyCopyableTypeIndex()).release(), true);

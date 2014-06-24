@@ -42,6 +42,7 @@
 #include "plugins/data_ports/common/tPullOperation.h"
 #include "plugins/data_ports/standard/tMultiTypePortBufferPool.h"
 #include "plugins/data_ports/optimized/tCheapCopyPort.h"
+#include "plugins/data_ports/optimized/tSingleThreadedCheapCopyPortGeneric.h"
 #include "plugins/data_ports/standard/tPullRequestHandlerRaw.h"
 
 //----------------------------------------------------------------------
@@ -83,7 +84,11 @@ class tDataPortFactory : public core::tPortFactory
   {
     core::tPortWrapperBase::tConstructorArguments<common::tAbstractDataPortCreationInfo> creation_info(port_name, &parent, type, flags);
     return IsCheaplyCopiedType(type) ? // TODO: put it
-           *static_cast<core::tAbstractPort*>(new optimized::tCheapCopyPort(creation_info)) :
+#ifndef RRLIB_SINGLE_THREADED
+           * static_cast<core::tAbstractPort*>(new optimized::tCheapCopyPort(creation_info)) :
+#else
+           *static_cast<core::tAbstractPort*>(new optimized::tSingleThreadedCheapCopyPortGeneric(creation_info)) :
+#endif
            *static_cast<core::tAbstractPort*>(new tStandardPort(creation_info));
     //return *static_cast<core::tAbstractPort*>(new tStandardPort(creation_info));
   }

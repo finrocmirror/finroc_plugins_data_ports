@@ -48,6 +48,7 @@
 #include "plugins/data_ports/tPortDataPointer.h"
 #include "plugins/data_ports/numeric/tNumber.h"
 #include "plugins/data_ports/optimized/tCheapCopyPort.h"
+#include "plugins/data_ports/api/tSingleThreadedCheapCopyPort.h"
 #include "plugins/data_ports/standard/tStandardPort.h"
 
 //----------------------------------------------------------------------
@@ -80,7 +81,7 @@ struct tPortImplementation;
 template <typename TWrapper, typename TBuffer, tPortImplementationType TYPE, bool BOUNDABLE>
 struct tCheapCopyPortBaseImplementation
 {
-  typedef optimized::tCheapCopyPort tPortBase;
+  typedef typename std::conditional<definitions::cSINGLE_THREADED, api::tSingleThreadedCheapCopyPort<TBuffer>, optimized::tCheapCopyPort>::type tPortBase;
 
   static core::tAbstractPort* CreatePort(tPortCreationInfo<TWrapper> creation_info)
   {
@@ -92,7 +93,7 @@ struct tCheapCopyPortBaseImplementation
     }
     else
     {
-      return new optimized::tCheapCopyPort(creation_info);
+      return new tPortBase(creation_info);
     }
   }
 };
@@ -101,7 +102,7 @@ struct tCheapCopyPortBaseImplementation
 template <typename TWrapper, typename TBuffer, tPortImplementationType TYPE>
 struct tCheapCopyPortBaseImplementation<TWrapper, TBuffer, TYPE, false>
 {
-  typedef optimized::tCheapCopyPort tPortBase;
+  typedef typename std::conditional<definitions::cSINGLE_THREADED, api::tSingleThreadedCheapCopyPort<TBuffer>, optimized::tCheapCopyPort>::type tPortBase;
 
   static core::tAbstractPort* CreatePort(tPortCreationInfo<TWrapper> creation_info)
   {
@@ -110,7 +111,7 @@ struct tCheapCopyPortBaseImplementation<TWrapper, TBuffer, TYPE, false>
     {
       FINROC_LOG_PRINT(WARNING, "Bounds are not supported for type '", creation_info.data_type.GetName(), "'. Ignoring.");
     }
-    return new optimized::tCheapCopyPort(creation_info);
+    return new tPortBase(creation_info);
   }
 };
 
@@ -193,6 +194,7 @@ struct tCheapCopyPortImplementation<numeric::tNumber, tPortImplementationType::N
 template <typename T, tPortImplementationType TYPE>
 struct tPortImplementation : public tCheapCopyPortImplementation<T, TYPE>
 {
+#ifndef RRLIB_SINGLE_THREADED
   typedef tCheapCopyPortImplementation<T, TYPE> tBase;
 
   static inline void BrowserPublish(optimized::tCheapCopyPort& port, const T& data, const rrlib::time::tTimestamp& timestamp)
@@ -261,6 +263,39 @@ struct tPortImplementation : public tCheapCopyPortImplementation<T, TYPE>
     typename tBase::tPortBuffer buffer;
     tBase::Assign(buffer, new_default, port.GetUnit());
     rrlib::rtti::tGenericObjectWrapper<typename tBase::tPortBuffer> wrapper(buffer);
+    port.SetDefault(wrapper);
+  }
+#endif
+};
+
+// implementation for cheap copy types in single-threaded mode
+template <typename T>
+struct tPortImplementation<T, tPortImplementationType::CHEAP_COPY_SINGLE_THREADED> :
+  public tCheapCopyPortBaseImplementation<T, T, tPortImplementationType::CHEAP_COPY_SINGLE_THREADED, IsBoundable<T>::value>
+{
+  typedef api::tSingleThreadedCheapCopyPort<T> tPortBase;
+  typedef T tPortBuffer;
+
+  static inline void CopyCurrentPortValue(tPortBase& port, T& result_buffer, rrlib::time::tTimestamp& timestamp_buffer)
+  {
+    timestamp_buffer = port.CurrentValueTimestamp();
+    result_buffer = port.CurrentValue();
+  }
+
+  static inline void CopyAndPublish(tPortBase& port, const T& data, const rrlib::time::tTimestamp& timestamp)
+  {
+    port.Publish(data, timestamp);
+  }
+
+  static inline tPortDataPointer<const T> GetPointer(tPortBase& port)
+  {
+    return tPortDataPointerImplementation<T, true>(port.CurrentValueBuffer());
+  }
+
+  static void SetDefault(tPortBase& port, const T& new_default)
+  {
+    T t = new_default;
+    rrlib::rtti::tGenericObjectWrapper<T> wrapper(t);
     port.SetDefault(wrapper);
   }
 };

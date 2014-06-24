@@ -67,7 +67,7 @@ namespace data_ports
  * \tparam T Can be plain type to get buffers by value (only available for cheaply-copied types)
  *           Can alternatively be tPortDataPointer<const ...> to get pointer to buffer.
  */
-template <typename T>
+template < typename T, bool Tsingle_threaded_cheap_copy = tIsCheaplyCopiedType<typename api::tPortBufferReturnCustomizationSingleThreaded<T>::tPortDataType>::value && definitions::cSINGLE_THREADED >
 class tPortBuffers : private rrlib::util::tNoncopyable
 {
   /*! Class that contains implementation of buffer access */
@@ -156,6 +156,92 @@ private:
 
   /*! Port that values were dequeued from */
   tPortBase* port;
+};
+
+template <typename T>
+class tPortBuffers<T, true> : private rrlib::util::tNoncopyable
+{
+  /*! Class that contains implementation of buffer access */
+  typedef api::tPortBufferReturnCustomizationSingleThreaded<T> tImplementation;
+  typedef api::tSingleThreadedCheapCopyPort<typename tImplementation::tPortDataType> tPortBase;
+  typedef typename tPortBase::tQueue tQueue;
+  typedef typename tPortBase::tQueueEntry tQueueEntry;
+
+//----------------------------------------------------------------------
+// Public methods and typedefs
+//----------------------------------------------------------------------
+public:
+
+  tPortBuffers(tQueue& queue, tPortBase& port) :
+    queue(queue)
+  {
+  }
+
+  /*! Move constructor */
+  tPortBuffers(tPortBuffers && other) :
+    queue()
+  {
+    std::swap(queue, other.queue);
+  }
+
+  /*! Move assignment */
+  tPortBuffers& operator=(tPortBuffers && other)
+  {
+    std::swap(queue, other.queue);
+    return *this;
+  }
+
+  /*!
+   * \return True, if there are no elements (left) in this fragment.
+   */
+  bool Empty()
+  {
+    return queue.empty();
+  }
+
+  /*!
+   * Returns and removes the element from queue fragment that was enqueued first
+   * (the first call possibly involves reverting the element order => a little overhead)
+   *
+   * \return Element that was removed
+   */
+  T PopFront()
+  {
+    tQueueEntry temp = queue.front();
+    queue.pop_front();
+    return tImplementation::template ToDesiredType<tQueueEntry>(temp);
+  }
+
+  /*!
+   * Returns and removes the element from queue fragment that was enqueued last
+   * (the first call possibly involves reverting the element order => a little overhead)
+   *
+   * \return Element that was removed
+   */
+  T PopBack()
+  {
+    tQueueEntry temp = queue.back();
+    queue.pop_back();
+    return tImplementation::template ToDesiredType<tQueueEntry>(temp);
+  }
+
+  /*!
+   * Returns and removes an element from the queue fragment
+   *
+   * \return Element that was removed
+   */
+  T PopAny()
+  {
+    return PopFront();
+  }
+
+//----------------------------------------------------------------------
+// Private fields and methods
+//----------------------------------------------------------------------
+private:
+
+  /*! Reference to port's queue */
+  tQueue queue;
 };
 
 //----------------------------------------------------------------------

@@ -66,7 +66,8 @@ enum class tPortImplementationType
 {
   STANDARD,
   CHEAP_COPY,
-  NUMERIC
+  NUMERIC,
+  CHEAP_COPY_SINGLE_THREADED
 };
 
 //----------------------------------------------------------------------
@@ -80,8 +81,9 @@ template <typename T>
 struct tPortImplementationTypeTrait
 {
   /*! Port implementation to use */
-  static const tPortImplementationType type = IsNumeric<T>::value ? tPortImplementationType::NUMERIC :
-      (tIsCheaplyCopiedType<T>::value ? tPortImplementationType::CHEAP_COPY : tPortImplementationType::STANDARD);
+  static const tPortImplementationType type = (IsNumeric<T>::value && (!definitions::cSINGLE_THREADED)) ? tPortImplementationType::NUMERIC :
+      (tIsCheaplyCopiedType<T>::value ? (definitions::cSINGLE_THREADED ? tPortImplementationType::CHEAP_COPY_SINGLE_THREADED :
+                                         tPortImplementationType::CHEAP_COPY) : tPortImplementationType::STANDARD);
 };
 
 //----------------------------------------------------------------------

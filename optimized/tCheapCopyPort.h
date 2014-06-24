@@ -86,6 +86,8 @@ namespace optimized
  */
 class tCheapCopyPort : public common::tAbstractDataPort
 {
+#ifndef RRLIB_SINGLE_THREADED
+
   template<typename T>
   friend class finroc::data_ports::tPort;
 
@@ -163,7 +165,7 @@ public:
 
 
   /*!
-   * \param creation_info PortCreationInformation
+   * \param creation_info Port creation information
    */
   tCheapCopyPort(common::tAbstractDataPortCreationInfo creation_info);
 
@@ -969,6 +971,15 @@ private:
       UpdateEdgeStatistics(source, target, publishing_data.published_buffer->GetObject());
     }
   }
+#else
+
+public:
+  inline tUnit GetUnit()
+  {
+    return tUnit::cNO_UNIT;
+  }
+
+#endif // RRLIB_SINGLE_THREADED
 };
 
 //----------------------------------------------------------------------

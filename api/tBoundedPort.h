@@ -45,6 +45,7 @@
 //----------------------------------------------------------------------
 #include "plugins/data_ports/tPortCreationInfo.h"
 #include "plugins/data_ports/optimized/tCheapCopyPort.h"
+#include "plugins/data_ports/api/tSingleThreadedCheapCopyPort.h"
 
 //----------------------------------------------------------------------
 // Namespace declaration
@@ -70,12 +71,13 @@ struct tPortImplementation;
  * Port with upper and lower bounds for values.
  */
 template <typename T, tPortImplementationType TYPE>
-class tBoundedPort : public optimized::tCheapCopyPort
+class tBoundedPort : public std::conditional<definitions::cSINGLE_THREADED, api::tSingleThreadedCheapCopyPort<T>, optimized::tCheapCopyPort>::type
 {
-  static_assert((!std::is_integral<T>::value) || TYPE == tPortImplementationType::NUMERIC, "Type must be numeric for numeric type");
+  static_assert((!std::is_integral<T>::value) || TYPE == tPortImplementationType::NUMERIC || definitions::cSINGLE_THREADED, "Type must be numeric for numeric type");
 
   typedef typename std::conditional<TYPE == tPortImplementationType::NUMERIC, numeric::tNumber, T>::type tBufferType;
   typedef tPortImplementation<T, TYPE> tImplementationVariation;
+  typedef typename std::conditional<definitions::cSINGLE_THREADED, api::tSingleThreadedCheapCopyPort<T>, optimized::tCheapCopyPort>::type tPortBase;
 
 //----------------------------------------------------------------------
 // Public methods and typedefs
@@ -83,7 +85,7 @@ class tBoundedPort : public optimized::tCheapCopyPort
 public:
 
   tBoundedPort(const tPortCreationInfo<T>& creation_info) :
-    optimized::tCheapCopyPort(AdjustCreationInfo(creation_info)),
+    tPortBase(AdjustCreationInfo(creation_info)),
     bounds(creation_info.GetBounds())
   {
   }
@@ -104,21 +106,30 @@ public:
    */
   inline void SetBounds(const tBounds<T>& new_bounds)
   {
-    if (IsReady())
+    if (this->IsReady())
     {
       FINROC_LOG_PRINT(WARNING, "Port has already been initialized. Cannot change bounds.");
       return;
     }
     bounds = new_bounds;
+#ifndef RRLIB_SINGLE_THREADED
     tBufferType value_buffer = tBufferType();
-    CopyCurrentValue(value_buffer, tStrategy::NEVER_PULL);
-    T value = tImplementationVariation::ToValue(value_buffer, GetUnit());
+    this->CopyCurrentValue(value_buffer, tStrategy::NEVER_PULL);
+    T value = tImplementationVariation::ToValue(value_buffer, this->GetUnit());
     if (!bounds.InBounds(value))
     {
-      tUnusedManagerPointer new_buffer(optimized::tGlobalBufferPools::Instance().GetUnusedBuffer(GetCheaplyCopyableTypeIndex()).release());
-      tImplementationVariation::Assign(new_buffer->GetObject().GetData<tBufferType>(), bounds.GetOutOfBoundsDefault(), GetUnit());
-      BrowserPublishRaw(new_buffer); // If port is already connected, could this have undesirable side-effects? (I do not think so - otherwise we need to do something more sophisticated here)
+      typename tPortBase::tUnusedManagerPointer new_buffer(optimized::tGlobalBufferPools::Instance().GetUnusedBuffer(this->GetCheaplyCopyableTypeIndex()).release());
+      tImplementationVariation::Assign(new_buffer->GetObject().template GetData<tBufferType>(), bounds.GetOutOfBoundsDefault(), this->GetUnit());
+      this->BrowserPublishRaw(new_buffer); // If port is already connected, could this have undesirable side-effects? (I do not think so - otherwise we need to do something more sophisticated here)
     }
+#else
+    T value = this->CurrentValue();
+    if (!bounds.InBounds(value))
+    {
+      T new_value = bounds.GetOutOfBoundsDefault();
+      BrowserPublishRaw(rrlib::rtti::tGenericObjectWrapper<T>(new_value), rrlib::time::cNO_TIME);
+    }
+#endif
   }
 
 //----------------------------------------------------------------------
@@ -134,25 +145,43 @@ private:
    */
   inline static tPortCreationInfo<T> AdjustCreationInfo(tPortCreationInfo<T> creation_info)
   {
-    creation_info.flags |= tFrameworkElement::tFlag::NON_STANDARD_ASSIGN;
+    creation_info.flags |= core::tFrameworkElement::tFlag::NON_STANDARD_ASSIGN;
     return creation_info;
   }
 
-  virtual std::string BrowserPublishRaw(tUnusedManagerPointer& buffer, bool notify_listener_on_this_port = true,
+#ifndef RRLIB_SINGLE_THREADED
+  virtual std::string BrowserPublishRaw(typename tPortBase::tUnusedManagerPointer& buffer, bool notify_listener_on_this_port = true,
                                         tChangeStatus change_constant = tChangeStatus::CHANGED) override
   {
-    if (buffer->GetObject().GetType() != GetDataType())
+    if (buffer->GetObject().GetType() != this->GetDataType())
     {
       return "Buffer has wrong type";
     }
-    const tBufferType& value_buffer = buffer->GetObject().GetData<tBufferType>();
-    T value = tImplementationVariation::ToValue(value_buffer, GetUnit());
+    const tBufferType& value_buffer = buffer->GetObject().template GetData<tBufferType>();
+    T value = tImplementationVariation::ToValue(value_buffer, this->GetUnit());
     if (!bounds.InBounds(value))
     {
       return GenerateErrorMessage(value);
     }
-    return tCheapCopyPort::BrowserPublishRaw(buffer, notify_listener_on_this_port, change_constant);
+    return tPortBase::BrowserPublishRaw(buffer, notify_listener_on_this_port, change_constant);
   }
+#else
+  virtual std::string BrowserPublishRaw(const rrlib::rtti::tGenericObject& buffer, rrlib::time::tTimestamp timestamp,
+                                        bool notify_listener_on_this_port = true, tChangeStatus change_constant = tChangeStatus::CHANGED) override
+  {
+    if (buffer.GetType() != this->GetDataType())
+    {
+      return "Buffer has wrong type";
+    }
+    T value = buffer.template GetData<T>();
+    if (!bounds.InBounds(value))
+    {
+      return GenerateErrorMessage(value);
+    }
+    return tPortBase::BrowserPublishRaw(buffer, timestamp, notify_listener_on_this_port, change_constant);
+  }
+
+#endif
 
   /*!
    * Generates error message for BrowserPublishRaw
@@ -173,21 +202,23 @@ private:
     return "Value is out of bounds";
   }
 
-  virtual bool NonStandardAssign(tPublishingDataGlobalBuffer& publishing_data, tChangeStatus change_constant) override
+#ifndef RRLIB_SINGLE_THREADED
+  virtual bool NonStandardAssign(typename tPortBase::tPublishingDataGlobalBuffer& publishing_data, tChangeStatus change_constant) override
   {
     return NonStandardAssignImplementation(publishing_data, change_constant);
   }
 
-  virtual bool NonStandardAssign(tPublishingDataThreadLocalBuffer& publishing_data, tChangeStatus change_constant) override
+  virtual bool NonStandardAssign(typename tPortBase::tPublishingDataThreadLocalBuffer& publishing_data, tChangeStatus change_constant) override
   {
     return NonStandardAssignImplementation(publishing_data, change_constant);
   }
+
 
   template <typename TPublishingData>
   bool NonStandardAssignImplementation(TPublishingData& publishing_data, tChangeStatus change_constant)
   {
     const tBufferType& value_buffer = publishing_data.published_buffer->GetObject().template GetData<tBufferType>();
-    T value = tImplementationVariation::ToValue(value_buffer, GetUnit());
+    T value = tImplementationVariation::ToValue(value_buffer, this->GetUnit());
     if (!bounds.InBounds(value))
     {
       if (bounds.GetOutOfBoundsAction() == tOutOfBoundsAction::DISCARD)
@@ -195,15 +226,36 @@ private:
         return false;
       }
       rrlib::time::tTimestamp timestamp = publishing_data.published_buffer->GetTimestamp();
-      tUnusedManagerPointer buffer = GetUnusedBuffer(publishing_data);
+      typename tPortBase::tUnusedManagerPointer buffer = this->GetUnusedBuffer(publishing_data);
       publishing_data.Init(buffer);
       tImplementationVariation::Assign(publishing_data.published_buffer->GetObject().template GetData<tBufferType>(),
-                                       bounds.GetOutOfBoundsAction() == tOutOfBoundsAction::ADJUST_TO_RANGE ? bounds.ToBounds(value) : bounds.GetOutOfBoundsDefault(), GetUnit());
+                                       bounds.GetOutOfBoundsAction() == tOutOfBoundsAction::ADJUST_TO_RANGE ? bounds.ToBounds(value) : bounds.GetOutOfBoundsDefault(), this->GetUnit());
       publishing_data.published_buffer->SetTimestamp(timestamp);
     }
-    return tCheapCopyPort::NonStandardAssign(publishing_data, change_constant);
+    return tPortBase::NonStandardAssign(publishing_data, change_constant);
     // tCheapCopyPort::Assign(publishing_data); done anyway
   }
+
+#else
+
+  virtual bool NonStandardAssign(typename tPortBase::tPublishingData& publishing_data, tChangeStatus change_constant) override
+  {
+    T value = publishing_data.template Value<T>();
+    if (!bounds.InBounds(value))
+    {
+      if (bounds.GetOutOfBoundsAction() == tOutOfBoundsAction::DISCARD)
+      {
+        return false;
+      }
+
+      *static_cast<T*>(this->current_value.data_pointer) = bounds.GetOutOfBoundsAction() == tOutOfBoundsAction::ADJUST_TO_RANGE ? bounds.ToBounds(value) : bounds.GetOutOfBoundsDefault();
+      this->current_value.timestamp = publishing_data.value->timestamp;
+      publishing_data.value = &this->current_value;
+    }
+    return tPortBase::NonStandardAssign(publishing_data, change_constant);
+  }
+
+#endif
 };
 
 //----------------------------------------------------------------------

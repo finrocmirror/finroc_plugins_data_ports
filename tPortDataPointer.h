@@ -189,11 +189,14 @@ public:
 //----------------------------------------------------------------------
 private:
 
+
   friend struct api::tPortImplementation<tPortData, api::tPortImplementationTypeTrait<tPortData>::type>;
   friend class tGenericPort;
   template <typename U, bool>
   friend class api::tPullRequestHandlerAdapter;
   friend class api::tPullRequestHandlerAdapterGeneric;
+  template <typename U, bool CHEAPLY_COPIED_TYPE>
+  friend class api::tPortDataPointerImplementation;
 
   template <typename U>
   friend rrlib::serialization::tOutputStream& operator << (rrlib::serialization::tOutputStream& stream, const tPortDataPointer<U>& data);

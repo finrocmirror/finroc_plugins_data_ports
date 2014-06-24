@@ -107,7 +107,7 @@ public:
   /*! Class that contains actual implementation of most functionality */
   typedef api::tPortImplementation<T, api::tPortImplementationTypeTrait<T>::type> tImplementation;
 
-  typedef optimized::tCheapCopyPort tPortBase;
+  typedef typename tImplementation::tPortBase tPortBase;
 
   virtual core::tAbstractPort* CreatePort(const common::tAbstractDataPortCreationInfo& creation_info) override
   {
@@ -123,7 +123,7 @@ public:
   virtual tPortDataPointer<const rrlib::rtti::tGenericObject> GetPointer(core::tAbstractPort& abstract_port, tStrategy strategy) override
   {
     tPortBase& port = static_cast<tPortBase&>(abstract_port);
-    if ((strategy == tStrategy::DEFAULT && port.PushStrategy()) || strategy == tStrategy::NEVER_PULL)
+    if ((strategy == tStrategy::DEFAULT && port.PushStrategy()) || strategy == tStrategy::NEVER_PULL || definitions::cSINGLE_THREADED)
     {
       tPortDataPointer<rrlib::rtti::tGenericObject> buffer = this->GetUnusedBuffer(port);
       rrlib::time::tTimestamp timestamp;
@@ -131,11 +131,13 @@ public:
       buffer.SetTimestamp(timestamp);
       return std::move(buffer);
     }
+#ifndef RRLIB_SINGLE_THREADED
     else
     {
       auto buffer_pointer = port.GetPullRaw(strategy == tStrategy::PULL_IGNORING_HANDLER_ON_THIS_PORT);
       return tPortDataPointerImplementation<rrlib::rtti::tGenericObject, false>(buffer_pointer.release(), false);
     }
+#endif
   }
 
   virtual void Publish(core::tAbstractPort& port, const rrlib::rtti::tGenericObject& data, const rrlib::time::tTimestamp& timestamp) override
@@ -154,7 +156,7 @@ class tGenericPortImplementationCheapCopy : public tGenericPortImplementation
 {
 public:
 
-  typedef optimized::tCheapCopyPort tPortBase;
+  typedef tCheapCopyPort tPortBase;
 
   virtual core::tAbstractPort* CreatePort(const common::tAbstractDataPortCreationInfo& creation_info) override
   {
@@ -169,7 +171,7 @@ public:
   virtual tPortDataPointer<const rrlib::rtti::tGenericObject> GetPointer(core::tAbstractPort& abstract_port, tStrategy strategy) override
   {
     tPortBase& port = static_cast<tPortBase&>(abstract_port);
-    if ((strategy == tStrategy::DEFAULT && port.PushStrategy()) || strategy == tStrategy::NEVER_PULL)
+    if ((strategy == tStrategy::DEFAULT && port.PushStrategy()) || strategy == tStrategy::NEVER_PULL || definitions::cSINGLE_THREADED)
     {
       tPortDataPointer<rrlib::rtti::tGenericObject> buffer = this->GetUnusedBuffer(port);
       rrlib::time::tTimestamp timestamp;
@@ -177,15 +179,18 @@ public:
       buffer.SetTimestamp(timestamp);
       return std::move(buffer);
     }
+#ifndef RRLIB_SINGLE_THREADED
     else
     {
       auto buffer_pointer = port.GetPullRaw(strategy == tStrategy::PULL_IGNORING_HANDLER_ON_THIS_PORT);
       return tPortDataPointerImplementation<rrlib::rtti::tGenericObject, false>(buffer_pointer.release(), false);
     }
+#endif
   }
 
   virtual void Publish(core::tAbstractPort& port, const rrlib::rtti::tGenericObject& data, const rrlib::time::tTimestamp& timestamp) override
   {
+#ifndef RRLIB_SINGLE_THREADED
     assert(data.GetType() == port.GetDataType());
     optimized::tThreadLocalBufferPools* thread_local_pools = optimized::tThreadLocalBufferPools::Get();
     if (thread_local_pools)
@@ -204,6 +209,9 @@ public:
       common::tPublishOperation<optimized::tCheapCopyPort, typename optimized::tCheapCopyPort::tPublishingDataGlobalBuffer> publish_operation(buffer);
       publish_operation.Execute<false, tChangeStatus::CHANGED, false, false>(static_cast<tPortBase&>(port));
     }
+#else
+    static_cast<tPortBase&>(port).Publish(data, timestamp);
+#endif
   }
 
   virtual void SetBounds(core::tAbstractPort& port, const rrlib::rtti::tGenericObject& min, const rrlib::rtti::tGenericObject& max) override
@@ -309,7 +317,7 @@ void tGenericPortImplementation::SetPullRequestHandler(core::tAbstractPort& port
 {
   if (IsCheaplyCopiedType(port.GetDataType()))
   {
-    static_cast<optimized::tCheapCopyPort&>(port).SetPullRequestHandler(pull_request_handler);
+    static_cast<tCheapCopyPort&>(port).SetPullRequestHandler(pull_request_handler);
   }
   else
   {

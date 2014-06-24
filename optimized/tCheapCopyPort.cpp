@@ -69,6 +69,7 @@ namespace optimized
 //----------------------------------------------------------------------
 // Implementation
 //----------------------------------------------------------------------
+#ifndef RRLIB_SINGLE_THREADED
 
 namespace internal
 {
@@ -536,6 +537,8 @@ void tCheapCopyPort::SetPullRequestHandler(tPullRequestHandlerRaw* pull_request_
     this->pull_request_handler = pull_request_handler_;
   }
 }
+
+#endif // RRLIB_SINGLE_THREADED
 
 //----------------------------------------------------------------------
 // End of namespace declaration

@@ -160,6 +160,24 @@ private:
   }
 };
 
+// Normal adapter class for cheap copy types (single-threaded)
+template <typename LISTENER, typename T, bool FIRST_LISTENER>
+class tPortListenerAdapter<LISTENER, T, tPortImplementationType::CHEAP_COPY_SINGLE_THREADED, FIRST_LISTENER> : public tPortListenerAdapterBase<LISTENER, FIRST_LISTENER>
+{
+public:
+
+  template <typename ... TArgs>
+  tPortListenerAdapter(LISTENER& listener, TArgs& ... args) : tPortListenerAdapterBase<LISTENER, FIRST_LISTENER>(listener, args...) {}
+
+private:
+
+  virtual void PortChangedRaw(tChangeContext& change_context, int& lock_counter, rrlib::buffer_pools::tBufferManagementInfo& value) override
+  {
+    this->PortChangedRawBase(change_context, lock_counter, value);
+    this->listener.OnPortChange(static_cast<optimized::tSingleThreadedCheapCopyPortGeneric::tCurrentValueBuffer&>(value).data->GetData<T>(), change_context);
+  }
+};
+
 // Normal adapter class for generic port
 template <typename LISTENER, bool FIRST_LISTENER>
 class tPortListenerAdapterGeneric : public tPortListenerAdapterBase<LISTENER, FIRST_LISTENER>
@@ -176,7 +194,14 @@ private:
     this->PortChangedRawBase(change_context, lock_counter, value);
     if (IsCheaplyCopiedType(change_context.Origin().GetDataType()))
     {
-      this->listener.OnPortChange(static_cast<optimized::tCheaplyCopiedBufferManager&>(value).GetObject(), change_context);
+      if (definitions::cSINGLE_THREADED)
+      {
+        this->listener.OnPortChange(*static_cast<optimized::tSingleThreadedCheapCopyPortGeneric::tCurrentValueBuffer&>(value).data, change_context);
+      }
+      else
+      {
+        this->listener.OnPortChange(static_cast<optimized::tCheaplyCopiedBufferManager&>(value).GetObject(), change_context);
+      }
     }
     else
     {
@@ -196,7 +221,7 @@ public:
 
 private:
 
-  typedef typename std::conditional<tIsCheaplyCopiedType<T>::value, optimized::tCheaplyCopiedBufferManager, standard::tPortBufferManager>::type tBufferManager;
+  typedef typename std::conditional<tIsCheaplyCopiedType<T>::value, typename std::conditional<definitions::cSINGLE_THREADED, optimized::tSingleThreadedCheapCopyPortGeneric::tCurrentValueBuffer, optimized::tCheaplyCopiedBufferManager>::type, standard::tPortBufferManager>::type tBufferManager;
   typedef tPortImplementation<T, tPortImplementationTypeTrait<T>::type> tImplementation;
 
   virtual void PortChangedRaw(tChangeContext& change_context, int& lock_counter, rrlib::buffer_pools::tBufferManagementInfo& value) override
@@ -221,6 +246,12 @@ private:
     tPortDataPointer<const T> pointer(tPortDataPointerImplementation<T, true>(data, change_context.Timestamp()));
     this->listener.OnPortChange(pointer, change_context);
   }
+
+  inline void PortChangedRawImplementation(tChangeContext& change_context, int& lock_counter, optimized::tSingleThreadedCheapCopyPortGeneric::tCurrentValueBuffer& value)
+  {
+    tPortDataPointer<const T> pointer(tPortDataPointerImplementation<T, true>(value.data->GetData<T>(), change_context.Timestamp()));
+    this->listener.OnPortChange(pointer, change_context);
+  }
 };
 
 // Variant for smart pointer with generic port
@@ -240,9 +271,21 @@ private:
     lock_counter++;
     if (IsCheaplyCopiedType(change_context.Origin().GetDataType()))
     {
-      tPortDataPointer<const rrlib::rtti::tGenericObject> pointer(
-        api::tPortDataPointerImplementation<rrlib::rtti::tGenericObject, false>(static_cast<optimized::tCheaplyCopiedBufferManager*>(&value), false));
-      this->listener.OnPortChange(pointer, change_context);
+      if (definitions::cSINGLE_THREADED)
+      {
+        optimized::tSingleThreadedCheapCopyPortGeneric::tCurrentValueBuffer& buffer = static_cast<optimized::tSingleThreadedCheapCopyPortGeneric::tCurrentValueBuffer&>(value);
+        auto buffer_manager = optimized::tGlobalBufferPools::Instance().GetUnusedBuffer(buffer.cheaply_copyable_type_index);
+        buffer_manager->GetObject().DeepCopyFrom(*buffer.data);
+        tPortDataPointer<const rrlib::rtti::tGenericObject> pointer(
+          api::tPortDataPointerImplementation<rrlib::rtti::tGenericObject, false>(buffer_manager.release(), false));
+        this->listener.OnPortChange(pointer, change_context);
+      }
+      else
+      {
+        tPortDataPointer<const rrlib::rtti::tGenericObject> pointer(
+          api::tPortDataPointerImplementation<rrlib::rtti::tGenericObject, false>(static_cast<optimized::tCheaplyCopiedBufferManager*>(&value), false));
+        this->listener.OnPortChange(pointer, change_context);
+      }
     }
     else
     {
