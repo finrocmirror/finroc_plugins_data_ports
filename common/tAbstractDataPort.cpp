@@ -192,28 +192,21 @@ int16_t tAbstractDataPort::GetMinNetworkUpdateIntervalForSubscription() const
 
 int16_t tAbstractDataPort::GetStrategyRequirement() const
 {
-  if (IsInputPort())
+  if (GetFlag(tFlag::PUSH_STRATEGY))
   {
-    if (GetFlag(tFlag::PUSH_STRATEGY))
+    if (GetFlag(tFlag::USES_QUEUE))
     {
-      if (GetFlag(tFlag::USES_QUEUE))
-      {
-        int qlen = GetMaxQueueLength();
-        return static_cast<int16_t>((qlen > 0 ? std::min<int>(qlen, std::numeric_limits<int16_t>::max()) : std::numeric_limits<int16_t>::max()));
-      }
-      else
-      {
-        return 1;
-      }
+      int qlen = GetMaxQueueLength();
+      return static_cast<int16_t>((qlen > 0 ? std::min<int>(qlen, std::numeric_limits<int16_t>::max()) : std::numeric_limits<int16_t>::max()));
     }
     else
     {
-      return 0;
+      return 1;
     }
   }
   else
   {
-    return static_cast<int16_t>((IsConnected() ? 0 : -1));
+    return static_cast<int16_t>((IsInputPort() || IsConnected() ? 0 : -1));
   }
 }
 
