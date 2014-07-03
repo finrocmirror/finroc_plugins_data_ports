@@ -158,6 +158,16 @@ public:
     SetString(string);
   }
 
+  void SetDefault(const T& default_val, bool overwrite_default = false)
+  {
+    if (DefaultValueSet() && (!overwrite_default))
+    {
+      FINROC_LOG_PRINT_STATIC(DEBUG_WARNING, "Default value already set");
+    }
+    rrlib::serialization::tOutputStream os(default_value);
+    os << default_val;
+  }
+
 //----------------------------------------------------------------------
 // Private fields and methods
 //----------------------------------------------------------------------
@@ -185,16 +195,6 @@ private:
     {
       config_entry = s;
     }
-  }
-
-  void SetDefault(const T& default_val)
-  {
-    if (DefaultValueSet())
-    {
-      FINROC_LOG_PRINT_STATIC(DEBUG_WARNING, "Default value already set");
-    }
-    rrlib::serialization::tOutputStream os(default_value);
-    os << default_val;
   }
 };
 
