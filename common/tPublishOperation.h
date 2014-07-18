@@ -109,8 +109,13 @@ public:
     if (NOTIFY_LISTENER_ON_THIS_PORT)
     {
       port.SetChanged(CHANGE_CONSTANT);
+#ifndef _LIB_FINROC_PLUGINS_DATA_RECORDING_PRESENT_
       port.template NotifyListeners<CHANGE_CONSTANT>(*this);
     }
+#else
+    }
+    port.template NotifyListeners<CHANGE_CONSTANT>(*this);
+#endif
 
     if (!REVERSE)
     {
