@@ -212,7 +212,7 @@ public:
     tPort<T>::Wrap(wrap); // checks types
     if (!(wrap.GetFlag(core::tFrameworkElement::tFlag::EMITS_DATA) && wrap.GetFlag(core::tFrameworkElement::tFlag::OUTPUT_PORT)))
     {
-      std::runtime_error("tOutputPort can only wrap output ports. Attempted to wrap port that has invalid flags.");
+      throw std::runtime_error("tOutputPort can only wrap output ports. Attempted to wrap port that has invalid flags.");
     }
     tOutputPort port;
     port.SetWrapped(&wrap);

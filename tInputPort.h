@@ -293,7 +293,7 @@ public:
     tPort<T>::Wrap(wrap); // checks types
     if (!(wrap.GetFlag(core::tFrameworkElement::tFlag::ACCEPTS_DATA)))
     {
-      std::runtime_error("tInputPort can only wrap ports that accept data.");
+      throw std::runtime_error("tInputPort can only wrap ports that accept data.");
     }
     tInputPort port;
     port.SetWrapped(&wrap);
