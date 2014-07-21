@@ -75,7 +75,7 @@ tPortDataPointerImplementation<rrlib::rtti::tGenericObject, false> tDeserializat
 {
   if (!IsDataFlowType(type))
   {
-    throw std::runtime_error("Not a data flow type");
+    throw rrlib::util::tTraceableException<std::runtime_error>("Not a data flow type");
   }
   if (IsCheaplyCopiedType(type))
   {
@@ -93,7 +93,7 @@ tPortDataPointerImplementation<rrlib::rtti::tGenericObject, false> tDeserializat
   {
     if (!current_scope)
     {
-      throw std::runtime_error("No scope created");
+      throw rrlib::util::tTraceableException<std::runtime_error>("No scope created");
     }
     if (!current_scope->buffer_source)
     {
@@ -108,7 +108,7 @@ standard::tMultiTypePortBufferPool& tDeserializationScope::ObtainBufferPool()
 {
   if (!buffer_source)
   {
-    throw std::logic_error("This must be implemented if scope class can be created without providing buffer pool.");
+    throw rrlib::util::tTraceableException<std::logic_error>("This must be implemented if scope class can be created without providing buffer pool.");
   }
   return *buffer_source;
 }

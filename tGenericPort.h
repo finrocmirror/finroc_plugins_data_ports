@@ -281,7 +281,7 @@ public:
   {
     if (!IsDataFlowType(wrap.GetDataType()))
     {
-      throw std::runtime_error(wrap.GetDataType().GetName() + " is no data flow type and cannot be wrapped.");
+      throw rrlib::util::tTraceableException<std::runtime_error>(wrap.GetDataType().GetName() + " is no data flow type and cannot be wrapped.");
     }
     tGenericPort port;
     port.SetWrapped(&wrap);
