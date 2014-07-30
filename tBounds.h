@@ -94,7 +94,8 @@ public:
    * \param max Maximum bound
    * \param out_of_bounds_action How to proceed if an incoming value is out of bounds
    */
-  tBounds(T min, T max, tOutOfBoundsAction out_of_bounds_action = tOutOfBoundsAction::ADJUST_TO_RANGE) :
+  template <typename TMin, typename TMax>
+  tBounds(TMin min, TMax max, tOutOfBoundsAction out_of_bounds_action = tOutOfBoundsAction::ADJUST_TO_RANGE) :
     min(min), max(max),
     action(out_of_bounds_action),
     out_of_bounds_default()
@@ -107,7 +108,8 @@ public:
    * \param max Maximum bound
    * \param out_of_bounds_default Default value to apply when value is out of bounds
    */
-  tBounds(T min, T max, T out_of_bounds_default) :
+  template <typename TMin, typename TMax>
+  tBounds(TMin min, TMax max, T out_of_bounds_default) :
     min(min), max(max),
     action(tOutOfBoundsAction::APPLY_DEFAULT),
     out_of_bounds_default(out_of_bounds_default)
