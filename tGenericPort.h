@@ -240,6 +240,14 @@ public:
   }
 
   /*!
+   * \return Has port changed since last changed-flag-reset?
+   */
+  inline bool HasChanged() const
+  {
+    return this->GetWrapped()->HasChanged();
+  }
+
+  /*!
    * Publish Data Buffer. This data will be forwarded to any connected ports.
    * Should only be called on output ports.
    *
