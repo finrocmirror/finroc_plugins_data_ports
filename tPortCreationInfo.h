@@ -158,6 +158,12 @@ public:
     SetString(string);
   }
 
+  // we replicate this here, since Set() for default values catches enums if T is e.g. rrlib::si_units::tQuantity type
+  void Set(core::tFrameworkElement::tFlag flag)
+  {
+    tAbstractPortCreationInfo::Set(flag);
+  }
+
   void SetDefault(const T& default_val, bool overwrite_default = false)
   {
     if (DefaultValueSet() && (!overwrite_default))
