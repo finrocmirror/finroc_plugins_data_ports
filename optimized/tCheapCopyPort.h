@@ -171,10 +171,7 @@ public:
 
   virtual ~tCheapCopyPort();
 
-  /*!
-   * Set current value to default value
-   */
-  void ApplyDefaultValue();
+  virtual void ApplyDefaultValue() override;
 
   /*!
    * Publish buffer through port
@@ -384,8 +381,6 @@ public:
   {
     return unit;
   }
-
-  virtual void NotifyDisconnect(); // TODO: why is this virtual?
 
 //  /*!
 //   * Publish data

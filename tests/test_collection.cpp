@@ -237,6 +237,43 @@ void TestPortListeners(const T& publish_value)
   parent->ManagedDelete();
 }
 
+template <typename T>
+void TestNetworkConnectionLoss(const T& default_value, const T& publish_value)
+{
+  core::tFrameworkElement* parent = new core::tFrameworkElement(&core::tRuntimeEnvironment::GetInstance(), "TestNetworkConnectionLoss");
+
+  tOutputPort<T> output_port("Output Port", parent);
+  tInputPort<T> input_port_no_explicit_default("Input Port No Explicit Default", parent, core::tFrameworkElement::tFlag::DEFAULT_ON_DISCONNECT);
+  tInputPort<T> input_port_explicit_default("Input Port Explicit Default", parent, core::tFrameworkElement::tFlag::DEFAULT_ON_DISCONNECT, default_value);
+  tInputPort<T> input_port_deferred_default("Input Port Deferred Default", parent, core::tFrameworkElement::tFlag::DEFAULT_ON_DISCONNECT);
+  input_port_deferred_default.SetDefault(default_value);
+  output_port.ConnectTo(input_port_no_explicit_default);
+  output_port.ConnectTo(input_port_explicit_default);
+  output_port.ConnectTo(input_port_deferred_default);
+  parent->Init();
+
+  output_port.Publish(publish_value);
+  RRLIB_UNIT_TESTS_EQUALITY(publish_value, *input_port_no_explicit_default.GetPointer());
+  RRLIB_UNIT_TESTS_EQUALITY(publish_value, *input_port_explicit_default.GetPointer());
+  RRLIB_UNIT_TESTS_EQUALITY(publish_value, *input_port_deferred_default.GetPointer());
+  input_port_no_explicit_default.GetWrapped()->NotifyOfNetworkConnectionLoss();
+  input_port_explicit_default.GetWrapped()->NotifyOfNetworkConnectionLoss();
+  input_port_deferred_default.GetWrapped()->NotifyOfNetworkConnectionLoss();
+  RRLIB_UNIT_TESTS_EQUALITY(T(), *input_port_no_explicit_default.GetPointer());
+  RRLIB_UNIT_TESTS_EQUALITY(default_value, *input_port_explicit_default.GetPointer());
+  RRLIB_UNIT_TESTS_EQUALITY(default_value, *input_port_deferred_default.GetPointer());
+  output_port.Publish(publish_value);
+  RRLIB_UNIT_TESTS_EQUALITY(publish_value, *input_port_no_explicit_default.GetPointer());
+  RRLIB_UNIT_TESTS_EQUALITY(publish_value, *input_port_explicit_default.GetPointer());
+  RRLIB_UNIT_TESTS_EQUALITY(publish_value, *input_port_deferred_default.GetPointer());
+  output_port.DisconnectAll();
+  RRLIB_UNIT_TESTS_EQUALITY(T(), *input_port_no_explicit_default.GetPointer());
+  RRLIB_UNIT_TESTS_EQUALITY(default_value, *input_port_explicit_default.GetPointer());
+  RRLIB_UNIT_TESTS_EQUALITY(default_value, *input_port_deferred_default.GetPointer());
+
+  parent->ManagedDelete();
+}
+
 class DataPortsTestCollection : public rrlib::util::tUnitTestSuite
 {
   RRLIB_UNIT_TESTS_BEGIN_SUITE(DataPortsTestCollection);
@@ -250,11 +287,14 @@ class DataPortsTestCollection : public rrlib::util::tUnitTestSuite
     TestPortQueues<std::string>("1", "2", "3");
     TestPortListeners<int>(1);
     TestPortListeners<std::string>("test");
+    TestNetworkConnectionLoss<int>(4, 7);
+    TestNetworkConnectionLoss<std::string>("default_value", "published_value");
 
     tThreadLocalBufferManagement local_buffers;
     TestPortChains();
     TestPortQueues<int>(1, 2, 3);
     TestPortListeners<int>(1);
+    TestNetworkConnectionLoss<int>(4, 7);
   }
 };
 

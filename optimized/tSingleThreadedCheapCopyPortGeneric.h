@@ -124,10 +124,7 @@ public:
 
   virtual ~tSingleThreadedCheapCopyPortGeneric();
 
-  /*!
-   * Set current value to default value
-   */
-  void ApplyDefaultValue();
+  virtual void ApplyDefaultValue() override;
 
   /*!
    * Publish buffer through port

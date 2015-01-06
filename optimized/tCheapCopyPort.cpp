@@ -153,7 +153,11 @@ void tCheapCopyPort::ApplyDefaultValue()
     FINROC_LOG_PRINT(ERROR, "No default value has been set. Doing nothing.");
     return;
   }
-  // Publish(*default_value); TODO
+
+  tUnusedManagerPointer buffer(tGlobalBufferPools::Instance().GetUnusedBuffer(GetCheaplyCopyableTypeIndex()).release());
+  buffer->GetObject().DeepCopyFrom(*default_value);
+  buffer->SetTimestamp(rrlib::time::cNO_TIME);
+  BrowserPublishRaw(buffer, true);
 }
 
 std::string tCheapCopyPort::BrowserPublishRaw(tUnusedManagerPointer& buffer, bool notify_listener_on_this_port, tChangeStatus change_constant)
@@ -468,14 +472,6 @@ bool tCheapCopyPort::NonStandardAssign(tPublishingDataThreadLocalBuffer& publish
     input_queue->Enqueue(tLockingManagerPointer(publishing_data.published_buffer));
   }
   return true;
-}
-
-void tCheapCopyPort::NotifyDisconnect()
-{
-  if (GetFlag(tFlag::DEFAULT_ON_DISCONNECT))
-  {
-    ApplyDefaultValue();
-  }
 }
 
 tCheapCopyPort::tLockingManagerPointer tCheapCopyPort::PullValueRaw(bool ignore_pull_request_handler_on_this_port)

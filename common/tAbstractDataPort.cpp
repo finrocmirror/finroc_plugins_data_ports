@@ -101,40 +101,6 @@ core::tAbstractPortCreationInfo tAbstractDataPort::AdjustPortCreationInfo(const 
   return result;
 }
 
-void tAbstractDataPort::ConnectionAdded(tAbstractPort& partner, bool partner_is_destination)
-{
-  if (!dynamic_cast<tAbstractDataPort*>(&partner))
-  {
-    FINROC_LOG_PRINT(ERROR, "Invalid port was connected");
-    abort();
-  }
-  if (partner_is_destination)
-  {
-    (static_cast<tAbstractDataPort&>(partner)).PropagateStrategy(NULL, this);
-
-    // check whether we need an initial reverse push
-    this->ConsiderInitialReversePush(static_cast<tAbstractDataPort&>(partner));
-  }
-}
-
-void tAbstractDataPort::ConnectionRemoved(tAbstractPort& partner, bool partner_is_destination)
-{
-  if (partner_is_destination)
-  {
-    if (!this->IsConnected())
-    {
-      this->strategy = -1;
-    }
-    if (!partner.IsConnected())
-    {
-      static_cast<tAbstractDataPort&>(partner).strategy = -1;
-    }
-
-    static_cast<tAbstractDataPort&>(partner).PropagateStrategy(NULL, NULL);
-    this->PropagateStrategy(NULL, NULL);
-  }
-}
-
 void tAbstractDataPort::ConsiderInitialReversePush(tAbstractDataPort& target)
 {
   if (IsReady() && target.IsReady())
@@ -207,6 +173,52 @@ int16_t tAbstractDataPort::GetStrategyRequirement() const
   else
   {
     return static_cast<int16_t>((IsInputPort() || IsConnected() ? 0 : -1));
+  }
+}
+
+void tAbstractDataPort::OnConnect(tAbstractPort& partner, bool partner_is_destination)
+{
+  if (!dynamic_cast<tAbstractDataPort*>(&partner))
+  {
+    FINROC_LOG_PRINT(ERROR, "Invalid port was connected");
+    abort();
+  }
+  if (partner_is_destination)
+  {
+    (static_cast<tAbstractDataPort&>(partner)).PropagateStrategy(NULL, this);
+
+    // check whether we need an initial reverse push
+    this->ConsiderInitialReversePush(static_cast<tAbstractDataPort&>(partner));
+  }
+}
+
+void tAbstractDataPort::OnDisconnect(tAbstractPort& partner, bool partner_is_destination)
+{
+  if (partner_is_destination)
+  {
+    if (!this->IsConnected())
+    {
+      this->strategy = -1;
+    }
+    if (!partner.IsConnected())
+    {
+      static_cast<tAbstractDataPort&>(partner).strategy = -1;
+    }
+
+    static_cast<tAbstractDataPort&>(partner).PropagateStrategy(NULL, NULL);
+    this->PropagateStrategy(NULL, NULL);
+  }
+  else
+  {
+    this->OnNetworkConnectionLoss();
+  }
+}
+
+void tAbstractDataPort::OnNetworkConnectionLoss()
+{
+  if (GetFlag(tFlag::DEFAULT_ON_DISCONNECT))
+  {
+    ApplyDefaultValue();
   }
 }
 

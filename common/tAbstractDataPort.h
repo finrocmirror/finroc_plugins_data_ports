@@ -80,6 +80,11 @@ public:
   tAbstractDataPort(const tAbstractDataPortCreationInfo& create_info);
 
   /*!
+   * Set current value to default value
+   */
+  virtual void ApplyDefaultValue() = 0;
+
+  /*!
    * Forwards current data to specified port (publishes the data via this port)
    *
    * \param other Port to which data is forwarded
@@ -336,10 +341,6 @@ private:
    */
   static core::tAbstractPortCreationInfo AdjustPortCreationInfo(const tAbstractDataPortCreationInfo& create_info);
 
-  virtual void ConnectionAdded(tAbstractPort& partner, bool partner_is_destination) override;
-
-  virtual void ConnectionRemoved(tAbstractPort& partner, bool partner_is_destination) override;
-
   /*!
    * Should be called in situations where there might need to be an initial push
    * (e.g. connecting or strategy change)
@@ -375,6 +376,12 @@ private:
    * \param reverse Is this a reverse push?
    */
   virtual void InitialPushTo(tAbstractPort& target, bool reverse) = 0;
+
+  virtual void OnConnect(tAbstractPort& partner, bool partner_is_destination) override;
+
+  virtual void OnDisconnect(tAbstractPort& partner, bool partner_is_destination) override;
+
+  virtual void OnNetworkConnectionLoss() override;
 };
 
 //----------------------------------------------------------------------

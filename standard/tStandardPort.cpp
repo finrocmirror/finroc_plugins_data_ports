@@ -165,7 +165,9 @@ void tStandardPort::ApplyDefaultValue()
     FINROC_LOG_PRINT(ERROR, "No default value has been set. Doing nothing.");
     return;
   }
-  Publish(default_value);
+  default_value->AddLocks(1);
+  tLockingManagerPointer pointer(default_value.get());
+  Publish(pointer);
 }
 
 void tStandardPort::BrowserPublish(tUnusedManagerPointer& data, bool notify_listener_on_this_port, tChangeStatus change_constant)
@@ -294,14 +296,6 @@ void tStandardPort::NonStandardAssign(tPublishingData& publishing_data, tChangeS
     // enqueue
     publishing_data.AddLock();
     input_queue->Enqueue(tLockingManagerPointer(publishing_data.published_buffer));
-  }
-}
-
-void tStandardPort::NotifyDisconnect()
-{
-  if (GetFlag(tFlag::DEFAULT_ON_DISCONNECT))
-  {
-    ApplyDefaultValue();
   }
 }
 

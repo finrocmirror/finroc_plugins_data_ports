@@ -164,7 +164,7 @@ public:
   /*!
    * Set current value to default value
    */
-  void ApplyDefaultValue();
+  virtual void ApplyDefaultValue() override;
 
   /*!
    * Publish buffer through port
@@ -251,8 +251,6 @@ public:
   }
 
   virtual tUnusedManagerPointer GetUnusedBufferRaw(const rrlib::rtti::tType& dt);
-
-  virtual void NotifyDisconnect(); // TODO: why is this virtual?
 
   /*!
    * Publish Data Buffer. This data will be forwarded to any connected ports.
