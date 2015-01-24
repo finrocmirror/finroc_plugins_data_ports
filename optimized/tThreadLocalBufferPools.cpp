@@ -92,12 +92,16 @@ struct tDeletionList
   void DeleteGarbage()
   {
     rrlib::thread::tLock lock(mutex);
-    for (auto it = garbage_pools.begin(); it != garbage_pools.end(); ++it)
+    for (auto it = garbage_pools.begin(); it != garbage_pools.end();)
     {
       if ((*it)->DeleteAllGarbage(false))
       {
         delete *it;
         it = garbage_pools.erase(it);
+      }
+      else
+      {
+        ++it;
       }
     }
   }
