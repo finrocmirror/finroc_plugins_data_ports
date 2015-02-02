@@ -80,6 +80,8 @@ class tPortDataPointer : private rrlib::util::tNoncopyable
 {
   typedef typename std::remove_const<T>::type tPortData;
 
+  enum { cCONST_DATA = !std::is_same<tPortData, T>::value };
+
   /*! Port-related functionality for type T */
   typedef api::tPortImplementation<tPortData, api::tPortImplementationTypeTrait<tPortData>::type> tPortImplementation;
 
@@ -118,7 +120,7 @@ public:
   }
 
   // Move constructor for non-const pointers
-  template < bool ENABLE = !std::is_same<tPortData, T>::value >
+  template <bool ENABLE = cCONST_DATA>
   inline tPortDataPointer(typename std::enable_if<ENABLE, tPortDataPointer<tPortData>>::type && non_const_pointer) :
     implementation(std::move(non_const_pointer.implementation))
   {
@@ -129,6 +131,30 @@ public:
   {
     std::swap(implementation, other.implementation);
     return *this;
+  }
+
+  /*!
+   * Attach compressed data to buffer.
+   * Components that have their data also available in compressed form, can attach this to their published data.
+   * E.g. a frame grabber might receive images in MJPG from a camera driver.
+   * Later, compression might be required for network connections or recording.
+   * Instead of recompressing the data, the original can be used.
+   * Must be called, before buffer is pusblished.
+   *
+   * Note: if Finroc data_compression plugin is not available, the data is discarded.
+   *
+   * (only available for data types that are not cheaply copied (they are small anyway) and not for buffers that contain const data)
+   *
+   * \param compression_format Format in which data was compressed (e.g. "jpg" - should be the same strings as used with rrlib_data_compression to allow decompression)
+   *                           Note that string is not copied and must remain valid as long as data
+   * \param data Pointer to compressed data (data is copied)
+   * \param size Size of compressed data
+   * \param key_frame Is this a key frame? (meaning that data be uncompressed without knowledge of any former data (frames))
+   */
+  template < bool ENABLE = api::tPortImplementationTypeTrait<tPortData>::type == api::tPortImplementationType::STANDARD && (!cCONST_DATA) >
+  void AttachCompressedData(const char* compression_format, void* data, size_t size, typename std::enable_if<ENABLE, bool>::type key_frame = true)
+  {
+    implementation.AttachCompressedData(compression_format, data, size, key_frame);
   }
 
   /*!
@@ -202,6 +228,8 @@ private:
   friend rrlib::serialization::tOutputStream& operator << (rrlib::serialization::tOutputStream& stream, const tPortDataPointer<U>& data);
   template <typename U>
   friend rrlib::serialization::tInputStream& operator >> (rrlib::serialization::tInputStream& stream, tPortDataPointer<U>& data);
+
+  friend class data_compression::tPlugin;
 
   /*! Actual implementation of smart pointer class */
   tImplementation implementation;

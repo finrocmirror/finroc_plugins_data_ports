@@ -29,7 +29,7 @@
  *
  * \b tEvent
  *
- * Simple data type that signals that an event has occured.
+ * Simple data type that signals that an event has occurred.
  * Event data types clearly indicate that ports are not used for transferring a
  * continuous flow of data, but only occasional events.
  * This event type without any attached data can be used to e.g. trigger certain
@@ -66,7 +66,7 @@ namespace data_ports
 //----------------------------------------------------------------------
 //! Event data type
 /*!
- * Simple data type that signals that an event has occured.
+ * Simple data type that signals that an event has occurred.
  * Event data types clearly indicate that ports are not used for transferring a
  * continuous flow of data, but only occasional events.
  * This event type without any attached data can be used to e.g. trigger certain

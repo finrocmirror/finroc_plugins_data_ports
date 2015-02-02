@@ -71,6 +71,10 @@ namespace standard
 tPortBufferManager::tPortBufferManager() :
   unused(true),
   derived_from(NULL)
+#ifdef _LIB_FINROC_PLUGINS_DATA_COMPRESSION_PRESENT_
+  , compression_status(0),
+  compressed_data()
+#endif
 {}
 
 tPortBufferManager::~tPortBufferManager()

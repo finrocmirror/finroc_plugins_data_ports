@@ -116,6 +116,11 @@ public:
     return *this;
   }
 
+  void AttachCompressedData(const char* compression_format, void* data, size_t size, bool key_frame)
+  {
+    buffer_manager->AttachCompressedData(compression_format, data, size, key_frame);
+  }
+
   void Deserialize(rrlib::serialization::tInputStream& stream)
   {
     if (stream.ReadBoolean())
@@ -386,6 +391,18 @@ public:
     }
   }
 
+  void AttachCompressedData(const char* compression_format, void* data, size_t size, bool key_frame)
+  {
+    if (IsCheaplyCopiedType(object->GetType()))
+    {
+      FINROC_LOG_PRINT(WARNING, "Cannot attach compressed data to cheaply copied type");
+    }
+    else
+    {
+      static_cast<standard::tPortBufferManager*>(buffer_manager)->AttachCompressedData(compression_format, data, size, key_frame);
+    }
+  }
+
   void Deserialize(rrlib::serialization::tInputStream& stream)
   {
     if (stream.ReadBoolean())
@@ -412,6 +429,12 @@ public:
   {
     return object;
   }
+
+  common::tReferenceCountingBufferManager* GetBufferManager() const
+  {
+    return buffer_manager;
+  }
+
 
   inline rrlib::time::tTimestamp GetTimestamp() const
   {
@@ -451,7 +474,7 @@ public:
 //----------------------------------------------------------------------
 private:
 
-  /*! Locked buffer - if standard type */
+  /*! Locked buffer */
   common::tReferenceCountingBufferManager* buffer_manager;
 
   /*! Generic object this pointer points to */

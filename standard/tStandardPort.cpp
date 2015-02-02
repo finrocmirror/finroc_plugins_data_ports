@@ -111,6 +111,10 @@ tStandardPort::tStandardPort(common::tAbstractDataPortCreationInfo creation_info
   default_value(CreateDefaultValue(creation_info, buffer_pool)),
   current_value(0),
   standard_assign(!GetFlag(tFlag::NON_STANDARD_ASSIGN) && (!GetFlag(tFlag::HAS_QUEUE))),
+#ifdef _LIB_FINROC_PLUGINS_DATA_COMPRESSION_PRESENT_
+  compression_active_status(-2),
+  data_compressor_mutex("tStandardPort data compressor"),
+#endif
   input_queue(),
   pull_request_handler(NULL)
 {

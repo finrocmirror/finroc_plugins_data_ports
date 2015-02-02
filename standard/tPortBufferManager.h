@@ -56,15 +56,19 @@
 //----------------------------------------------------------------------
 namespace finroc
 {
-namespace data_ports
-{
-namespace standard
-{
 
 //----------------------------------------------------------------------
 // Forward declarations / typedefs / enums
 //----------------------------------------------------------------------
+namespace data_compression
+{
+class tPlugin;
+}
 
+namespace data_ports
+{
+namespace standard
+{
 //----------------------------------------------------------------------
 // Class declaration
 //----------------------------------------------------------------------
@@ -88,6 +92,44 @@ class tPortBufferManager : public common::tReferenceCountingBufferManager
 public:
 
   ~tPortBufferManager();
+
+  /*!
+   * Attach compressed data to buffer.
+   * Components that have their data also available in compressed form, can attach this to their published data.
+   * E.g. a frame grabber might receive images in MJPG from a camera driver.
+   * Later, compression might be required for network connections or recording.
+   * Instead of recompressing the data, the original can be used.
+   * Must be called, before buffer is pusblished.
+   *
+   * Note: if Finroc data_compression plugin is not available, the data is discarded.
+   *
+   * (only available for data types that are not cheaply copied (they are small anyway) and not for buffers that contain const data)
+   *
+   * \param compression_format Format in which data was compressed (e.g. "jpg" - should be the same strings as used with rrlib_data_compression to allow decompression)
+   *                           Note that string is not copied and must remain valid as long as data
+   * \param data Pointer to compressed data (data is copied)
+   * \param size Size of compressed data
+   * \param key_frame Is this a key frame? (meaning that data be uncompressed without knowledge of any former data (frames))
+   */
+  void AttachCompressedData(const char* compression_format, void* data, size_t size, bool key_frame)
+  {
+    if (!unused)
+    {
+      FINROC_LOG_PRINT(WARNING, "Buffer has already been published. No data is attached.");
+      return;
+    }
+#ifdef _LIB_FINROC_PLUGINS_DATA_COMPRESSION_PRESENT_
+    if (!compressed_data)
+    {
+      compressed_data.reset(new std::tuple<rrlib::serialization::tMemoryBuffer, const char*, bool>());
+    }
+    rrlib::serialization::tOutputStream stream(std::get<0>(*compressed_data));
+    stream.Write(data, size);
+    std::get<1>(*compressed_data) = compression_format;
+    std::get<2>(*compressed_data) = key_frame;
+    this->compression_status = 3;  // Enum value for "data available" (see data_compression::tPlugin)
+#endif
+  }
 
   /*!
    * Creates instance of tPortBufferManager containing a buffer
@@ -120,6 +162,9 @@ public:
   inline void SetUnused(bool unused)
   {
     this->unused = unused;
+#ifdef _LIB_FINROC_PLUGINS_DATA_COMPRESSION_PRESENT_
+    this->compression_status = 0;
+#endif
   }
 
 //----------------------------------------------------------------------
@@ -133,6 +178,17 @@ private:
   /*! PortDataManager that this manager is derived from - null if not derived */
   tPortBufferManager* derived_from;
 
+#ifdef _LIB_FINROC_PLUGINS_DATA_COMPRESSION_PRESENT_
+
+  friend class data_compression::tPlugin;
+
+  /*! Compression status */
+  std::atomic<uint8_t> compression_status;
+
+  /*! Info on compressed data (compressed data, compression format, key frame?) */
+  std::unique_ptr<std::tuple<rrlib::serialization::tMemoryBuffer, const char*, bool>> compressed_data;
+
+#endif
 
   tPortBufferManager();
 
