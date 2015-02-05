@@ -59,6 +59,10 @@ namespace common
 // Forward declarations / typedefs / enums
 //----------------------------------------------------------------------
 
+// Some raw flag combinations (defined as constants to get maximum performance - also in debug mode)
+enum { cRAW_FLAGS_READY_AND_HIJACKED = (core::tFrameworkElementFlag::READY | core::tFrameworkElementFlag::HIJACKED_PORT).Raw() };
+enum { cRAW_FLAG_READY = core::tFrameworkElementFlags(core::tFrameworkElementFlag::READY).Raw() };
+
 //----------------------------------------------------------------------
 // Class declaration
 //----------------------------------------------------------------------
@@ -93,9 +97,13 @@ public:
   template <bool REVERSE, tChangeStatus CHANGE_CONSTANT, bool BROWSER_PUBLISH, bool NOTIFY_LISTENER_ON_THIS_PORT>
   inline void Execute(TPort& port)
   {
-    if (!(port.IsReady() || BROWSER_PUBLISH))
+    uint flag_query = port.GetAllFlags().Raw() & cRAW_FLAGS_READY_AND_HIJACKED;
+    if (flag_query != cRAW_FLAG_READY && (!BROWSER_PUBLISH))
     {
-      PrintWarning(port, "is not ready. Ignoring publishing request.");
+      if (!port.IsReady())
+      {
+        PrintWarning(port, "is not ready. Ignoring publishing request.");
+      }
       this->CheckRecycle();
       return;
     }
@@ -198,7 +206,7 @@ private:
    * \param warning Message to print
    */
   __attribute__((noinline))
-  void PrintWarning(TPort& port, const char* warning)
+  static void PrintWarning(TPort& port, const char* warning)
   {
     FINROC_LOG_PRINT_STATIC(WARNING, "Port '", port.GetQualifiedName(), "' ", warning);
   }

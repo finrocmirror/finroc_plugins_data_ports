@@ -274,6 +274,56 @@ void TestNetworkConnectionLoss(const T& default_value, const T& publish_value)
   parent->ManagedDelete();
 }
 
+void TestOutOfBoundsPublish()
+{
+  core::tFrameworkElement* parent = new core::tFrameworkElement(&core::tRuntimeEnvironment::GetInstance(), "TestOutOfBoundsPublish");
+
+  tOutputPort<int> output_port("Output Port", parent, tBounds<int>(0, 2, tOutOfBoundsAction::DISCARD));
+  tInputPort<int> input_port("Input Port", parent, tBounds<int>(0, 1));
+  output_port.ConnectTo(input_port);
+  parent->Init();
+
+  output_port.Publish(3);
+  RRLIB_UNIT_TESTS_EQUALITY(0, input_port.Get());
+  output_port.Publish(2);
+  RRLIB_UNIT_TESTS_EQUALITY(1, input_port.Get());
+
+  parent->ManagedDelete();
+}
+
+template <typename T>
+void TestHijackedPublishing(const T& value_to_publish)
+{
+  core::tFrameworkElement* parent = new core::tFrameworkElement(&core::tRuntimeEnvironment::GetInstance(), "TestHijackedPublishing");
+  T default_value = T();
+
+  tOutputPort<T> output_port("Output Port", parent);
+  tProxyPort<T, true> proxy_port("Proxy Port", parent);
+  tInputPort<T> input_port("Input Port", parent);
+  output_port.ConnectTo(proxy_port);
+  proxy_port.ConnectTo(input_port);
+  parent->Init();
+
+  output_port.Publish(value_to_publish);
+  RRLIB_UNIT_TESTS_EQUALITY(value_to_publish, *proxy_port.GetPointer());
+  RRLIB_UNIT_TESTS_EQUALITY(value_to_publish, *input_port.GetPointer());
+  input_port.GetWrapped()->SetHijacked(true);
+  RRLIB_UNIT_TESTS_EQUALITY(value_to_publish, *proxy_port.GetPointer());
+  RRLIB_UNIT_TESTS_EQUALITY(value_to_publish, *input_port.GetPointer());
+  output_port.Publish(default_value);
+  RRLIB_UNIT_TESTS_EQUALITY(default_value, *proxy_port.GetPointer());
+  RRLIB_UNIT_TESTS_EQUALITY(value_to_publish, *input_port.GetPointer());
+  proxy_port.GetWrapped()->SetHijacked(true);
+  input_port.GetWrapped()->SetHijacked(false);
+  output_port.Publish(value_to_publish);
+  RRLIB_UNIT_TESTS_EQUALITY(default_value, *proxy_port.GetPointer());
+  RRLIB_UNIT_TESTS_EQUALITY(value_to_publish, *input_port.GetPointer());
+  output_port.GetWrapped()->SetHijacked(true);
+  output_port.Publish(value_to_publish);
+
+  parent->ManagedDelete();
+}
+
 class DataPortsTestCollection : public rrlib::util::tUnitTestSuite
 {
   RRLIB_UNIT_TESTS_BEGIN_SUITE(DataPortsTestCollection);
@@ -289,12 +339,17 @@ class DataPortsTestCollection : public rrlib::util::tUnitTestSuite
     TestPortListeners<std::string>("test");
     TestNetworkConnectionLoss<int>(4, 7);
     TestNetworkConnectionLoss<std::string>("default_value", "published_value");
+    TestOutOfBoundsPublish();
+    TestHijackedPublishing<int>(42);
+    TestHijackedPublishing<std::string>("test");
 
     tThreadLocalBufferManagement local_buffers;
     TestPortChains();
     TestPortQueues<int>(1, 2, 3);
     TestPortListeners<int>(1);
     TestNetworkConnectionLoss<int>(4, 7);
+    TestOutOfBoundsPublish();
+    TestHijackedPublishing<int>(42);
   }
 };
 

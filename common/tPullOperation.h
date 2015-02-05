@@ -107,6 +107,12 @@ private:
    */
   void ExecuteImplementation(TPort& port, bool first)
   {
+    if (port.GetFlag(core::tFrameworkElementFlag::HIJACKED_PORT))
+    {
+      port.LockCurrentValueForPublishing(*this);
+      return;
+    }
+
     if ((!first) && port.pull_request_handler)
     {
       port.CallPullRequestHandler(*this);

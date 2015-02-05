@@ -233,6 +233,10 @@ bool tAbstractDataPort::PropagateStrategy(tAbstractDataPort* push_wanter, tAbstr
     tAbstractDataPort& port = static_cast<tAbstractDataPort&>(*it);
     max = static_cast<int16_t>(std::max(max, port.GetStrategy()));
   }
+  if (GetFlag(tFlag::HIJACKED_PORT))
+  {
+    max = -1;
+  }
 
   // has max length (strategy) for this port changed? => propagate to sources
   bool change = (max != strategy);
@@ -294,6 +298,17 @@ bool tAbstractDataPort::PropagateStrategy(tAbstractDataPort* push_wanter, tAbstr
   }
 
   return change;
+}
+
+void tAbstractDataPort::SetHijacked(bool hijacked)
+{
+  tLock lock(GetStructureMutex());
+  if (hijacked == GetFlag(tFlag::HIJACKED_PORT))
+  {
+    return;
+  }
+  SetFlag(tFlag::HIJACKED_PORT, hijacked);
+  PropagateStrategy(NULL, NULL);
 }
 
 void tAbstractDataPort::SetMinNetUpdateInterval(rrlib::time::tDuration& new_interval)

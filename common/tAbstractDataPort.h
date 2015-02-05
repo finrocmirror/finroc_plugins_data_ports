@@ -218,6 +218,15 @@ public:
   }
 
   /*!
+   * Set whether port is in hijacked mode.
+   * In this mode, application will no longer publish data to/via this port.
+   * Only 'browser' publishes will. E.g. data_playback plugin uses these.
+   *
+   * \param Whether port should be in hijacked state
+   */
+  void SetHijacked(bool hijacked);
+
+  /*!
    * Set whether data should be pushed or pulled
    *
    * \param push Push data?
