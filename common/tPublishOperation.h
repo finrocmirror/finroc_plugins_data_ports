@@ -95,7 +95,7 @@ public:
   {
     if (!(port.IsReady() || BROWSER_PUBLISH))
     {
-      FINROC_LOG_PRINT(WARNING, "Port is not ready. Ignoring publishing request.");
+      PrintWarning(port, "is not ready. Ignoring publishing request.");
       return;
     }
 
@@ -189,6 +189,18 @@ public:
 // Private fields and methods
 //----------------------------------------------------------------------
 private:
+
+  /*!
+   * Put to separate method as it expands to quite a lot of code that does not need to be inlined
+   *
+   * \param port Port to print message for
+   * \param warning Message to print
+   */
+  __attribute__((noinline))
+  void PrintWarning(TPort& port, const char* warning)
+  {
+    FINROC_LOG_PRINT_STATIC(WARNING, "Port '", port.GetQualifiedName(), "' ", warning);
+  }
 
 };
 
