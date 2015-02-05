@@ -96,6 +96,7 @@ public:
     if (!(port.IsReady() || BROWSER_PUBLISH))
     {
       PrintWarning(port, "is not ready. Ignoring publishing request.");
+      this->CheckRecycle();
       return;
     }
 
