@@ -489,6 +489,7 @@ public:
       {
         assert((used_locks < cADD_LOCKS) && "Too many locks in this publishing operation");
         published_buffer->ReleaseLocks<tUnusedManagerPointer::deleter_type, tCheaplyCopiedBufferManager>(cADD_LOCKS - used_locks);
+        published_buffer = NULL;
       }
     }
 
@@ -581,6 +582,7 @@ public:
       {
         tUnusedBufferRecycler recycler;
         recycler(published_buffer);
+        published_buffer = NULL;
       }
     }
 

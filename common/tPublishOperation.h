@@ -96,6 +96,7 @@ public:
     if (!(port.IsReady() || BROWSER_PUBLISH))
     {
       FINROC_LOG_PRINT(WARNING, "Port is not ready. Ignoring publishing request.");
+      this->CheckRecycle();
       return;
     }
 
