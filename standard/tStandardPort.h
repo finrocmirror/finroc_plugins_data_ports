@@ -433,17 +433,13 @@ private:
    */
   const bool standard_assign;
 
-#ifdef _LIB_FINROC_PLUGINS_DATA_COMPRESSION_PRESENT_
-
   friend class data_compression::tPlugin;
 
-  /*! Is compression enabled for this port? [31 bytes rule revision when this was checked, 1 byte enabled?] */
+  /*! accessed by finroc_plugins_data_compression only: Is compression enabled for this port? [31 bytes rule revision when this was checked, 1 byte enabled?] */
   std::atomic<uint32_t> compression_active_status;
 
-  /*! Mutex for data compressors attached to this port */
+  /*! accessed by finroc_plugins_data_compression only: Mutex for data compressors attached to this port */
   rrlib::thread::tOrderedMutex data_compressor_mutex;
-
-#endif
 
   /*! Queue for ports with incoming value queue */
   std::unique_ptr<common::tPortQueue<tLockingManagerPointer>> input_queue;

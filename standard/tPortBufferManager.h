@@ -118,7 +118,7 @@ public:
       FINROC_LOG_PRINT(WARNING, "Buffer has already been published. No data is attached.");
       return;
     }
-#ifdef _LIB_FINROC_PLUGINS_DATA_COMPRESSION_PRESENT_
+
     if (!compressed_data)
     {
       compressed_data.reset(new std::tuple<rrlib::serialization::tMemoryBuffer, const char*, bool>());
@@ -127,8 +127,7 @@ public:
     stream.Write(data, size);
     std::get<1>(*compressed_data) = compression_format;
     std::get<2>(*compressed_data) = key_frame;
-    this->compression_status = 3;  // Enum value for "data available" (see data_compression::tPlugin)
-#endif
+    this->compression_status = 3;  // Enum value for "data available" (see finroc::data_compression::tPlugin)
   }
 
   /*!
@@ -162,9 +161,7 @@ public:
   inline void SetUnused(bool unused)
   {
     this->unused = unused;
-#ifdef _LIB_FINROC_PLUGINS_DATA_COMPRESSION_PRESENT_
     this->compression_status = 0;
-#endif
   }
 
 //----------------------------------------------------------------------
@@ -178,8 +175,6 @@ private:
   /*! PortDataManager that this manager is derived from - null if not derived */
   tPortBufferManager* derived_from;
 
-#ifdef _LIB_FINROC_PLUGINS_DATA_COMPRESSION_PRESENT_
-
   friend class data_compression::tPlugin;
 
   /*! Compression status */
@@ -187,8 +182,6 @@ private:
 
   /*! Info on compressed data (compressed data, compression format, key frame?) */
   std::unique_ptr<std::tuple<rrlib::serialization::tMemoryBuffer, const char*, bool>> compressed_data;
-
-#endif
 
   tPortBufferManager();
 
