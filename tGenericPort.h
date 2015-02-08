@@ -47,6 +47,7 @@
 // Internal includes with ""
 //----------------------------------------------------------------------
 #include "plugins/data_ports/api/tGenericPortImplementation.h"
+#include "plugins/data_ports/tEvent.h"
 
 //----------------------------------------------------------------------
 // Namespace declaration
@@ -150,6 +151,27 @@ public:
    */
   template <typename TListener>
   void AddPortListenerSimple(TListener& listener);
+
+  /*!
+   * Apply default value to port
+   * (not particularly efficient)
+   *
+   * apply_type_default_if_no_port_default_defined If no default value was set in constructor, use default of data type? (otherwise prints a warning)
+   */
+  void ApplyDefault(bool apply_type_default_if_no_port_default_defined)
+  {
+    if (GetDefaultValue() || (!apply_type_default_if_no_port_default_defined))
+    {
+      static_cast<common::tAbstractDataPort&>(*GetWrapped()).ApplyDefaultValue();
+    }
+    else
+    {
+      tPortDataPointer<rrlib::rtti::tGenericObject> buffer = GetUnusedBuffer();
+      std::unique_ptr<rrlib::rtti::tGenericObject> default_buffer(buffer->GetType().CreateInstanceGeneric());
+      buffer->DeepCopyFrom(*default_buffer);
+      BrowserPublish(buffer);
+    }
+  }
 
   /*!
    * Publish buffer through port
