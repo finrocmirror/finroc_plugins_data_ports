@@ -264,6 +264,7 @@ struct tPortImplementation : public tCheapCopyPortImplementation<T, TYPE>
     tBase::Assign(buffer, new_default, port.GetUnit());
     rrlib::rtti::tGenericObjectWrapper<typename tBase::tPortBuffer> wrapper(buffer);
     port.SetDefault(wrapper);
+    port.ApplyDefaultValue();
   }
 #endif
 };
@@ -304,6 +305,7 @@ struct tPortImplementation<T, tPortImplementationType::CHEAP_COPY_SINGLE_THREADE
     T t = new_default;
     rrlib::rtti::tGenericObjectWrapper<T> wrapper(t);
     port.SetDefault(wrapper);
+    port.ApplyDefaultValue();
   }
 };
 

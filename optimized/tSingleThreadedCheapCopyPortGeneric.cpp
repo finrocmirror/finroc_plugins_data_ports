@@ -107,10 +107,12 @@ tSingleThreadedCheapCopyPortGeneric::~tSingleThreadedCheapCopyPortGeneric()
 
 void tSingleThreadedCheapCopyPortGeneric::ApplyDefaultValue()
 {
-  if (default_value)
+  if (!default_value)
   {
-    current_value.data->DeepCopyFrom(*default_value);
+    FINROC_LOG_PRINT(ERROR, "No default value has been set. Doing nothing.");
+    return;
   }
+  BrowserPublishRaw(*default_value, rrlib::time::cNO_TIME, true);
 }
 
 std::string tSingleThreadedCheapCopyPortGeneric::BrowserPublishRaw(const rrlib::rtti::tGenericObject& buffer, rrlib::time::tTimestamp timestamp,
