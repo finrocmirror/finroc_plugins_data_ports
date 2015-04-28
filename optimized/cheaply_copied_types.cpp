@@ -108,7 +108,7 @@ struct tRegister
     registered_types(1)
   {
     // Put number at position zero - as this is the most frequently used type
-    used_types[0].type = rrlib::rtti::tDataType<numeric::tNumber>();
+    used_types[0].type = rrlib::rtti::tDataType<numeric::tNumber>("Number");
   }
 };
 
