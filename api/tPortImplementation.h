@@ -88,8 +88,11 @@ struct tCheapCopyPortBaseImplementation
     creation_info.UnsetDefaultValue(); // TBuffer might differ from TWrapper => corrupts default value (it is set later in tPort)
     if (creation_info.BoundsSet())
     {
-      return new tBoundedPort<TWrapper, TYPE>(creation_info);  // Crashes with release mode in gcc 4.6 :-/
-      //return new optimized::tCheapCopyPort(creation_info);
+#ifdef __nios2__
+      return new tPortBase(creation_info);
+#else
+      return new tBoundedPort<TWrapper, TYPE>(creation_info);  // Crashes with release mode in gcc 4.6 and nios gcc 4.8
+#endif
     }
     else
     {
