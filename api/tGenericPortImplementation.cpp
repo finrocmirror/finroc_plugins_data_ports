@@ -285,12 +285,10 @@ void tGenericPortImplementation::CreateImplementations()
       internal::CheckCreateImplementationForType<int8_t>(type);
       internal::CheckCreateImplementationForType<int16_t>(type);
       internal::CheckCreateImplementationForType<int>(type);
-      internal::CheckCreateImplementationForType<long int>(type);
       internal::CheckCreateImplementationForType<long long int>(type);
       internal::CheckCreateImplementationForType<uint8_t>(type);
       internal::CheckCreateImplementationForType<uint16_t>(type);
       internal::CheckCreateImplementationForType<unsigned int>(type);
-      internal::CheckCreateImplementationForType<unsigned long int>(type);
       internal::CheckCreateImplementationForType<unsigned long long int>(type);
       internal::CheckCreateImplementationForType<double>(type);
       internal::CheckCreateImplementationForType<float>(type);

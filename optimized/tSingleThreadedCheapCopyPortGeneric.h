@@ -109,7 +109,7 @@ public:
     template <typename T>
     T Value()
     {
-      assert(typeid(T).name() == value->data->GetType().GetRttiName());
+      assert(typeid(typename rrlib::rtti::NormalizedType<T>::type).name() == value->data->GetType().GetRttiName());
       return *static_cast<T*>(value->data_pointer);
     }
 

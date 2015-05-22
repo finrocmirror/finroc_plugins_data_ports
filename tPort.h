@@ -331,7 +331,7 @@ public:
    */
   static tPort Wrap(core::tAbstractPort& wrap)
   {
-    if (wrap.GetDataType().GetRttiName() != typeid(tPortBuffer).name())
+    if (wrap.GetDataType().GetRttiName() != typeid(typename rrlib::rtti::NormalizedType<tPortBuffer>::type).name())
     {
       //FINROC_LOG_PRINT(ERROR, "tPort<", rrlib::rtti::Demangle(typeid(T).name()), "> cannot wrap port with buffer type '", wrap.GetDataType().GetName(), "'.");
       throw std::runtime_error("tPort<" + rrlib::util::Demangle(typeid(T).name()) + "> cannot wrap port with buffer type '" + wrap.GetDataType().GetName() + "'.");
