@@ -197,7 +197,7 @@ rrlib::serialization::tInputStream& operator >> (rrlib::serialization::tInputStr
   uint32_t index = stream.ReadByte();
   if (index >= internal::cUNIT_COUNT)
   {
-    FINROC_LOG_PRINT(ERROR, "Invalid unit index in stream: ", index);
+    FINROC_LOG_PRINT_STATIC(ERROR, "Invalid unit index in stream: ", index);
     unit = tUnit();
   }
   else

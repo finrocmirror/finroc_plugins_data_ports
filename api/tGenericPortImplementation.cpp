@@ -80,7 +80,7 @@ struct tBoundsSetter
     typedef api::tBoundedPort<T, api::tPortImplementationTypeTrait<T>::type> tBoundedPort;
     if (typeid(port) != typeid(tBoundedPort))
     {
-      FINROC_LOG_PRINT(ERROR, "Cannot set bounds for port ", rrlib::rtti::tDataType<T>().GetName(), ". It is not a bounded port.");
+      FINROC_LOG_PRINT_STATIC(ERROR, "Cannot set bounds for port ", rrlib::rtti::tDataType<T>().GetName(), ". It is not a bounded port.");
       return;
     }
     static_cast<tBoundedPort&>(port).SetBounds(tBounds<T>(min.GetData<T>(), max.GetData<T>()));
@@ -91,7 +91,7 @@ struct tNoBoundsSetter
 {
   static void SetBounds(core::tAbstractPort& port, const rrlib::rtti::tGenericObject& min, const rrlib::rtti::tGenericObject& max)
   {
-    FINROC_LOG_PRINT(ERROR, "Cannot set bounds for type ", port.GetDataType().GetName());
+    FINROC_LOG_PRINT_STATIC(ERROR, "Cannot set bounds for type ", port.GetDataType().GetName());
   }
 };
 

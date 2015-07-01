@@ -136,7 +136,7 @@ uint32_t GetCheaplyCopiedTypeIndex(const rrlib::rtti::tType& type)
   rrlib::thread::tLock lock(mutex);
   if (!IsCheaplyCopiedType(type))
   {
-    FINROC_LOG_PRINT(ERROR, "Invalid type registered");
+    FINROC_LOG_PRINT_STATIC(ERROR, "Invalid type registered");
     abort();
   }
 
@@ -157,7 +157,7 @@ uint32_t GetCheaplyCopiedTypeIndex(const rrlib::rtti::tType& type)
   type_copy.AddAnnotation(new internal::tIndexAnnotation(result));
   if (result >= cMAX_CHEAPLY_COPYABLE_TYPES)
   {
-    FINROC_LOG_PRINT(ERROR, "Maximum number of cheaply copyable types exceeded");
+    FINROC_LOG_PRINT_STATIC(ERROR, "Maximum number of cheaply copyable types exceeded");
     abort();
   }
   return result;

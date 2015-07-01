@@ -169,7 +169,7 @@ rrlib::serialization::tInputStream& operator >> (rrlib::serialization::tInputStr
     break;
   case cCONST:
     stream.ReadByte();
-    FINROC_LOG_PRINT(WARNING, "Constants no longer supported. Ignoring.");
+    FINROC_LOG_PRINT_STATIC(WARNING, "Constants no longer supported. Ignoring.");
     break;
   default:
     number.SetValue(static_cast<int>(first_byte) >> 1);
@@ -198,7 +198,7 @@ rrlib::serialization::tStringOutputStream &operator << (rrlib::serialization::tS
     stream << number.Value<double>();
     break;
   default:
-    FINROC_LOG_PRINT(ERROR, "Memory error: Invalid enum.");
+    FINROC_LOG_PRINT_STATIC(ERROR, "Memory error: Invalid enum.");
     abort();
   }
   stream << number.GetUnit().GetName();

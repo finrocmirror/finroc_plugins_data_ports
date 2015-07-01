@@ -112,7 +112,7 @@ struct tCheapCopyPortBaseImplementation<TWrapper, TBuffer, TYPE, false>
     creation_info.UnsetDefaultValue(); // TBuffer might differ from TWrapper => corrupts default value (it is set later in tPort)
     if (creation_info.BoundsSet())
     {
-      FINROC_LOG_PRINT(WARNING, "Bounds are not supported for type '", creation_info.data_type.GetName(), "'. Ignoring.");
+      FINROC_LOG_PRINT_STATIC(WARNING, "Bounds are not supported for type '", creation_info.data_type.GetName(), "'. Ignoring.");
     }
     return new tPortBase(creation_info);
   }
@@ -346,7 +346,7 @@ struct tPortImplementation<T, tPortImplementationType::STANDARD>
   {
     if (pci.BoundsSet())
     {
-      FINROC_LOG_PRINT(WARNING, "Bounds are not supported for type '", pci.data_type.GetName(), "'. Ignoring.");
+      FINROC_LOG_PRINT_STATIC(WARNING, "Bounds are not supported for type '", pci.data_type.GetName(), "'. Ignoring.");
     }
     return new standard::tStandardPort(pci);
   }
