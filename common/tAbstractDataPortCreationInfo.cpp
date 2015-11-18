@@ -69,7 +69,6 @@ namespace common
 //----------------------------------------------------------------------
 
 tAbstractDataPortCreationInfo::tAbstractDataPortCreationInfo() :
-  unit(),
   max_queue_size(-1),
   min_net_update_interval(-1),
   config_entry(),

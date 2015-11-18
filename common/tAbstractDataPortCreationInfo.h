@@ -46,7 +46,6 @@
 //----------------------------------------------------------------------
 #include "plugins/data_ports/tBounds.h"
 #include "plugins/data_ports/tQueueSettings.h"
-#include "plugins/data_ports/tUnit.h"
 
 //----------------------------------------------------------------------
 // Namespace declaration
@@ -83,9 +82,6 @@ public:
 
   /*! Base class */
   typedef core::tAbstractPortCreationInfo tBase;
-
-  /*! SI Unit of port. NULL for no unit = provides raw numbers */
-  tUnit unit;
 
   /*! Input Queue size; value <= 0 means flexible size */
   int max_queue_size;
@@ -143,11 +139,6 @@ public:
     {
       flags |= core::tFrameworkElement::tFlag::HAS_DEQUEUE_ALL_QUEUE;
     }
-  }
-
-  void Set(const tUnit& unit)
-  {
-    this->unit = unit;
   }
 
   void Set(const tAbstractDataPortCreationInfo& other)

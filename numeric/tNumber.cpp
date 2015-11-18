@@ -76,27 +76,21 @@ static rrlib::rtti::tDataType<tNumber> cINIT_DATA_TYPE("Number");
 //----------------------------------------------------------------------
 // Implementation
 //----------------------------------------------------------------------
-static inline int8_t PrepareFirstByte(int8_t value2, tUnit unit)
+static inline int8_t PrepareFirstByte(int8_t value2)
 {
-  int tmp = (value2 << 1);
-  return static_cast<int8_t>((unit == tUnit::cNO_UNIT) ? tmp : (tmp | 1));
+  return static_cast<int8_t>((value2 << 1));
 }
 
 bool tNumber::operator<(const tNumber& other) const
 {
-  if (unit != tUnit::cNO_UNIT && other.unit != tUnit::cNO_UNIT)
-  {
-    double o = other.unit.ConvertTo(other.double_value, unit);
-    return o < double_value;
-  }
   switch (number_type)
   {
   case tType::INT64:
-    return integer_value < other.integer_value;
+    return integer_value < other.Value<int64_t>();
   case tType::DOUBLE:
-    return double_value < other.double_value;
+    return double_value < other.Value<double>();
   case tType::FLOAT:
-    return float_value < other.float_value;
+    return float_value < other.Value<float>();
   default:
     FINROC_LOG_PRINT(ERROR, "Memory error: Invalid enum.");
     abort();
@@ -111,37 +105,33 @@ rrlib::serialization::tOutputStream& operator << (rrlib::serialization::tOutputS
     int64_t value = number.integer_value;
     if (value >= cMIN_BARRIER && value <= 63)
     {
-      stream.WriteByte(PrepareFirstByte(static_cast<int8_t>(value), number.GetUnit()));
+      stream.WriteByte(PrepareFirstByte(static_cast<int8_t>(value)));
     }
     else if (value >= std::numeric_limits<int16_t>::min() && value <= std::numeric_limits<int16_t>::max())
     {
-      stream.WriteByte(PrepareFirstByte(cINT16, number.GetUnit()));
+      stream.WriteByte(PrepareFirstByte(cINT16));
       stream.WriteShort(static_cast<int16_t>(value));
     }
     else if (value >= std::numeric_limits<int32_t>::min() && value <= std::numeric_limits<int32_t>::max())
     {
-      stream.WriteByte(PrepareFirstByte(cINT32, number.GetUnit()));
+      stream.WriteByte(PrepareFirstByte(cINT32));
       stream.WriteInt(static_cast<int32_t>(value));
     }
     else
     {
-      stream.WriteByte(PrepareFirstByte(cINT64, number.GetUnit()));
+      stream.WriteByte(PrepareFirstByte(cINT64));
       stream.WriteLong(value);
     }
   }
   else if (number.GetNumberType() == tNumber::tType::DOUBLE)
   {
-    stream.WriteByte(PrepareFirstByte(cFLOAT64, number.GetUnit()));
+    stream.WriteByte(PrepareFirstByte(cFLOAT64));
     stream.WriteDouble(number.double_value);
   }
   else if (number.GetNumberType() == tNumber::tType::FLOAT)
   {
-    stream.WriteByte(PrepareFirstByte(cFLOAT32, number.GetUnit()));
+    stream.WriteByte(PrepareFirstByte(cFLOAT32));
     stream.WriteFloat(number.float_value);
-  }
-  if (number.GetUnit() != tUnit::cNO_UNIT)
-  {
-    stream << number.GetUnit();
   }
   return stream;
 }
@@ -177,9 +167,7 @@ rrlib::serialization::tInputStream& operator >> (rrlib::serialization::tInputStr
   }
   if (has_unit)
   {
-    tUnit unit;
-    stream >> unit;
-    number.SetUnit(unit);
+    stream.ReadByte(); // for backward compatibility
   }
   return stream;
 }
@@ -201,17 +189,15 @@ rrlib::serialization::tStringOutputStream &operator << (rrlib::serialization::tS
     FINROC_LOG_PRINT_STATIC(ERROR, "Memory error: Invalid enum.");
     abort();
   }
-  stream << number.GetUnit().GetName();
   return stream;
 }
 
 // TODO: This implementation could be nicer
 rrlib::serialization::tStringInputStream &operator >> (rrlib::serialization::tStringInputStream& stream, tNumber& number)
 {
-  // scan for unit
+  // scan for unit string (for backward compatibility)
   tString complete_string = stream.ReadWhile("-./", rrlib::serialization::tStringInputStream::cDIGIT | rrlib::serialization::tStringInputStream::cWHITESPACE | rrlib::serialization::tStringInputStream::cLETTER, true);
   tString number_string = complete_string;
-  tUnit unit;
   for (size_t i = 0; i < complete_string.length(); i++)
   {
     char c = complete_string[i];
@@ -222,20 +208,14 @@ rrlib::serialization::tStringInputStream &operator >> (rrlib::serialization::tSt
         continue;  // exponent in decimal notation
       }
       number_string = complete_string.substr(0, i); // trimming not necessary, as ato* functions do this
-      tString unit_string = complete_string.substr(i); // first character is letter
-      assert(unit_string.length() > 0 && isalpha(unit_string[0]));
-      while (isspace(unit_string.back())) // trim back
-      {
-        unit_string.erase(unit_string.length() - 1);
-      }
-      unit = tUnit::GetUnit(unit_string);
+      //tString unit_string = complete_string.substr(i); // first character is letter
       break;
     }
   }
   if (number_string.find('.') != std::string::npos || number_string.find('e') != std::string::npos || number_string.find('E') != std::string::npos)
   {
     double d = atof(number_string.c_str());
-    number.SetValue(d, unit);
+    number.SetValue(d);
     if (d == 0.0)
     {
       for (size_t i = 0; i < number_string.length(); i++)
@@ -250,7 +230,7 @@ rrlib::serialization::tStringInputStream &operator >> (rrlib::serialization::tSt
   else
   {
     int64_t d = atoll(number_string.c_str());
-    number.SetValue(d, unit);
+    number.SetValue(d);
     if (d == 0LL)
     {
       for (size_t i = 0; i < number_string.length(); i++)

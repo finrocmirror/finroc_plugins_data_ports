@@ -202,7 +202,7 @@ public:
 
 #ifndef RRLIB_SINGLE_THREADED
   inline tPortDataPointerImplementation(typename tPortImplementation::tPortBase::tLockingManagerPointer& pointer, optimized::tCheapCopyPort& port) :
-    buffer(tPortImplementation::ToValue(pointer->GetObject().template GetData<typename tPortImplementation::tPortBuffer>(), port.GetUnit())),
+    buffer(tPortImplementation::ToValue(pointer->GetObject().template GetData<typename tPortImplementation::tPortBuffer>())),
     timestamp(pointer->GetTimestamp()),
     null_pointer(false)
   {

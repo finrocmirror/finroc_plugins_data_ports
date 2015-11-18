@@ -102,7 +102,6 @@ public:
    * unsigned int arguments are interpreted as flags.
    * A tQueueSettings argument creates an input queue with the specified settings.
    * tBounds<T> are port's bounds.
-   * tUnit argument is port's unit.
    * tPortCreationBase argument is copied. This is only allowed as first argument.
    */
   template <typename ... ARGS>

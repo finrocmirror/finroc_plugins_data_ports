@@ -30,7 +30,7 @@
  * \b tNumber
  *
  * Type used in backend of all numeric ports.
- * Can store integer as well as floating point values - together with a unit.
+ * Can store integer as well as floating point values.
  *
  */
 //----------------------------------------------------------------------
@@ -40,11 +40,11 @@
 //----------------------------------------------------------------------
 // External includes (system with <>, local with "")
 //----------------------------------------------------------------------
+#include "rrlib/serialization/serialization.h"
 
 //----------------------------------------------------------------------
 // Internal includes with ""
 //----------------------------------------------------------------------
-#include "plugins/data_ports/tUnit.h"
 
 //----------------------------------------------------------------------
 // Namespace declaration
@@ -66,7 +66,7 @@ namespace numeric
 //! Numeric value
 /*!
  * Type used in backend of all numeric ports.
- * Can store integer as well as floating point values - together with a unit.
+ * Can store integer as well as floating point values.
  */
 class tNumber
 {
@@ -83,28 +83,24 @@ public:
 
   inline tNumber() :
     integer_value(0),
-    number_type(tType::INT64),
-    unit()
+    number_type(tType::INT64)
   {}
 
   /*! constructor for all integral types. */
   template<typename T>
-  inline tNumber(T value, typename std::enable_if<std::is_integral<T>::value, tUnit>::type unit = tUnit()) :
+  inline tNumber(T value, typename std::enable_if<std::is_integral<T>::value, void*>::type unused = nullptr) :
     integer_value(value),
-    number_type(tType::INT64),
-    unit(unit)
+    number_type(tType::INT64)
   {}
 
-  inline tNumber(double value, tUnit unit = tUnit()) :
+  inline tNumber(double value) :
     double_value(value),
-    number_type(tType::DOUBLE),
-    unit(unit)
+    number_type(tType::DOUBLE)
   {}
 
-  inline tNumber(float value, tUnit unit = tUnit()) :
+  inline tNumber(float value) :
     float_value(value),
-    number_type(tType::FLOAT),
-    unit(unit)
+    number_type(tType::FLOAT)
   {}
 
   /*!
@@ -115,44 +111,23 @@ public:
     return number_type;
   }
 
-  /*!
-   * \return Unit of numeric value
-   */
-  inline tUnit GetUnit() const
-  {
-    return unit;
-  }
-
-  /*!
-   * Changes unit
-   *
-   * \param new_unit new unit
-   */
-  inline void SetUnit(tUnit new_unit)
-  {
-    unit = new_unit;
-  }
-
   // All kinds of variations of setters
   template<typename T>
-  inline void SetValue(T value, typename std::enable_if<std::is_integral<T>::value, tUnit>::type unit = tUnit())
+  inline void SetValue(T value, typename std::enable_if<std::is_integral<T>::value, void*>::type unused = nullptr)
   {
     this->integer_value = value;
-    this->unit = unit;
     number_type = tType::INT64;
   }
 
-  inline void SetValue(float value, tUnit unit = tUnit())
+  inline void SetValue(float value)
   {
     this->float_value = value;
-    this->unit = unit;
     number_type = tType::FLOAT;
   }
 
-  inline void SetValue(double value, tUnit unit = tUnit())
+  inline void SetValue(double value)
   {
     this->double_value = value;
-    this->unit = unit;
     number_type = tType::DOUBLE;
   }
 
@@ -176,7 +151,7 @@ public:
 
   bool operator==(const tNumber& other) const
   {
-    return integer_value == other.integer_value && number_type == other.number_type && unit == other.unit;
+    return integer_value == other.integer_value && number_type == other.number_type;
   }
 
   bool operator!=(const tNumber& other) const
@@ -207,9 +182,6 @@ private:
    * (and which value of the above union is used)
    */
   tType number_type;
-
-  /*! Unit of numeric value */
-  tUnit unit;
 
 };
 

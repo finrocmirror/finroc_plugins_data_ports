@@ -74,18 +74,6 @@ namespace data_ports
  *           Any data type that is binary serializable by rrlib_serialization
  *           can be used in Finroc data ports - even non-copyable ones.
  *           Get and dequeue operations will return T. Publish operations accept T.
- *           TODO ?: Depending on the intended port use, T can be a plain, reference or smart pointer type:
- *           1) If T is a plain type, Get() will return the port's current value  by value.
- *              This is - naturally - not suitable for non-copyable types.
- *           TODO ?: 2) If T is a reference type, Get() will return a const reference to the port's current value buffer.
- *              This is suitable and efficient for all kinds of data types.
- *              Data buffers are locked (and can be accessed safely) as long as inside the relevant
- *              auto-lock scope (created by instantiating tAutoLockScope)
- *              Such scopes are automatically created by Finroc for Update()/Sense()/Control() methods of modules.
- *           TODO ?: 3) If T is tPortDataPtr<U>, the port returns a tPortDataPtr smart pointer -
- *              used similarly as a standard unique pointer (movable, unique).
- *              On smart pointer destruction, the lock on the buffer is released.
- *              Smart pointers do not support numeric types (due to conversion overhead).
  */
 template<typename T>
 class tPort : public core::tPortWrapperBase
@@ -137,7 +125,6 @@ public:
    * tFrameworkElement::tFlags arguments are interpreted as flags.
    * A tQueueSettings argument creates an input queue with the specified settings.
    * tBounds<T> are port's bounds.
-   * tUnit argument is port's unit.
    * const T& is interpreted as port's default value.
    * tPortCreationInfo<T> argument is copied.
    *
@@ -184,7 +171,7 @@ public:
 #ifndef RRLIB_SINGLE_THREADED
     tPortBuffer t;
     GetWrapped()->CopyCurrentValue(t);
-    return tImplementation::ToValue(t, GetWrapped()->GetUnit());
+    return tImplementation::ToValue(t);
 #else
     return GetWrapped()->CurrentValue();
 #endif
@@ -196,7 +183,7 @@ public:
 #ifndef RRLIB_SINGLE_THREADED
     tPortBuffer t;
     GetWrapped()->CopyCurrentValue(t, timestamp);
-    return tImplementation::ToValue(t, GetWrapped()->GetUnit());
+    return tImplementation::ToValue(t);
 #else
     timestamp = GetWrapped()->CurrentTimestamp();
     return GetWrapped()->CurrentValue();

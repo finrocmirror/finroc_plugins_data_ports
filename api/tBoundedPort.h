@@ -115,11 +115,11 @@ public:
 #ifndef RRLIB_SINGLE_THREADED
     tBufferType value_buffer = tBufferType();
     this->CopyCurrentValue(value_buffer, tStrategy::NEVER_PULL);
-    T value = tImplementationVariation::ToValue(value_buffer, this->GetUnit());
+    T value = tImplementationVariation::ToValue(value_buffer);
     if (!bounds.InBounds(value))
     {
       typename tPortBase::tUnusedManagerPointer new_buffer(optimized::tGlobalBufferPools::Instance().GetUnusedBuffer(this->GetCheaplyCopyableTypeIndex()).release());
-      tImplementationVariation::Assign(new_buffer->GetObject().template GetData<tBufferType>(), bounds.GetOutOfBoundsDefault(), this->GetUnit());
+      tImplementationVariation::Assign(new_buffer->GetObject().template GetData<tBufferType>(), bounds.GetOutOfBoundsDefault());
       this->BrowserPublishRaw(new_buffer); // If port is already connected, could this have undesirable side-effects? (I do not think so - otherwise we need to do something more sophisticated here)
     }
 #else
@@ -158,7 +158,7 @@ private:
       return "Buffer has wrong type";
     }
     const tBufferType& value_buffer = buffer->GetObject().template GetData<tBufferType>();
-    T value = tImplementationVariation::ToValue(value_buffer, this->GetUnit());
+    T value = tImplementationVariation::ToValue(value_buffer);
     if (!bounds.InBounds(value))
     {
       return GenerateErrorMessage(value);
@@ -218,7 +218,7 @@ private:
   bool NonStandardAssignImplementation(TPublishingData& publishing_data, tChangeStatus change_constant)
   {
     const tBufferType& value_buffer = publishing_data.published_buffer->GetObject().template GetData<tBufferType>();
-    T value = tImplementationVariation::ToValue(value_buffer, this->GetUnit());
+    T value = tImplementationVariation::ToValue(value_buffer);
     if (!bounds.InBounds(value))
     {
       if (bounds.GetOutOfBoundsAction() == tOutOfBoundsAction::DISCARD)
@@ -229,7 +229,7 @@ private:
       typename tPortBase::tUnusedManagerPointer buffer = this->GetUnusedBuffer(publishing_data);
       publishing_data.Init(buffer);
       tImplementationVariation::Assign(publishing_data.published_buffer->GetObject().template GetData<tBufferType>(),
-                                       bounds.GetOutOfBoundsAction() == tOutOfBoundsAction::ADJUST_TO_RANGE ? bounds.ToBounds(value) : bounds.GetOutOfBoundsDefault(), this->GetUnit());
+                                       bounds.GetOutOfBoundsAction() == tOutOfBoundsAction::ADJUST_TO_RANGE ? bounds.ToBounds(value) : bounds.GetOutOfBoundsDefault());
       publishing_data.published_buffer->SetTimestamp(timestamp);
     }
     return tPortBase::NonStandardAssign(publishing_data, change_constant);

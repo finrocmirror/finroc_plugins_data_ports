@@ -126,12 +126,12 @@ struct tCheapCopyPortImplementation :
 {
   typedef T tPortBuffer;
 
-  static inline void Assign(T& buffer, const T& value, const tUnit& port_unit)
+  static inline void Assign(T& buffer, const T& value)
   {
     buffer = value;
   }
 
-  static inline T ToValue(const T& value, const tUnit& port_unit)
+  static inline T ToValue(const T& value)
   {
     return value;
   }
@@ -144,24 +144,14 @@ struct tCheapCopyPortImplementation<T, tPortImplementationType::NUMERIC> :
 {
   typedef numeric::tNumber tPortBuffer;
 
-  static inline void Assign(numeric::tNumber& buffer, T value, const tUnit& port_unit)
+  static inline void Assign(numeric::tNumber& buffer, T value)
   {
-    buffer.SetValue(value, port_unit);
+    buffer.SetValue(value);
   }
 
-  static inline T ToCorrectUnit(const numeric::tNumber& number, const tUnit& port_unit)
+  static inline T ToValue(const numeric::tNumber& value)
   {
-    T value = number.Value<T>();
-    if (number.GetUnit() != tUnit::cNO_UNIT && port_unit != tUnit::cNO_UNIT && number.GetUnit() != port_unit)
-    {
-      value = number.GetUnit().ConvertTo(value, port_unit);
-    }
-    return value;
-  }
-
-  static inline T ToValue(const numeric::tNumber& value, const tUnit& port_unit)
-  {
-    return ToCorrectUnit(value, port_unit);
+    return value.Value<T>();
   }
 };
 
@@ -172,24 +162,14 @@ struct tCheapCopyPortImplementation<numeric::tNumber, tPortImplementationType::N
 {
   typedef numeric::tNumber tPortBuffer;
 
-  static inline void Assign(numeric::tNumber& buffer, const numeric::tNumber value, const tUnit& port_unit)
+  static inline void Assign(numeric::tNumber& buffer, const numeric::tNumber value)
   {
     buffer = value;
-    buffer.SetUnit(port_unit);
   }
 
-  static inline numeric::tNumber ToCorrectUnit(const numeric::tNumber& number, const tUnit& port_unit)
+  static inline numeric::tNumber ToValue(const numeric::tNumber& value)
   {
-    if (number.GetUnit() != tUnit::cNO_UNIT && port_unit != tUnit::cNO_UNIT && number.GetUnit() != port_unit)
-    {
-      return numeric::tNumber(number.GetUnit().ConvertTo(number.Value<double>(), port_unit), port_unit);
-    }
-    return number;
-  }
-
-  static inline numeric::tNumber ToValue(const numeric::tNumber& value, const tUnit& port_unit)
-  {
-    return ToCorrectUnit(value, port_unit);
+    return value;
   }
 };
 
@@ -204,7 +184,7 @@ struct tPortImplementation : public tCheapCopyPortImplementation<T, TYPE>
   {
     typename optimized::tCheapCopyPort::tUnusedManagerPointer buffer(optimized::tGlobalBufferPools::Instance().GetUnusedBuffer(port.GetCheaplyCopyableTypeIndex()).release());
     buffer->SetTimestamp(timestamp);
-    tBase::Assign(buffer->GetObject().GetData<typename tBase::tPortBuffer>(), data, port.GetUnit());
+    tBase::Assign(buffer->GetObject().GetData<typename tBase::tPortBuffer>(), data);
     port.BrowserPublishRaw(buffer);
   }
 
@@ -215,7 +195,7 @@ struct tPortImplementation : public tCheapCopyPortImplementation<T, TYPE>
     {
       typename optimized::tThreadLocalBufferPools::tBufferPointer buffer = thread_local_pools->GetUnusedBuffer(port.GetCheaplyCopyableTypeIndex());
       buffer->SetTimestamp(timestamp);
-      tBase::Assign(buffer->GetObject().GetData<typename tBase::tPortBuffer>(), data, port.GetUnit());
+      tBase::Assign(buffer->GetObject().GetData<typename tBase::tPortBuffer>(), data);
       common::tPublishOperation<optimized::tCheapCopyPort, typename optimized::tCheapCopyPort::tPublishingDataThreadLocalBuffer> publish_operation(buffer.release(), true);
       publish_operation.Execute<false, tChangeStatus::CHANGED, false, false>(port);
     }
@@ -223,7 +203,7 @@ struct tPortImplementation : public tCheapCopyPortImplementation<T, TYPE>
     {
       typename optimized::tCheapCopyPort::tUnusedManagerPointer buffer(optimized::tGlobalBufferPools::Instance().GetUnusedBuffer(port.GetCheaplyCopyableTypeIndex()).release());
       buffer->SetTimestamp(timestamp);
-      tBase::Assign(buffer->GetObject().GetData<typename tBase::tPortBuffer>(), data, port.GetUnit());
+      tBase::Assign(buffer->GetObject().GetData<typename tBase::tPortBuffer>(), data);
       common::tPublishOperation<optimized::tCheapCopyPort, typename optimized::tCheapCopyPort::tPublishingDataGlobalBuffer> publish_operation(buffer);
       publish_operation.Execute<false, tChangeStatus::CHANGED, false, false>(port);
     }
@@ -233,7 +213,7 @@ struct tPortImplementation : public tCheapCopyPortImplementation<T, TYPE>
   {
     typename tBase::tPortBuffer temp_buffer;
     port.CopyCurrentValue(temp_buffer, timestamp_buffer);
-    result_buffer = tBase::ToValue(temp_buffer, port.GetUnit());
+    result_buffer = tBase::ToValue(temp_buffer);
   }
 
   static inline tPortDataPointer<const T> GetPointer(optimized::tCheapCopyPort& port)
@@ -241,7 +221,7 @@ struct tPortImplementation : public tCheapCopyPortImplementation<T, TYPE>
     typename tBase::tPortBuffer buffer;
     rrlib::time::tTimestamp timestamp;
     port.CopyCurrentValue(buffer, timestamp);
-    return tPortDataPointerImplementation<T, true>(tBase::ToValue(buffer, port.GetUnit()), timestamp);
+    return tPortDataPointerImplementation<T, true>(tBase::ToValue(buffer), timestamp);
   }
 
   static inline tPortDataPointer<T> GetUnusedBuffer(optimized::tCheapCopyPort& port)
@@ -264,7 +244,7 @@ struct tPortImplementation : public tCheapCopyPortImplementation<T, TYPE>
   static void SetDefault(optimized::tCheapCopyPort& port, const T& new_default)
   {
     typename tBase::tPortBuffer buffer;
-    tBase::Assign(buffer, new_default, port.GetUnit());
+    tBase::Assign(buffer, new_default);
     rrlib::rtti::tGenericObjectWrapper<typename tBase::tPortBuffer> wrapper(buffer);
     port.SetDefault(wrapper);
     port.ApplyDefaultValue();

@@ -102,7 +102,6 @@ public:
    * tFrameworkElement::tFlags arguments are interpreted as flags.
    * A tQueueSettings argument creates an input queue with the specified settings.
    * tBounds<T> are port's bounds.
-   * tUnit argument is port's unit.
    * const T& is interpreted as port's default value.
    * tPortCreationInfo<T> argument is copied. This is only allowed as first argument.
    *
@@ -198,7 +197,7 @@ public:
     typename tPort<T>::tPortBackend::tLockingManagerPointer buffer = this->GetWrapped()->DequeueSingleRaw();
     if (buffer)
     {
-      result = tImplementation::ToValue(buffer->GetObject().template GetData<typename tPort<T>::tPortBuffer>(), this->GetWrapped()->GetUnit());
+      result = tImplementation::ToValue(buffer->GetObject().template GetData<typename tPort<T>::tPortBuffer>());
     }
     return buffer.get();
   }

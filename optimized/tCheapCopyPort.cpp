@@ -99,8 +99,7 @@ tCheapCopyPort::tCheapCopyPort(common::tAbstractDataPortCreationInfo creation_in
   current_value(0),
   standard_assign(!GetFlag(tFlag::NON_STANDARD_ASSIGN) && (!GetFlag(tFlag::HAS_QUEUE))),
   input_queue(),
-  pull_request_handler(NULL),
-  unit(creation_info.unit)
+  pull_request_handler(NULL)
 {
   if ((!IsDataFlowType(GetDataType())) || (!IsCheaplyCopiedType(GetDataType())))
   {

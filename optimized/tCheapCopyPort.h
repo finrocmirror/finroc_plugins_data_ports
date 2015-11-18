@@ -374,14 +374,6 @@ public:
     return PullValueRaw(ignore_pull_request_handler_on_this_port);
   }
 
-  /*!
-   * \return Unit of port
-   */
-  inline tUnit GetUnit()
-  {
-    return unit;
-  }
-
 //  /*!
 //   * Publish data
 //   *
@@ -699,9 +691,6 @@ private:
   /*! Object that handles pull requests - null if there is none (typical case) */
   tPullRequestHandlerRaw* pull_request_handler;
 
-  /*! Unit of port (currently only used for numeric ports) */
-  tUnit unit;
-
 
   /*!
    * Publishes new data to port.
@@ -968,14 +957,6 @@ private:
       UpdateEdgeStatistics(source, target, publishing_data.published_buffer->GetObject());
     }
   }
-#else
-
-public:
-  inline tUnit GetUnit()
-  {
-    return tUnit::cNO_UNIT;
-  }
-
 #endif // RRLIB_SINGLE_THREADED
 };
 
