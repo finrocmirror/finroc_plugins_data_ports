@@ -281,10 +281,22 @@ public:
   }
 
   /*!
+   * Publish Data Buffer. This data will be forwarded to any connected ports.
+   * Should only be called on output ports.
+   *
+   * \param buffer Buffer with data to publish - typically acquired with GetUnuserBuffer()
+   */
+  inline void Publish(tPortDataPointer<rrlib::rtti::tGenericObject>& buffer)
+  {
+    implementation->Publish(*GetWrapped(), buffer.implementation.Release());
+  }
+
+  /*!
    * Set new bounds
    * (This is not thread-safe and must only be done in "pause mode")
    *
-   * \param b New Bounds
+   * \param min Minimum value
+   * \param max Maximum value
    */
   inline void SetBounds(const rrlib::rtti::tGenericObject& min, const rrlib::rtti::tGenericObject& max)
   {

@@ -324,6 +324,45 @@ void TestHijackedPublishing(const T& value_to_publish)
   parent->ManagedDelete();
 }
 
+template <typename T>
+void TestGenericPorts(T value_to_publish, T another_value)
+{
+  core::tFrameworkElement* parent = new core::tFrameworkElement(&core::tRuntimeEnvironment::GetInstance(), "TestGenericPorts");
+  T default_value = T();
+  rrlib::rtti::tGenericObjectWrapper<T> default_buffer(default_value);
+  rrlib::rtti::tGenericObjectWrapper<T> value_buffer(value_to_publish);
+  rrlib::rtti::tGenericObjectWrapper<T> another_value_buffer(another_value);
+
+  tGenericPort output_port("Output Port", rrlib::rtti::tDataType<T>(), parent, core::tFrameworkElement::tFlag::EMITS_DATA | core::tFrameworkElement::tFlag::OUTPUT_PORT);
+  tGenericPort proxy_port("Proxy Port", rrlib::rtti::tDataType<T>(), parent, core::tFrameworkElement::tFlag::ACCEPTS_DATA | core::tFrameworkElement::tFlag::PUSH_STRATEGY | core::tFrameworkElement::tFlag::EMITS_DATA);
+  tGenericPort input_port("Input Port", rrlib::rtti::tDataType<T>(), parent, core::tFrameworkElement::tFlag::ACCEPTS_DATA | core::tFrameworkElement::tFlag::PUSH_STRATEGY);
+  output_port.ConnectTo(proxy_port);
+  proxy_port.ConnectTo(input_port);
+  parent->Init();
+
+  // Publish by value
+  T get_value = T();
+  rrlib::rtti::tGenericObjectWrapper<T> get_buffer(get_value);
+  input_port.Get(get_buffer);
+  RRLIB_UNIT_TESTS_EQUALITY(default_value, get_value);
+  output_port.Publish(value_buffer);
+  proxy_port.Get(get_buffer);
+  RRLIB_UNIT_TESTS_EQUALITY(value_to_publish, get_value);
+  input_port.Get(get_buffer);
+  RRLIB_UNIT_TESTS_EQUALITY(value_to_publish, get_value);
+
+  // Publish via buffer
+  auto unused_buffer = output_port.GetUnusedBuffer();
+  unused_buffer->GetData<T>() = another_value;
+  output_port.Publish(unused_buffer);
+  proxy_port.Get(get_buffer);
+  RRLIB_UNIT_TESTS_EQUALITY(another_value, get_value);
+  input_port.Get(get_buffer);
+  RRLIB_UNIT_TESTS_EQUALITY(another_value, get_value);
+
+  parent->ManagedDelete();
+}
+
 class DataPortsTestCollection : public rrlib::util::tUnitTestSuite
 {
   RRLIB_UNIT_TESTS_BEGIN_SUITE(DataPortsTestCollection);
@@ -342,6 +381,8 @@ class DataPortsTestCollection : public rrlib::util::tUnitTestSuite
     TestOutOfBoundsPublish();
     TestHijackedPublishing<int>(42);
     TestHijackedPublishing<std::string>("test");
+    TestGenericPorts<bool>(true, false);
+    TestGenericPorts<std::string>("123", "45");
 
     tThreadLocalBufferManagement local_buffers;
     TestPortChains();
@@ -350,6 +391,7 @@ class DataPortsTestCollection : public rrlib::util::tUnitTestSuite
     TestNetworkConnectionLoss<int>(4, 7);
     TestOutOfBoundsPublish();
     TestHijackedPublishing<int>(42);
+    TestGenericPorts<bool>(true, false);
   }
 };
 
