@@ -180,10 +180,13 @@ bool tSingleThreadedCheapCopyPortGeneric::NonStandardAssign(tPublishingData& pub
 
 void tSingleThreadedCheapCopyPortGeneric::Publish(const rrlib::rtti::tGenericObject& data, rrlib::time::tTimestamp timestamp)
 {
-  current_value.data->DeepCopyFrom(data);
-  current_value.timestamp = timestamp;
-  common::tPublishOperation<tSingleThreadedCheapCopyPortGeneric, tPublishingData> publish_operation(current_value);
-  publish_operation.Execute<false, tChangeStatus::CHANGED, false, false>(*this);
+  if (!GetFlag(tFlag::HIJACKED_PORT))
+  {
+    current_value.data->DeepCopyFrom(data);
+    current_value.timestamp = timestamp;
+    common::tPublishOperation<tSingleThreadedCheapCopyPortGeneric, tPublishingData> publish_operation(current_value);
+    publish_operation.Execute<false, tChangeStatus::CHANGED, false, false>(*this);
+  }
 }
 
 void tSingleThreadedCheapCopyPortGeneric::SetCurrentValueBuffer(void* address)

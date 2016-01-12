@@ -154,10 +154,13 @@ public:
    */
   void Publish(const T& data, rrlib::time::tTimestamp timestamp)
   {
-    *static_cast<T*>(current_value.data_pointer) = data;
-    current_value.timestamp = timestamp;
-    common::tPublishOperation<tSingleThreadedCheapCopyPort<T>, tPublishingData> publish_operation(current_value);
-    publish_operation.template Execute<false, tChangeStatus::CHANGED, false, false>(*this);
+    if (!GetFlag(tFlag::HIJACKED_PORT))
+    {
+      *static_cast<T*>(current_value.data_pointer) = data;
+      current_value.timestamp = timestamp;
+      common::tPublishOperation<tSingleThreadedCheapCopyPort<T>, tPublishingData> publish_operation(current_value);
+      publish_operation.template Execute<false, tChangeStatus::CHANGED, false, false>(*this);
+    }
   }
 
 //----------------------------------------------------------------------

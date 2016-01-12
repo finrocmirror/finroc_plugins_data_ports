@@ -61,6 +61,10 @@ namespace data_ports
 //----------------------------------------------------------------------
 // Forward declarations / typedefs / enums
 //----------------------------------------------------------------------
+namespace api
+{
+class tGenericPortImplementation;
+}
 
 //----------------------------------------------------------------------
 // Class declaration
@@ -218,6 +222,7 @@ private:
 
   friend struct api::tPortImplementation<tPortData, api::tPortImplementationTypeTrait<tPortData>::type>;
   friend class tGenericPort;
+  friend class api::tGenericPortImplementation;
   template <typename U, bool>
   friend class api::tPullRequestHandlerAdapter;
   friend class api::tPullRequestHandlerAdapterGeneric;

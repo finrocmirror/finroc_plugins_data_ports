@@ -288,7 +288,7 @@ public:
    */
   inline void Publish(tPortDataPointer<rrlib::rtti::tGenericObject>& buffer)
   {
-    implementation->Publish(*GetWrapped(), buffer.implementation.Release());
+    implementation->Publish(*GetWrapped(), buffer);
   }
 
   /*!

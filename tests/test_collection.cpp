@@ -298,7 +298,7 @@ void TestHijackedPublishing(const T& value_to_publish)
   T default_value = T();
 
   tOutputPort<T> output_port("Output Port", parent);
-  tProxyPort<T, true> proxy_port("Proxy Port", parent);
+  tProxyPort<T, true> proxy_port("Proxy Port", parent, core::tFrameworkElementFlag::PUSH_STRATEGY);
   tInputPort<T> input_port("Input Port", parent);
   output_port.ConnectTo(proxy_port);
   proxy_port.ConnectTo(input_port);

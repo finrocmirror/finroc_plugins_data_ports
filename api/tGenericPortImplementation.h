@@ -184,26 +184,30 @@ public:
    *
    * This publish()-variant is efficient with all data types.
    */
-  inline void Publish(core::tAbstractPort& port, common::tReferenceCountingBufferManager* data_buffer)
+  inline void Publish(core::tAbstractPort& port, tPortDataPointer<rrlib::rtti::tGenericObject>& data_buffer)
   {
     if (IsCheaplyCopiedType(port.GetDataType()))
     {
       tCheapCopyPort& cc_port = static_cast<tCheapCopyPort&>(port);
+#ifndef RRLIB_SINGLE_THREADED
       if (optimized::tThreadLocalBufferPools::Get())
       {
-        common::tPublishOperation<optimized::tCheapCopyPort, typename optimized::tCheapCopyPort::tPublishingDataThreadLocalBuffer> publish_operation(static_cast<optimized::tThreadLocalBufferManager*>(data_buffer), true);
+        common::tPublishOperation<optimized::tCheapCopyPort, typename optimized::tCheapCopyPort::tPublishingDataThreadLocalBuffer> publish_operation(static_cast<optimized::tThreadLocalBufferManager*>(data_buffer.implementation.Release()), true);
         publish_operation.Execute<false, tChangeStatus::CHANGED, false, false>(cc_port);
       }
       else
       {
-        optimized::tCheapCopyPort::tUnusedManagerPointer pointer(static_cast<optimized::tCheaplyCopiedBufferManager*>(data_buffer));
+        optimized::tCheapCopyPort::tUnusedManagerPointer pointer(static_cast<optimized::tCheaplyCopiedBufferManager*>(data_buffer.implementation.Release()));
         common::tPublishOperation<optimized::tCheapCopyPort, typename optimized::tCheapCopyPort::tPublishingDataGlobalBuffer> publish_operation(pointer);
         publish_operation.Execute<false, tChangeStatus::CHANGED, false, false>(cc_port);
       }
+#else
+      cc_port.Publish(*data_buffer, data_buffer.GetTimestamp());
+#endif
     }
     else
     {
-      standard::tStandardPort::tUnusedManagerPointer buffer(static_cast<standard::tPortBufferManager*>(data_buffer));
+      standard::tStandardPort::tUnusedManagerPointer buffer(static_cast<standard::tPortBufferManager*>(data_buffer.implementation.Release()));
       assert(buffer->IsUnused());
       static_cast<standard::tStandardPort&>(port).Publish(buffer);
     }
