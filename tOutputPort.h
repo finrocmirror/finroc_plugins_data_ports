@@ -103,13 +103,13 @@ public:
    */
   template <typename TArg1, typename TArg2, typename ... TRest>
   tOutputPort(const TArg1& arg1, const TArg2& arg2, const TRest&... args) :
-    tPort<T>(arg1, arg2, args..., core::tFrameworkElement::tFlag::EMITS_DATA | core::tFrameworkElement::tFlag::OUTPUT_PORT)
+    tPort<T>(arg1, arg2, args..., cDEFAULT_OUTPUT_PORT_FLAGS)
   {}
 
   // with a single argument, we do not want catch calls for copy construction
   template < typename TArgument1, bool ENABLE = !std::is_base_of<tOutputPort, TArgument1>::value >
   tOutputPort(const TArgument1& argument1, typename std::enable_if<ENABLE, tNoArgument>::type no_argument = tNoArgument()) :
-    tPort<T>(argument1, core::tFrameworkElement::tFlag::EMITS_DATA | core::tFrameworkElement::tFlag::OUTPUT_PORT)
+    tPort<T>(argument1, cDEFAULT_OUTPUT_PORT_FLAGS)
   {}
 
   /*!

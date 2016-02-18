@@ -37,6 +37,7 @@
 // External includes (system with <>, local with "")
 //----------------------------------------------------------------------
 #include "rrlib/time/time.h"
+#include "core/tFrameworkElement.h"
 
 //----------------------------------------------------------------------
 // Internal includes with ""
@@ -74,7 +75,11 @@ enum class tChangeStatus : int8_t
 };
 
 /*! Timeout for pull operations */
-static constexpr rrlib::time::tDuration cPULL_TIMEOUT = std::chrono::seconds(1);
+constexpr rrlib::time::tDuration cPULL_TIMEOUT = std::chrono::seconds(1);
+
+/*! Default flags for input and output data ports */
+constexpr core::tFrameworkElement::tFlags cDEFAULT_INPUT_PORT_FLAGS = core::tFrameworkElement::tFlag::ACCEPTS_DATA | core::tFrameworkElement::tFlag::PUSH_STRATEGY;
+constexpr core::tFrameworkElement::tFlags cDEFAULT_OUTPUT_PORT_FLAGS = core::tFrameworkElement::tFlag::EMITS_DATA | core::tFrameworkElement::tFlag::OUTPUT_PORT;
 
 //----------------------------------------------------------------------
 // Function declarations
