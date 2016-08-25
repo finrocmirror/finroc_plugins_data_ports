@@ -130,7 +130,7 @@ public:
     {
       for (auto it = port.OutgoingConnectionsBegin(); it != port.OutgoingConnectionsEnd(); ++it)
       {
-        TPort& destination_port = static_cast<TPort&>(*it);
+        TPort& destination_port = static_cast<TPort&>(it->Destination());
         if (destination_port.template WantsPush<REVERSE, CHANGE_CONSTANT>())
         {
           Receive<REVERSE, CHANGE_CONSTANT>(*this, destination_port, port);
@@ -143,7 +143,7 @@ public:
       // reverse
       for (auto it = port.IncomingConnectionsBegin(); it != port.IncomingConnectionsEnd(); ++it)
       {
-        TPort& destination_port = static_cast<TPort&>(*it);
+        TPort& destination_port = static_cast<TPort&>(it->Source());
         if (destination_port.template WantsPush<true, CHANGE_CONSTANT>())
         {
           Receive<true, CHANGE_CONSTANT>(*this, destination_port, port);
@@ -175,7 +175,7 @@ public:
       // forward
       for (auto it = port.OutgoingConnectionsBegin(); it != port.OutgoingConnectionsEnd(); ++it)
       {
-        TPort& destination_port = static_cast<TPort&>(*it);
+        TPort& destination_port = static_cast<TPort&>(it->Destination());
         if (destination_port.template WantsPush<false, CHANGE_CONSTANT>())
         {
           Receive<false, CHANGE_CONSTANT>(publishing_data, destination_port, port);
@@ -185,7 +185,7 @@ public:
       // reverse
       for (auto it = port.IncomingConnectionsBegin(); it != port.IncomingConnectionsEnd(); ++it)
       {
-        TPort& destination_port = static_cast<TPort&>(*it);
+        TPort& destination_port = static_cast<TPort&>(it->Source());
         if (&destination_port != &origin && destination_port.template WantsPush<true, CHANGE_CONSTANT>())
         {
           Receive<true, CHANGE_CONSTANT>(publishing_data, destination_port, port);

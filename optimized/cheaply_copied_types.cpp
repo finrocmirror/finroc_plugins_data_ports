@@ -32,7 +32,6 @@
 //----------------------------------------------------------------------
 // External includes (system with <>, local with "")
 //----------------------------------------------------------------------
-#include "rrlib/rtti/tTypeAnnotation.h"
 #include "rrlib/thread/tLock.h"
 #include "core/definitions.h"
 
@@ -75,11 +74,11 @@ namespace optimized
 namespace internal
 {
 
-class tIndexAnnotation : public rrlib::rtti::tTypeAnnotation
+class tIndexAnnotation
 {
 public:
 
-  tIndexAnnotation(uint32_t index) : index(index) {}
+  tIndexAnnotation(uint32_t index = 0) : index(index) {}
 
   /*! Cheaply copied typed index */
   uint32_t index;
@@ -126,10 +125,10 @@ static internal::tRegister& GetRegister()
 
 uint32_t GetCheaplyCopiedTypeIndex(const rrlib::rtti::tType& type)
 {
-  internal::tIndexAnnotation* annotation = type.GetAnnotation<internal::tIndexAnnotation>();
-  if (annotation)
+  internal::tIndexAnnotation annotation = type.GetAnnotation<internal::tIndexAnnotation>();
+  if (annotation.index)
   {
-    return annotation->index;
+    return annotation.index - 1;
   }
 
   static rrlib::thread::tMutex mutex;
@@ -154,7 +153,7 @@ uint32_t GetCheaplyCopiedTypeIndex(const rrlib::rtti::tType& type)
   reg.used_types[result].type = type;
   reg.registered_types++;
   rrlib::rtti::tType type_copy = type;
-  type_copy.AddAnnotation(new internal::tIndexAnnotation(result));
+  type_copy.AddAnnotation(internal::tIndexAnnotation(result + 1)); // +1 so that index zero is different from Null-memory
   if (result >= cMAX_CHEAPLY_COPYABLE_TYPES)
   {
     FINROC_LOG_PRINT_STATIC(ERROR, "Maximum number of cheaply copyable types exceeded");

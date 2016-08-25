@@ -166,7 +166,7 @@ public:
     else
     {
       tPortDataPointer<rrlib::rtti::tGenericObject> buffer = GetUnusedBuffer();
-      std::unique_ptr<rrlib::rtti::tGenericObject> default_buffer(buffer->GetType().CreateInstanceGeneric());
+      std::unique_ptr<rrlib::rtti::tGenericObject> default_buffer(buffer->GetType().CreateGenericObject());
       buffer->DeepCopyFrom(*default_buffer);
       BrowserPublish(buffer);
     }

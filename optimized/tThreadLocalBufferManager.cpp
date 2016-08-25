@@ -84,7 +84,7 @@ tThreadLocalBufferManager* tThreadLocalBufferManager::CreateInstance(const rrlib
 {
   static_assert(sizeof(tThreadLocalBufferManager) % 8 == 0, "Port Data manager must be aligned to 8 byte boundary");
   char* placement = (char*)operator new(sizeof(tThreadLocalBufferManager) + type.GetSize(true));
-  type.CreateInstanceGeneric(placement + sizeof(tThreadLocalBufferManager));
+  type.EmplaceGenericObject(placement + sizeof(tThreadLocalBufferManager)).release();
   return new(placement) tThreadLocalBufferManager();
 }
 

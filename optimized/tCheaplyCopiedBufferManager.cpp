@@ -86,7 +86,7 @@ tCheaplyCopiedBufferManager* tCheaplyCopiedBufferManager::CreateInstance(const r
 {
   static_assert(sizeof(tCheaplyCopiedBufferManager) % 8 == 0, "Port Data manager must be aligned to 8 byte boundary");
   char* placement = (char*)operator new(sizeof(tCheaplyCopiedBufferManager) + type.GetSize(true));
-  type.CreateInstanceGeneric(placement + sizeof(tCheaplyCopiedBufferManager));
+  type.EmplaceGenericObject(placement + sizeof(tCheaplyCopiedBufferManager)).release();
   return new(placement) tCheaplyCopiedBufferManager();
 }
 

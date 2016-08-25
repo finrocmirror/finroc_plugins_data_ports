@@ -137,7 +137,7 @@ class tPullRequestHandlerAdapterGeneric : public standard::tPullRequestHandlerRa
     tPortDataPointer<const rrlib::rtti::tGenericObject> pulled_buffer = OnPullRequest(origin_port);
     if (pulled_buffer)
     {
-      result_buffer.GetObject().DeepCopyFrom(*pulled_buffer, NULL);
+      result_buffer.GetObject().DeepCopyFrom(*pulled_buffer);
       result_buffer.SetTimestamp(pulled_buffer.GetTimestamp());
     }
     return pulled_buffer;

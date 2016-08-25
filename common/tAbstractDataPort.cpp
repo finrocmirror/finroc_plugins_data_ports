@@ -117,7 +117,7 @@ void tAbstractDataPort::ForwardStrategy(int16_t strategy2, tAbstractDataPort* pu
 {
   for (auto it = IncomingConnectionsBegin(); it != IncomingConnectionsEnd(); ++it)
   {
-    tAbstractDataPort& port = static_cast<tAbstractDataPort&>(*it);
+    tAbstractDataPort& port = static_cast<tAbstractDataPort&>(it->Source());
     if (push_wanter || port.GetStrategy() != strategy2)
     {
       port.PropagateStrategy(push_wanter, NULL);
@@ -132,7 +132,7 @@ int16_t tAbstractDataPort::GetMinNetworkUpdateIntervalForSubscription() const
 
   for (auto it = OutgoingConnectionsBegin(); it != OutgoingConnectionsEnd(); ++it)
   {
-    tAbstractDataPort& port = static_cast<tAbstractDataPort&>(*it);
+    tAbstractDataPort& port = static_cast<tAbstractDataPort&>(it->Destination());
     if (port.GetStrategy() > 0)
     {
       if ((t = port.min_net_update_time) >= 0 && t < result)
@@ -143,7 +143,7 @@ int16_t tAbstractDataPort::GetMinNetworkUpdateIntervalForSubscription() const
   }
   for (auto it = IncomingConnectionsBegin(); it != IncomingConnectionsEnd(); ++it)
   {
-    tAbstractDataPort& port = static_cast<tAbstractDataPort&>(*it);
+    tAbstractDataPort& port = static_cast<tAbstractDataPort&>(it->Source());
     if (port.GetFlag(tFlag::PUSH_STRATEGY_REVERSE))
     {
       if ((t = port.min_net_update_time) >= 0 && t < result)
@@ -230,7 +230,7 @@ bool tAbstractDataPort::PropagateStrategy(tAbstractDataPort* push_wanter, tAbstr
   int16_t max = static_cast<int16_t>(std::min(GetStrategyRequirement(), std::numeric_limits<short>::max()));
   for (auto it = OutgoingConnectionsBegin(); it != OutgoingConnectionsEnd(); ++it)
   {
-    tAbstractDataPort& port = static_cast<tAbstractDataPort&>(*it);
+    tAbstractDataPort& port = static_cast<tAbstractDataPort&>(it->Destination());
     max = static_cast<int16_t>(std::max(max, port.GetStrategy()));
   }
   if (GetFlag(tFlag::HIJACKED_PORT))
@@ -250,7 +250,7 @@ bool tAbstractDataPort::PropagateStrategy(tAbstractDataPort* push_wanter, tAbstr
       bool all_sources_reverse_pushers = true;
       for (auto it = IncomingConnectionsBegin(); it != IncomingConnectionsEnd(); ++it)
       {
-        tAbstractDataPort& port = static_cast<tAbstractDataPort&>(*it);
+        tAbstractDataPort& port = static_cast<tAbstractDataPort&>(it->Source());
         if (port.IsReady() && (!port.ReversePushStrategy()))
         {
           all_sources_reverse_pushers = false;
@@ -277,7 +277,7 @@ bool tAbstractDataPort::PropagateStrategy(tAbstractDataPort* push_wanter, tAbstr
   int other_sources = 0;
   for (auto it = IncomingConnectionsBegin(); it != IncomingConnectionsEnd(); ++it)
   {
-    if (it->IsReady() && &(*it) != new_connection_partner)
+    if (it->Source().IsReady() && &(it->Source()) != new_connection_partner)
     {
       other_sources++;
     }
@@ -352,7 +352,7 @@ void tAbstractDataPort::SetReversePushStrategy(bool push)
   {
     for (auto it = OutgoingConnectionsBegin(); it != OutgoingConnectionsEnd(); ++it)
     {
-      tAbstractDataPort& port = static_cast<tAbstractDataPort&>(*it);
+      tAbstractDataPort& port = static_cast<tAbstractDataPort&>(it->Destination());
       if (port.IsReady())
       {
         FINROC_LOG_PRINT(DEBUG_VERBOSE_1, "Performing initial reverse push from ", port.GetQualifiedName(), " to ", GetQualifiedName());

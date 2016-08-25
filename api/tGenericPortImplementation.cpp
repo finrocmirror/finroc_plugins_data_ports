@@ -264,16 +264,20 @@ static void CheckCreateImplementationForType(rrlib::rtti::tType type)
 {
   if (type.GetRttiName() == typeid(T).name())
   {
-    type.AddAnnotation<tGenericPortImplementation>(new internal::tGenericPortImplementationTyped<T>());
+    static internal::tGenericPortImplementationTyped<T> cINSTANCE;
+    type.AddAnnotation<tGenericPortImplementation*>(&cINSTANCE);
   }
 }
+
+tGenericPortImplementationCheapCopy cINSTANCE_CHEAP_COPY;
+tGenericPortImplementationStandard cINSTANCE_STANDARD;
 
 } // namespace internal
 
 void tGenericPortImplementation::CreateImplementations()
 {
   static rrlib::thread::tMutex mutex;
-  static int16_t initialized_types = 0;
+  static size_t initialized_types = 0;
   rrlib::thread::tLock lock(mutex);
 
   for (; initialized_types < rrlib::rtti::tType::GetTypeCount(); initialized_types++)
@@ -295,16 +299,16 @@ void tGenericPortImplementation::CreateImplementations()
       internal::CheckCreateImplementationForType<char>(type);  // is neither int8_t nor uint8_t
       internal::CheckCreateImplementationForType<numeric::tNumber>(type);
 
-      if (!type.GetAnnotation<tGenericPortImplementation>())
+      if (!type.GetAnnotation<tGenericPortImplementation*>())
       {
         assert((type.GetTypeTraits() & rrlib::rtti::trait_flags::cIS_INTEGRAL) == 0 || type.GetRttiName() == typeid(bool).name());
         if (IsCheaplyCopiedType(type))
         {
-          type.AddAnnotation<tGenericPortImplementation>(new internal::tGenericPortImplementationCheapCopy());
+          type.AddAnnotation<tGenericPortImplementation*>(&internal::cINSTANCE_CHEAP_COPY);
         }
         else
         {
-          type.AddAnnotation<tGenericPortImplementation>(new internal::tGenericPortImplementationStandard());
+          type.AddAnnotation<tGenericPortImplementation*>(&internal::cINSTANCE_STANDARD);
         }
       }
     }

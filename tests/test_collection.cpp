@@ -194,12 +194,16 @@ void TestPortListeners(const T& publish_value)
     }
     void OnPortChange(const rrlib::rtti::tGenericObject& value, tChangeContext& change_context)
     {
-      FINROC_LOG_PRINT(DEBUG_VERBOSE_1, "  Port Changed Generic: ", value);
+      rrlib::serialization::tStringOutputStream stream;
+      value.Serialize(stream);
+      FINROC_LOG_PRINT(DEBUG_VERBOSE_1, "  Port Changed Generic: ", stream.ToString());
       this->calls++;
     }
     void OnPortChange(tPortDataPointer<const rrlib::rtti::tGenericObject>& value, tChangeContext& change_context)
     {
-      FINROC_LOG_PRINT(DEBUG_VERBOSE_1, "  Port Changed Generic (tPortDataPointer): ", *value);
+      rrlib::serialization::tStringOutputStream stream;
+      value->Serialize(stream);
+      FINROC_LOG_PRINT(DEBUG_VERBOSE_1, "  Port Changed Generic (tPortDataPointer): ", stream.ToString());
       this->calls++;
     }
     void OnPortChange(tChangeContext& change_context)

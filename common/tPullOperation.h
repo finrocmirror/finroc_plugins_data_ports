@@ -133,7 +133,7 @@ private:
     // continue with next-best connected source port
     for (auto it = port.IncomingConnectionsBegin(); it != port.IncomingConnectionsEnd(); ++it)
     {
-      ExecuteImplementation(static_cast<TPort&>(*it), false);
+      ExecuteImplementation(static_cast<TPort&>(it->Source()), false);
       typename TPort::tTaggedBufferPointer::tStorage tagged_pointer_raw = this->published_buffer_tagged_pointer;
       if (tagged_pointer_raw != port.current_value.load())
       {

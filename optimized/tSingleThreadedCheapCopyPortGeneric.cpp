@@ -76,7 +76,7 @@ tSingleThreadedCheapCopyPortGeneric::tSingleThreadedCheapCopyPortGeneric(common:
   max_queue_length(-1),
   standard_assign(!GetFlag(tFlag::NON_STANDARD_ASSIGN) && (!GetFlag(tFlag::HAS_QUEUE)))
 {
-  current_value.data.reset(creation_info.data_type.CreateInstanceGeneric());
+  current_value.data.reset(creation_info.data_type.CreateGenericObject());
   current_value.data_pointer = current_value.data->GetRawDataPointer();
   current_value.cheaply_copyable_type_index = RegisterPort(creation_info.data_type);
   current_value.timestamp = rrlib::time::cNO_TIME;
@@ -90,7 +90,7 @@ tSingleThreadedCheapCopyPortGeneric::tSingleThreadedCheapCopyPortGeneric(common:
   // set initial value to default?
   if (creation_info.DefaultValueSet() || creation_info.flags.Get(core::tFrameworkElement::tFlag::DEFAULT_ON_DISCONNECT))
   {
-    default_value.reset(creation_info.data_type.CreateInstanceGeneric());
+    default_value.reset(creation_info.data_type.CreateGenericObject());
     if (creation_info.DefaultValueSet())
     {
       rrlib::serialization::tInputStream stream(creation_info.GetDefaultGeneric());
@@ -191,7 +191,7 @@ void tSingleThreadedCheapCopyPortGeneric::Publish(const rrlib::rtti::tGenericObj
 
 void tSingleThreadedCheapCopyPortGeneric::SetCurrentValueBuffer(void* address)
 {
-  std::unique_ptr<rrlib::rtti::tGenericObject> new_buffer(GetDataType().CreateInstanceGeneric(address, false));
+  std::unique_ptr<rrlib::rtti::tGenericObject> new_buffer(GetDataType().CreateGenericObject(address));
   new_buffer->DeepCopyFrom(*current_value.data);
   std::swap(new_buffer, current_value.data);
   current_value.data_pointer = current_value.data->GetRawDataPointer();
@@ -199,7 +199,7 @@ void tSingleThreadedCheapCopyPortGeneric::SetCurrentValueBuffer(void* address)
 
 void tSingleThreadedCheapCopyPortGeneric::SetDefault(rrlib::rtti::tGenericObject& new_default)
 {
-  default_value.reset(new_default.GetType().CreateInstanceGeneric());
+  default_value.reset(new_default.GetType().CreateGenericObject());
   default_value->DeepCopyFrom(new_default);
   current_value.data->DeepCopyFrom(new_default);
 }

@@ -84,7 +84,7 @@ tPortBufferManager* tPortBufferManager::CreateInstance(const rrlib::rtti::tType&
 {
   static_assert(sizeof(tPortBufferManager) % 8 == 0, "Port Data manager must be aligned to 8 byte boundary");
   char* placement = (char*)operator new(sizeof(tPortBufferManager) + type.GetSize(true));
-  type.CreateInstanceGeneric(placement + sizeof(tPortBufferManager));
+  type.EmplaceGenericObject(placement + sizeof(tPortBufferManager)).release();
   return new(placement) tPortBufferManager();
 }
 

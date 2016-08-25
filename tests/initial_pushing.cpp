@@ -147,7 +147,7 @@ void TestInitialPushing(const std::array<T, 9>& test_values)
   tOutputPort<T> o0("o0", core::tFrameworkElement::tFlag::ACCEPTS_DATA, parent); // flag makes this also a proxy port
   core::tFrameworkElement::InitAll();
   o0.Publish(test_values[5]);
-  o0.ConnectTo(o1, core::tAbstractPort::tConnectDirection::TO_TARGET);
+  o0.ConnectTo(o1, core::tConnectionFlag::DIRECTION_TO_DESTINATION);
   CheckPortValue(o3, test_values[5]);
 
   // o6->o0->o1->o2->o3
@@ -157,7 +157,7 @@ void TestInitialPushing(const std::array<T, 9>& test_values)
   tInputPort<T> o5("o5", parent);
   core::tFrameworkElement::InitAll();
   o4.ConnectTo(o5);
-  o2.ConnectTo(o4, core::tAbstractPort::tConnectDirection::TO_TARGET);
+  o2.ConnectTo(o4, core::tConnectionFlag::DIRECTION_TO_DESTINATION);
   CheckPortValue(o5, test_values[5]);
   tOutputPort<T> o6("o6", parent);
   core::tFrameworkElement::InitAll();
@@ -176,7 +176,7 @@ void TestInitialPushing(const std::array<T, 9>& test_values)
   core::tFrameworkElement::InitAll();
   o7.ConnectTo(o8);
   CheckPortValue(o8, test_values[7]);
-  o7.ConnectTo(o1, core::tAbstractPort::tConnectDirection::TO_TARGET);
+  o7.ConnectTo(o1, core::tConnectionFlag::DIRECTION_TO_DESTINATION);
   CheckPortValue(o1, test_values[6]);
 
   tPortBuffers<tPortDataPointer<const T>> queue_fragment = o8.DequeueAllBuffers();

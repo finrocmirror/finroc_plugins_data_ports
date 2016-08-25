@@ -79,7 +79,7 @@ static rrlib::rtti::tGenericObject* CreateDefaultValue(const common::tAbstractDa
 {
   if (creation_info.DefaultValueSet() || creation_info.flags.Get(core::tFrameworkElement::tFlag::DEFAULT_ON_DISCONNECT))
   {
-    rrlib::rtti::tGenericObject* result = creation_info.data_type.CreateInstanceGeneric();
+    rrlib::rtti::tGenericObject* result = creation_info.data_type.CreateGenericObject();
     if (creation_info.DefaultValueSet())
     {
       rrlib::serialization::tInputStream input(creation_info.GetDefaultGeneric());
@@ -121,7 +121,7 @@ tCheapCopyPort::tCheapCopyPort(common::tAbstractDataPortCreationInfo creation_in
   }
   else
   {
-    std::unique_ptr<rrlib::rtti::tGenericObject> object_with_default_value(GetDataType().CreateInstanceGeneric());
+    std::unique_ptr<rrlib::rtti::tGenericObject> object_with_default_value(GetDataType().CreateGenericObject());
     initial->GetObject().DeepCopyFrom(*object_with_default_value);
   }
 
@@ -262,7 +262,7 @@ void tCheapCopyPort::CopyCurrentValueToGenericObject(rrlib::rtti::tGenericObject
   else
   {
     tLockingManagerPointer dc = PullValueRaw(strategy == tStrategy::PULL_IGNORING_HANDLER_ON_THIS_PORT);
-    buffer.DeepCopyFrom(dc->GetObject(), NULL);
+    buffer.DeepCopyFrom(dc->GetObject());
     timestamp = dc->GetTimestamp();
   }
 }
@@ -504,7 +504,7 @@ void tCheapCopyPort::SetDefault(rrlib::rtti::tGenericObject& new_default)
 
   if (!default_value)
   {
-    default_value.reset(new_default.GetType().CreateInstanceGeneric());
+    default_value.reset(new_default.GetType().CreateGenericObject());
   }
   else if (default_value->GetType() != new_default.GetType())
   {

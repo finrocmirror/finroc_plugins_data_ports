@@ -39,7 +39,6 @@
 //----------------------------------------------------------------------
 // External includes (system with <>, local with "")
 //----------------------------------------------------------------------
-#include "rrlib/rtti/tTypeAnnotation.h"
 
 //----------------------------------------------------------------------
 // Internal includes with ""
@@ -73,7 +72,7 @@ namespace api
 /*!
  * Implementations for tGenericPort.
  */
-class tGenericPortImplementation : public rrlib::rtti::tTypeAnnotation
+class tGenericPortImplementation
 {
 //----------------------------------------------------------------------
 // Public methods and typedefs
@@ -125,11 +124,11 @@ public:
    */
   static tGenericPortImplementation* GetImplementation(const rrlib::rtti::tType& type)
   {
-    tGenericPortImplementation* annotation = type.GetAnnotation<tGenericPortImplementation>();
+    tGenericPortImplementation* annotation = type.GetAnnotation<tGenericPortImplementation*>();
     if (!annotation)
     {
       CreateImplementations();
-      annotation = type.GetAnnotation<tGenericPortImplementation>();
+      annotation = type.GetAnnotation<tGenericPortImplementation*>();
     }
     return annotation;
   }
