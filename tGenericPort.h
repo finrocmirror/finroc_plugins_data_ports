@@ -327,7 +327,7 @@ public:
     tGenericPort port;
     port.SetWrapped(&wrap);
     port.implementation = api::tGenericPortImplementation::GetImplementation(
-                            ((!use_backend_type_only) && wrap.GetWrapperDataType() != NULL) ? wrap.GetWrapperDataType() : wrap.GetDataType());
+                            ((!use_backend_type_only) && wrap.GetWrapperDataType()) ? wrap.GetWrapperDataType() : wrap.GetDataType());
     return port;
   }
 

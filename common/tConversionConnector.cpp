@@ -19,30 +19,32 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 //
 //----------------------------------------------------------------------
-/*!\file    plugins/data_ports/optimized/tPullRequestHandlerRaw.h
+/*!\file    plugins/data_ports/common/tConversionConnector.cpp
  *
  * \author  Max Reichardt
  *
- * \date    2012-11-04
- *
- * \brief   Contains tPullRequestHandlerRaw
- *
- * \b tPullRequestHandlerRaw
- *
- * Can be used to handle pull requests of - typically - output ports
+ * \date    2016-08-26
  *
  */
 //----------------------------------------------------------------------
-#ifndef __plugins__data_ports__optimized__tPullRequestHandlerRaw_h__
-#define __plugins__data_ports__optimized__tPullRequestHandlerRaw_h__
+#include "plugins/data_ports/common/tConversionConnector.h"
 
 //----------------------------------------------------------------------
 // External includes (system with <>, local with "")
 //----------------------------------------------------------------------
-#include "rrlib/util/tNoncopyable.h"
 
 //----------------------------------------------------------------------
 // Internal includes with ""
+//----------------------------------------------------------------------
+#include "plugins/data_ports/tGenericPort.h"
+
+//----------------------------------------------------------------------
+// Debugging
+//----------------------------------------------------------------------
+#include <cassert>
+
+//----------------------------------------------------------------------
+// Namespace usage
 //----------------------------------------------------------------------
 
 //----------------------------------------------------------------------
@@ -52,42 +54,41 @@ namespace finroc
 {
 namespace data_ports
 {
-namespace optimized
+namespace common
 {
 
 //----------------------------------------------------------------------
 // Forward declarations / typedefs / enums
 //----------------------------------------------------------------------
-class tCheapCopyPort;
-class tCheaplyCopiedBufferManager;
 
 //----------------------------------------------------------------------
-// Class declaration
+// Const values
 //----------------------------------------------------------------------
-//! Pull Request handler interface for cheap copy ports.
-/*!
- * Can be used to handle pull requests of - typically - output ports
- */
-class tPullRequestHandlerRaw : private rrlib::util::tNoncopyable
+
+//----------------------------------------------------------------------
+// Implementation
+//----------------------------------------------------------------------
+
+tConversionConnector::tConversionConnector(core::tAbstractPort& source_port, core::tAbstractPort& destination_port, const core::tConnectOptions& connect_options) :
+  tConnector(source_port, destination_port, connect_options, conversion_operation),
+  conversion_operation(connect_options.conversion_operations.Compile(false, source_port.GetDataType(), destination_port.GetDataType()))
 {
+  static_assert(sizeof(destination_port_generic_memory) == sizeof(tGenericPort), "Adjust array size");
+  tGenericPort destination_port_generic = tGenericPort::Wrap(destination_port, true);
+  memcpy(destination_port_generic_memory, &destination_port_generic, sizeof(tGenericPort));
+}
 
-//----------------------------------------------------------------------
-// Public methods and typedefs
-//----------------------------------------------------------------------
-public:
+tConversionConnector::~tConversionConnector()
+{}
 
-  virtual ~tPullRequestHandlerRaw() = default;
+void tConversionConnector::Publish(const rrlib::rtti::tGenericObject& input_data, tChangeStatus change_constant) const
+{
+  tGenericPort& generic_port = const_cast<tGenericPort&>(reinterpret_cast<const tGenericPort&>(destination_port_generic_memory[0]));
+  tPortDataPointer<rrlib::rtti::tGenericObject> buffer = generic_port.GetUnusedBuffer();
+  conversion_operation.Convert(input_data, *buffer);
+  generic_port.BrowserPublish(buffer, true, change_constant);
+}
 
-  /*!
-   * Called whenever a pull request is intercepted
-   *
-   * \param origin (Output) Port pull request comes from
-   * \param result_buffer Buffer with result
-   * \return Was pull request handled (and result buffer filled) - or should it be handled by port in the standard way (now)?
-   */
-  virtual bool RawPullRequest(tCheapCopyPort& origin, tCheaplyCopiedBufferManager& result_buffer) = 0;
-
-};
 
 //----------------------------------------------------------------------
 // End of namespace declaration
@@ -95,6 +96,3 @@ public:
 }
 }
 }
-
-
-#endif

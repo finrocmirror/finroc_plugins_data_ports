@@ -62,6 +62,12 @@ namespace common
 // Forward declarations / typedefs / enums
 //----------------------------------------------------------------------
 
+template <typename TPort, typename TPublishingData>
+class tPublishOperation;
+
+template <typename TPort, typename TPublishingData, typename TManager>
+class tPullOperation;
+
 //----------------------------------------------------------------------
 // Class declaration
 //----------------------------------------------------------------------
@@ -114,31 +120,6 @@ public:
   {
     return GetMaxQueueLengthImplementation();
   }
-
-  /*!
-   * \return Minimum Network Update Interval (only-port specific one; -1 if there's no specific setting for port)
-   */
-  inline rrlib::time::tDuration GetMinNetUpdateInterval() const
-  {
-    return std::chrono::milliseconds(min_net_update_time);
-  }
-
-  /*!
-   * \return Minimum Network Update Interval (only-port specific one; -1 if there's no specific setting for port)
-   */
-  inline int16_t GetMinNetUpdateIntervalRaw() const
-  {
-    return min_net_update_time;
-  }
-
-  /*!
-   * (Helper function for network functions)
-   * Look for minimal port-specific minimal network update interval
-   * at all connected ports.
-   *
-   * \return result - -1 if no port has specific setting
-   */
-  int16_t GetMinNetworkUpdateIntervalForSubscription() const;
 
   /*!
    * \param listener Listener to remove
@@ -202,12 +183,6 @@ public:
   }
 
   /*!
-   * \param interval Minimum Network Update Interval
-   */
-  void SetMinNetUpdateInterval(rrlib::time::tDuration& interval);
-  void SetMinNetUpdateIntervalRaw(int16_t interval);
-
-  /*!
    * \param listener New ports Listener
    *
    * (warning: this will not delete the old listener)
@@ -246,6 +221,8 @@ public:
 protected:
 
   virtual ~tAbstractDataPort();
+
+  virtual core::tConnector* CreateConnector(tAbstractPort& destination, const core::tConnectOptions& connect_options) override;
 
   /*!
    * Propagates max target queue length to sources
@@ -317,6 +294,13 @@ protected:
 //----------------------------------------------------------------------
 private:
 
+  template <typename TPort, typename TPublishingData>
+  friend class tPublishOperation;
+
+  template <typename TPort, typename TPublishingData, typename TManager>
+  friend class tPullOperation;
+
+
   /*! Has port changed since last reset? (see constants above) */
   std::atomic<int8_t> changed;
 
@@ -334,9 +318,6 @@ private:
    * n >= 1: push strategy for queue with n elements (queue length makes no difference locally, but network ports need to buffer this amount of elements)
    */
   int16_t strategy;
-
-  /*! Minimum network update interval. Value < 0 means default for this type */
-  int16_t min_net_update_time;
 
   /*! Listener(s) of port value changes */
   common::tPortListenerRaw* port_listener;

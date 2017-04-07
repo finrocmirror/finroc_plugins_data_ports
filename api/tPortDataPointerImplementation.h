@@ -403,28 +403,6 @@ public:
     }
   }
 
-  void Deserialize(rrlib::serialization::tInputStream& stream)
-  {
-    if (stream.ReadBoolean())
-    {
-      rrlib::rtti::tType type;
-      stream >> type;
-      if ((!Get()) || Get()->GetType() != type)
-      {
-        tPortDataPointerImplementation<rrlib::rtti::tGenericObject, false> buffer = tDeserializationScope::GetUnusedBuffer(type);
-        std::swap(*this, buffer);
-      }
-      Get()->Deserialize(stream);
-      rrlib::time::tTimestamp timestamp;
-      stream >> timestamp;
-      SetTimestamp(timestamp);
-    }
-    else
-    {
-      *this = tPortDataPointerImplementation();
-    }
-  }
-
   inline rrlib::rtti::tGenericObject* Get() const
   {
     return object;
@@ -451,17 +429,6 @@ public:
     common::tReferenceCountingBufferManager* temp = buffer_manager;
     buffer_manager = NULL;
     return temp;
-  }
-
-  void Serialize(rrlib::serialization::tOutputStream& stream) const
-  {
-    stream.WriteBoolean(Get());
-    if (Get())
-    {
-      stream << Get()->GetType();
-      Get()->Serialize(stream);
-      stream << GetTimestamp();
-    }
   }
 
   inline void SetTimestamp(const rrlib::time::tTimestamp& timestamp)

@@ -38,6 +38,7 @@
 // Internal includes with ""
 //----------------------------------------------------------------------
 #include "plugins/data_ports/type_traits.h"
+#include "plugins/data_ports/common/tConversionConnector.h"
 
 //----------------------------------------------------------------------
 // Debugging
@@ -76,8 +77,7 @@ tAbstractDataPort::tAbstractDataPort(const tAbstractDataPortCreationInfo& create
   changed(static_cast<int8_t>(tChangeStatus::CHANGED_INITIAL)),
   custom_changed_flag(tChangeStatus::CHANGED_INITIAL),
   strategy(-1),
-  min_net_update_time(create_info.min_net_update_interval),
-  port_listener(NULL)
+  port_listener(nullptr)
 {
 }
 
@@ -92,7 +92,7 @@ tAbstractDataPort::~tAbstractDataPort()
 core::tAbstractPortCreationInfo tAbstractDataPort::AdjustPortCreationInfo(const tAbstractDataPortCreationInfo& create_info)
 {
   core::tAbstractPortCreationInfo result = create_info;
-  assert(result.data_type != NULL);
+  assert(result.data_type);
   if (IsCheaplyCopiedType(result.data_type))
   {
     // no priority flag set...if "cheaply copyable type" set to EXPRESS_PORT, because it does not hurt
@@ -107,10 +107,19 @@ void tAbstractDataPort::ConsiderInitialReversePush(tAbstractDataPort& target)
   {
     if (ReversePushStrategy() && CountOutgoingConnections() == 1)
     {
-      FINROC_LOG_PRINT(DEBUG_VERBOSE_1, "Performing initial reverse push from ", target.GetQualifiedName(), " to ", GetQualifiedName());
+      FINROC_LOG_PRINT(DEBUG_VERBOSE_1, "Performing initial reverse push from ", target, " to ", (*this));
       target.InitialPushTo(*this, true);
     }
   }
+}
+
+core::tConnector* tAbstractDataPort::CreateConnector(tAbstractPort& destination, const core::tConnectOptions& connect_options)
+{
+  if (connect_options.conversion_operations.Size() == 0 && this->GetDataType() == destination.GetDataType())
+  {
+    return tAbstractPort::CreateConnector(destination, connect_options);
+  }
+  return new tConversionConnector(*this, destination, connect_options);
 }
 
 void tAbstractDataPort::ForwardStrategy(int16_t strategy2, tAbstractDataPort* push_wanter)
@@ -120,40 +129,9 @@ void tAbstractDataPort::ForwardStrategy(int16_t strategy2, tAbstractDataPort* pu
     tAbstractDataPort& port = static_cast<tAbstractDataPort&>(it->Source());
     if (push_wanter || port.GetStrategy() != strategy2)
     {
-      port.PropagateStrategy(push_wanter, NULL);
+      port.PropagateStrategy(push_wanter, nullptr);
     }
   }
-}
-
-int16_t tAbstractDataPort::GetMinNetworkUpdateIntervalForSubscription() const
-{
-  int16_t result = std::numeric_limits<short>::max();
-  int16_t t = 0;
-
-  for (auto it = OutgoingConnectionsBegin(); it != OutgoingConnectionsEnd(); ++it)
-  {
-    tAbstractDataPort& port = static_cast<tAbstractDataPort&>(it->Destination());
-    if (port.GetStrategy() > 0)
-    {
-      if ((t = port.min_net_update_time) >= 0 && t < result)
-      {
-        result = t;
-      }
-    }
-  }
-  for (auto it = IncomingConnectionsBegin(); it != IncomingConnectionsEnd(); ++it)
-  {
-    tAbstractDataPort& port = static_cast<tAbstractDataPort&>(it->Source());
-    if (port.GetFlag(tFlag::PUSH_STRATEGY_REVERSE))
-    {
-      if ((t = port.min_net_update_time) >= 0 && t < result)
-      {
-        result = t;
-      }
-    }
-  }
-
-  return result == std::numeric_limits<short>::max() ? -1 : result;
 }
 
 int16_t tAbstractDataPort::GetStrategyRequirement() const
@@ -185,7 +163,7 @@ void tAbstractDataPort::OnConnect(tAbstractPort& partner, bool partner_is_destin
   }
   if (partner_is_destination)
   {
-    (static_cast<tAbstractDataPort&>(partner)).PropagateStrategy(NULL, this);
+    (static_cast<tAbstractDataPort&>(partner)).PropagateStrategy(nullptr, this);
 
     // check whether we need an initial reverse push
     this->ConsiderInitialReversePush(static_cast<tAbstractDataPort&>(partner));
@@ -205,8 +183,8 @@ void tAbstractDataPort::OnDisconnect(tAbstractPort& partner, bool partner_is_des
       static_cast<tAbstractDataPort&>(partner).strategy = -1;
     }
 
-    static_cast<tAbstractDataPort&>(partner).PropagateStrategy(NULL, NULL);
-    this->PropagateStrategy(NULL, NULL);
+    static_cast<tAbstractDataPort&>(partner).PropagateStrategy(nullptr, nullptr);
+    this->PropagateStrategy(nullptr, nullptr);
   }
   else
   {
@@ -263,7 +241,7 @@ bool tAbstractDataPort::PropagateStrategy(tAbstractDataPort* push_wanter, tAbstr
     {
       if (IsReady() && push_wanter->IsReady() && (!GetFlag(tFlag::NO_INITIAL_PUSHING)) && (!push_wanter->GetFlag(tFlag::NO_INITIAL_PUSHING)))
       {
-        FINROC_LOG_PRINT(DEBUG_VERBOSE_1, "Performing initial push from ", GetQualifiedName(), " to ", push_wanter->GetQualifiedName());
+        FINROC_LOG_PRINT(DEBUG_VERBOSE_1, "Performing initial push from ", (*this), " to ", (*push_wanter));
         InitialPushTo(*push_wanter, false);
       }
       push_wanter = NULL;
@@ -308,24 +286,7 @@ void tAbstractDataPort::SetHijacked(bool hijacked)
     return;
   }
   SetFlag(tFlag::HIJACKED_PORT, hijacked);
-  PropagateStrategy(NULL, NULL);
-}
-
-void tAbstractDataPort::SetMinNetUpdateInterval(rrlib::time::tDuration& new_interval)
-{
-  int64_t ms = std::chrono::duration_cast<std::chrono::milliseconds>(new_interval).count();
-  int16_t interval = std::min<int64_t>(ms < 0 ? 0 : ms, std::numeric_limits<int16_t>::max()); // adjust value to valid range
-  SetMinNetUpdateIntervalRaw(interval);
-}
-
-void tAbstractDataPort::SetMinNetUpdateIntervalRaw(int16_t new_interval)
-{
-  tLock lock(GetStructureMutex());
-  if (min_net_update_time != new_interval)
-  {
-    min_net_update_time = new_interval;
-    PublishUpdatedInfo(core::tRuntimeListener::tEvent::CHANGE);
-  }
+  PropagateStrategy(nullptr, nullptr);
 }
 
 void tAbstractDataPort::SetPushStrategy(bool push)
@@ -336,7 +297,7 @@ void tAbstractDataPort::SetPushStrategy(bool push)
     return;
   }
   SetFlag(tFlag::PUSH_STRATEGY, push);
-  PropagateStrategy(NULL, NULL);
+  PropagateStrategy(nullptr, nullptr);
 }
 
 void tAbstractDataPort::SetReversePushStrategy(bool push)
@@ -355,7 +316,7 @@ void tAbstractDataPort::SetReversePushStrategy(bool push)
       tAbstractDataPort& port = static_cast<tAbstractDataPort&>(it->Destination());
       if (port.IsReady())
       {
-        FINROC_LOG_PRINT(DEBUG_VERBOSE_1, "Performing initial reverse push from ", port.GetQualifiedName(), " to ", GetQualifiedName());
+        FINROC_LOG_PRINT(DEBUG_VERBOSE_1, "Performing initial reverse push from ", port, " to ", (*this));
         port.InitialPushTo(*this, true);
         break;
       }

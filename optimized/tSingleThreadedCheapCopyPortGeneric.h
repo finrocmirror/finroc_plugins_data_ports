@@ -106,6 +106,11 @@ public:
 
     tPublishingData(const tCurrentValueBuffer& value) : value(&value) {}
 
+    const rrlib::rtti::tGenericObject& GetObject()
+    {
+      return *value->data;
+    }
+
     template <typename T>
     T Value()
     {

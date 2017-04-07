@@ -14,11 +14,7 @@
       numeric/*
       standard/*
       optimized/*
-    </sources>
-  </library>
 
-  <library name="api">
-    <sources>
       tGenericPort.h
       tInputPort.h
       tOutputPort.h

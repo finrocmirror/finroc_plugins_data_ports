@@ -65,12 +65,6 @@ namespace data_ports
 template<typename T>
 class tPort;
 
-namespace common
-{
-template <typename TPort, typename TPublishingData, typename TManager>
-class tPullOperation;
-}
-
 namespace optimized
 {
 //----------------------------------------------------------------------
@@ -480,6 +474,11 @@ public:
       }
     }
 
+    const rrlib::rtti::tGenericObject& GetObject()
+    {
+      return published_buffer->GetObject();
+    }
+
     /*!
      * Reinitializes publishing data with adjusted buffer
      */
@@ -571,6 +570,11 @@ public:
         recycler(published_buffer);
         published_buffer = NULL;
       }
+    }
+
+    const rrlib::rtti::tGenericObject& GetObject()
+    {
+      return published_buffer->GetObject();
     }
 
     /*!

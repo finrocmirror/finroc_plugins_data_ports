@@ -301,15 +301,6 @@ void tStandardPort::NonStandardAssign(tPublishingData& publishing_data, tChangeS
   }
 }
 
-void tStandardPort::PrintStructure(int indent, std::stringstream& output) const
-{
-  tFrameworkElement::PrintStructure(indent, output);
-  if (multi_type_buffer_pool)
-  {
-    multi_type_buffer_pool->PrintStructure(indent + 2, output);
-  }
-}
-
 tStandardPort::tLockingManagerPointer tStandardPort::PullValueRaw(bool ignore_pull_request_handler_on_this_port)
 {
   common::tPullOperation<tStandardPort, tPublishingData, tPortBufferManager> pull_operation(200);

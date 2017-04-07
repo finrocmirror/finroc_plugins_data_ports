@@ -19,31 +19,33 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 //
 //----------------------------------------------------------------------
-/*!\file    plugins/data_ports/optimized/tPullRequestHandlerRaw.h
+/*!\file    plugins/data_ports/common/tConversionConnector.h
  *
  * \author  Max Reichardt
  *
- * \date    2012-11-04
+ * \date    2016-08-26
  *
- * \brief   Contains tPullRequestHandlerRaw
+ * \brief   Contains tConversionConnector
  *
- * \b tPullRequestHandlerRaw
+ * \b tConversionConnector
  *
- * Can be used to handle pull requests of - typically - output ports
+ * Port connector with type conversion attached
  *
  */
 //----------------------------------------------------------------------
-#ifndef __plugins__data_ports__optimized__tPullRequestHandlerRaw_h__
-#define __plugins__data_ports__optimized__tPullRequestHandlerRaw_h__
+#ifndef __plugins__data_ports__common__tConversionConnector_h__
+#define __plugins__data_ports__common__tConversionConnector_h__
 
 //----------------------------------------------------------------------
 // External includes (system with <>, local with "")
 //----------------------------------------------------------------------
-#include "rrlib/util/tNoncopyable.h"
+#include "rrlib/rtti_conversion/tCompiledConversionOperation.h"
+#include "core/port/tConnector.h"
 
 //----------------------------------------------------------------------
 // Internal includes with ""
 //----------------------------------------------------------------------
+#include "plugins/data_ports/definitions.h"
 
 //----------------------------------------------------------------------
 // Namespace declaration
@@ -52,23 +54,21 @@ namespace finroc
 {
 namespace data_ports
 {
-namespace optimized
+namespace common
 {
 
 //----------------------------------------------------------------------
 // Forward declarations / typedefs / enums
 //----------------------------------------------------------------------
-class tCheapCopyPort;
-class tCheaplyCopiedBufferManager;
 
 //----------------------------------------------------------------------
 // Class declaration
 //----------------------------------------------------------------------
-//! Pull Request handler interface for cheap copy ports.
+//! Conversion Connector
 /*!
- * Can be used to handle pull requests of - typically - output ports
+ * Port connector with type conversion attached
  */
-class tPullRequestHandlerRaw : private rrlib::util::tNoncopyable
+class tConversionConnector : public core::tConnector
 {
 
 //----------------------------------------------------------------------
@@ -76,17 +76,33 @@ class tPullRequestHandlerRaw : private rrlib::util::tNoncopyable
 //----------------------------------------------------------------------
 public:
 
-  virtual ~tPullRequestHandlerRaw() = default;
+  /*!
+   * \param source_port Source Port
+   * \param destination_port Destination Port
+   * \param connect_options Connect options for this connector
+   */
+  tConversionConnector(core::tAbstractPort& source_port, core::tAbstractPort& destination_port, const core::tConnectOptions& connect_options);
+
+  ~tConversionConnector();
 
   /*!
-   * Called whenever a pull request is intercepted
+   * Convert and publish data via this connector
    *
-   * \param origin (Output) Port pull request comes from
-   * \param result_buffer Buffer with result
-   * \return Was pull request handled (and result buffer filled) - or should it be handled by port in the standard way (now)?
+   * \param input_data Input data (to convert and publish)
+   * \param change_constant Change constant to use
    */
-  virtual bool RawPullRequest(tCheapCopyPort& origin, tCheaplyCopiedBufferManager& result_buffer) = 0;
+  void Publish(const rrlib::rtti::tGenericObject& input_data, tChangeStatus change_constant) const;
 
+//----------------------------------------------------------------------
+// Private fields and methods
+//----------------------------------------------------------------------
+private:
+
+  /*! Compiled conversion operation */
+  const rrlib::rtti::conversion::tCompiledConversionOperation conversion_operation;
+
+  /*! Destination port as generic port */
+  void* destination_port_generic_memory[2];
 };
 
 //----------------------------------------------------------------------

@@ -68,12 +68,6 @@ namespace data_ports
 template<typename T>
 class tPort;
 
-namespace common
-{
-template <typename TPort, typename TPublishingData, typename TManager>
-class tPullOperation;
-}
-
 namespace standard
 {
 class tMultiTypePortBufferPool;
@@ -368,6 +362,11 @@ protected:
 
     void CheckRecycle() {}
 
+    const rrlib::rtti::tGenericObject& GetObject()
+    {
+      return published_buffer->GetObject();
+    }
+
     void Init(tPortBufferManager* published)
     {
       assert(!published_buffer);
@@ -533,8 +532,6 @@ private:
       GetPortListener()->PortChangedRaw(change_context, publishing_data.ReferenceCounter(), *publishing_data.published_buffer);
     }
   }
-
-  virtual void PrintStructure(int indent, std::stringstream& output) const override;
 
   /*!
    * Publish data

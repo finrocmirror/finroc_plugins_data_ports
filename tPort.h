@@ -289,14 +289,6 @@ public:
     tImplementation::SetDefault(*GetWrapped(), new_default);
   }
 
-  /*!
-   * \param interval Minimum Network Update Interval
-   */
-  inline void SetMinNetUpdateInterval(rrlib::time::tDuration new_interval)
-  {
-    GetWrapped()->SetMinNetUpdateInterval(new_interval);
-  }
-
 //  /*
 //   * Set default value
 //   * This must be done before the port is used/initialized.

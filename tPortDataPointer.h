@@ -230,9 +230,9 @@ private:
   friend class api::tPortDataPointerImplementation;
 
   template <typename U>
-  friend rrlib::serialization::tOutputStream& operator << (rrlib::serialization::tOutputStream& stream, const tPortDataPointer<U>& data);
+  friend typename std::enable_if < (!std::is_same<typename std::remove_const<U>::type, rrlib::rtti::tGenericObject>::value), rrlib::serialization::tOutputStream >::type& operator << (rrlib::serialization::tOutputStream& stream, const tPortDataPointer<U>& data);
   template <typename U>
-  friend rrlib::serialization::tInputStream& operator >> (rrlib::serialization::tInputStream& stream, tPortDataPointer<U>& data);
+  friend typename std::enable_if < (!std::is_same<typename std::remove_const<U>::type, rrlib::rtti::tGenericObject>::value), rrlib::serialization::tInputStream >::type& operator >> (rrlib::serialization::tInputStream& stream, tPortDataPointer<U>& data);
 
   friend class data_compression::tPlugin;
 
@@ -242,14 +242,14 @@ private:
 
 
 template <typename T>
-rrlib::serialization::tOutputStream& operator << (rrlib::serialization::tOutputStream& stream, const tPortDataPointer<T>& data)
+typename std::enable_if < (!std::is_same<typename std::remove_const<T>::type, rrlib::rtti::tGenericObject>::value), rrlib::serialization::tOutputStream >::type& operator << (rrlib::serialization::tOutputStream& stream, const tPortDataPointer<T>& data)
 {
   data.implementation.Serialize(stream);
   return stream;
 }
 
 template <typename T>
-rrlib::serialization::tInputStream& operator >> (rrlib::serialization::tInputStream& stream, tPortDataPointer<T>& data)
+typename std::enable_if < (!std::is_same<typename std::remove_const<T>::type, rrlib::rtti::tGenericObject>::value), rrlib::serialization::tInputStream >::type& operator >> (rrlib::serialization::tInputStream& stream, tPortDataPointer<T>& data)
 {
   data.implementation.Deserialize(stream);
   return stream;

@@ -44,6 +44,7 @@
 //----------------------------------------------------------------------
 // Internal includes with ""
 //----------------------------------------------------------------------
+#include "plugins/data_ports/common/tConversionConnector.h"
 
 //----------------------------------------------------------------------
 // Namespace declaration
@@ -130,10 +131,17 @@ public:
     {
       for (auto it = port.OutgoingConnectionsBegin(); it != port.OutgoingConnectionsEnd(); ++it)
       {
-        TPort& destination_port = static_cast<TPort&>(it->Destination());
-        if (destination_port.template WantsPush<REVERSE, CHANGE_CONSTANT>())
+        if (static_cast<const common::tAbstractDataPort&>(it->Destination()).template WantsPush<REVERSE, CHANGE_CONSTANT>())
         {
-          Receive<REVERSE, CHANGE_CONSTANT>(*this, destination_port, port);
+          if (it->Flags().Get(core::tConnectionFlag::CONVERSION))
+          {
+            static_cast<const tConversionConnector&>(*it).Publish(this->GetObject(), CHANGE_CONSTANT);
+          }
+          else
+          {
+            TPort& destination_port = static_cast<TPort&>(it->Destination());
+            Receive<REVERSE, CHANGE_CONSTANT>(*this, destination_port, port);
+          }
         }
       }
     }
@@ -143,9 +151,9 @@ public:
       // reverse
       for (auto it = port.IncomingConnectionsBegin(); it != port.IncomingConnectionsEnd(); ++it)
       {
-        TPort& destination_port = static_cast<TPort&>(it->Source());
-        if (destination_port.template WantsPush<true, CHANGE_CONSTANT>())
+        if (static_cast<const common::tAbstractDataPort&>(it->Source()).template WantsPush<true, CHANGE_CONSTANT>() && (!it->Flags().Get(core::tConnectionFlag::CONVERSION)))
         {
+          TPort& destination_port = static_cast<TPort&>(it->Source());
           Receive<true, CHANGE_CONSTANT>(*this, destination_port, port);
         }
       }
@@ -175,19 +183,26 @@ public:
       // forward
       for (auto it = port.OutgoingConnectionsBegin(); it != port.OutgoingConnectionsEnd(); ++it)
       {
-        TPort& destination_port = static_cast<TPort&>(it->Destination());
-        if (destination_port.template WantsPush<false, CHANGE_CONSTANT>())
+        if (static_cast<const common::tAbstractDataPort&>(it->Destination()).template WantsPush<REVERSE, CHANGE_CONSTANT>())
         {
-          Receive<false, CHANGE_CONSTANT>(publishing_data, destination_port, port);
+          if (it->Flags().Get(core::tConnectionFlag::CONVERSION))
+          {
+            static_cast<const tConversionConnector&>(*it).Publish(publishing_data.GetObject(), CHANGE_CONSTANT);
+          }
+          else
+          {
+            TPort& destination_port = static_cast<TPort&>(it->Destination());
+            Receive<false, CHANGE_CONSTANT>(publishing_data, destination_port, port);
+          }
         }
       }
 
       // reverse
       for (auto it = port.IncomingConnectionsBegin(); it != port.IncomingConnectionsEnd(); ++it)
       {
-        TPort& destination_port = static_cast<TPort&>(it->Source());
-        if (&destination_port != &origin && destination_port.template WantsPush<true, CHANGE_CONSTANT>())
+        if (&it->Source() != &origin && static_cast<const common::tAbstractDataPort&>(it->Source()).template WantsPush<true, CHANGE_CONSTANT>() && (!it->Flags().Get(core::tConnectionFlag::CONVERSION)))
         {
+          TPort& destination_port = static_cast<TPort&>(it->Source());
           Receive<true, CHANGE_CONSTANT>(publishing_data, destination_port, port);
         }
       }
@@ -208,7 +223,7 @@ private:
   __attribute__((noinline))
   static void PrintWarning(TPort& port, const char* warning)
   {
-    FINROC_LOG_PRINT_STATIC(WARNING, "Port '", port.GetQualifiedName(), "' ", warning);
+    FINROC_LOG_PRINT_STATIC(WARNING, "Port '", port, "' ", warning);
   }
 
 };
