@@ -122,6 +122,16 @@ public:
     return tPortPack < TPort, TTypeList, Tsize - 1 >::GetPort(index);
   }
 
+  inline bool HasChanged(size_t index)
+  {
+    assert(index < this->NumberOfPorts());
+    if (index == Tsize - 1)
+    {
+      return this->port.HasChanged();
+    }
+    return tPortPack < TPort, TTypeList, Tsize - 1 >::HasChanged(index);
+  }
+
   inline void ManagedDelete()
   {
     this->port.GetWrapped()->ManagedDelete();
@@ -153,6 +163,12 @@ struct tPortPack <TPort, TTypeList, 0>
   {
     return *reinterpret_cast<core::tPortWrapperBase *>(0);
   };
+
+  inline bool HasChanged(size_t index)
+  {
+    return false;
+  };
+
   inline void ManagedDelete()
   {}
 };
