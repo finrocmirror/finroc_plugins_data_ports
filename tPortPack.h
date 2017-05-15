@@ -76,6 +76,9 @@ template <template <typename> class TPort, typename TTypeList, size_t Tsize = rr
 class tPortPack : private tPortPack < TPort, TTypeList, Tsize - 1 >
 {
 
+  template <bool value, typename>
+  using CheckIterators = std::integral_constant<bool, value>;
+
 //----------------------------------------------------------------------
 // Public methods and typedefs
 //----------------------------------------------------------------------
@@ -88,10 +91,18 @@ public:
     this->port.Init();
   }
 
-  template <typename TIterator>
+  template <typename TIterator, typename std::enable_if<CheckIterators<(Tsize> 1), TIterator>::value, int>::type = 0 >
+      inline tPortPack(core::tFrameworkElement *parent, TIterator names_begin, TIterator names_end) :
+        tPortPack < TPort, TTypeList, Tsize - 1 > (parent, names_begin, names_end - 1),
+        port(*(names_end - 1), parent)
+  {
+    this->port.Init();
+  }
+
+  template <typename TIterator, typename std::enable_if<CheckIterators<(Tsize == 1), TIterator>::value, int>::type = 0>
   inline tPortPack(core::tFrameworkElement *parent, TIterator names_begin, TIterator names_end) :
-    tPortPack < TPort, TTypeList, Tsize - 1 > (parent, names_begin, names_end - 1),
-    port(names_end - 1, parent)
+    tPortPack < TPort, TTypeList, Tsize - 1 > (parent, *names_begin),
+    port(*names_begin, parent)
   {
     this->port.Init();
   }
@@ -133,6 +144,11 @@ struct tPortPack <TPort, TTypeList, 0>
 {
   inline tPortPack(core::tFrameworkElement *parent, const std::string &name_prefix)
   {}
+
+  template <typename TIterator>
+  inline tPortPack(core::tFrameworkElement *parent, TIterator names_begin, TIterator names_end)
+  {}
+
   inline core::tPortWrapperBase &GetPort(size_t index)
   {
     return *reinterpret_cast<core::tPortWrapperBase *>(0);
