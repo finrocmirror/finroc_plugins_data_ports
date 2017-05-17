@@ -43,6 +43,7 @@
 #include "plugins/data_ports/tOutputPort.h"
 #include "plugins/data_ports/tProxyPort.h"
 #include "plugins/data_ports/tThreadLocalBufferManagement.h"
+#include "plugins/data_ports/tPortPack.h"
 
 //----------------------------------------------------------------------
 // Debugging
@@ -371,6 +372,7 @@ class DataPortsTestCollection : public rrlib::util::tUnitTestSuite
 {
   RRLIB_UNIT_TESTS_BEGIN_SUITE(DataPortsTestCollection);
   RRLIB_UNIT_TESTS_ADD_TEST(Test);
+  RRLIB_UNIT_TESTS_ADD_TEST(PortPack);
   RRLIB_UNIT_TESTS_END_SUITE;
 
   void Test()
@@ -396,6 +398,29 @@ class DataPortsTestCollection : public rrlib::util::tUnitTestSuite
     TestOutOfBoundsPublish();
     TestHijackedPublishing<int>(42);
     TestGenericPorts<bool>(true, false);
+  }
+
+  void PortPack()
+  {
+    auto parent = new core::tFrameworkElement(&core::tRuntimeEnvironment::GetInstance(), "TestPortPack");
+
+    using tTypeList = rrlib::util::tTypeList<int, double, std::string, bool>;
+    data_ports::tPortPack<tInputPort, tTypeList> ports(parent, "X");
+
+    RRLIB_UNIT_TESTS_EQUALITY(tTypeList::cSIZE, ports.NumberOfPorts());
+
+    for (size_t i = 0; i < tTypeList::cSIZE; ++i)
+    {
+      RRLIB_UNIT_TESTS_EQUALITY("X" + std::to_string(i + 1), ports.GetPort(i).GetName());
+    }
+
+    std::array<std::string, tTypeList::cSIZE> names {"foo", "bar", "baz", "fnord"};
+    data_ports::tPortPack<tInputPort, tTypeList> named_ports(parent, names.begin(), names.end());
+
+    for (size_t i = 0; i < tTypeList::cSIZE; ++i)
+    {
+      RRLIB_UNIT_TESTS_EQUALITY(names[i], named_ports.GetPort(i).GetName());
+    }
   }
 };
 
