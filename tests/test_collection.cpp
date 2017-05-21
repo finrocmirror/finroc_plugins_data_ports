@@ -45,6 +45,8 @@
 #include "plugins/data_ports/tThreadLocalBufferManagement.h"
 #include "plugins/data_ports/tPortPack.h"
 
+#include "plugins/structure/tModule.h"
+
 //----------------------------------------------------------------------
 // Debugging
 //----------------------------------------------------------------------
@@ -368,11 +370,41 @@ void TestGenericPorts(T value_to_publish, T another_value)
   parent->ManagedDelete();
 }
 
+struct mTestModule : structure::tModule
+{
+  using tModule::tModule;
+  void Update() override {}
+};
+
+template <typename ... T, typename NAMES>
+void PortPackTestHelper(core::tFrameworkElement *parent, const std::initializer_list<NAMES> &names_initializer)
+{
+  data_ports::tPortPack<mTestModule::tInput, T...> ports(parent, "X");
+
+  RRLIB_UNIT_TESTS_EQUALITY(sizeof...(T), ports.NumberOfPorts());
+  for (size_t i = 0; i < sizeof...(T); ++i)
+  {
+    RRLIB_UNIT_TESTS_EQUALITY("X" + std::to_string(i), ports.GetPort(i).GetName());
+  }
+
+  std::array<NAMES, sizeof...(T)> names;
+  assert(names_initializer.size() == names.size());
+  std::copy(names_initializer.begin(), names_initializer.end(), names.begin());
+  data_ports::tPortPack<tInputPort, T...> named_ports(parent, names.begin(), names.end());
+
+  RRLIB_UNIT_TESTS_EQUALITY(sizeof...(T), named_ports.NumberOfPorts());
+  for (size_t i = 0; i < sizeof...(T); ++i)
+  {
+    RRLIB_UNIT_TESTS_EQUALITY(std::string(names[i]), named_ports.GetPort(i).GetName());
+  }
+}
+
 class DataPortsTestCollection : public rrlib::util::tUnitTestSuite
 {
   RRLIB_UNIT_TESTS_BEGIN_SUITE(DataPortsTestCollection);
   RRLIB_UNIT_TESTS_ADD_TEST(Test);
   RRLIB_UNIT_TESTS_ADD_TEST(PortPack);
+  RRLIB_UNIT_TESTS_ADD_TEST(PortPackLegacy);
   RRLIB_UNIT_TESTS_END_SUITE;
 
   void Test()
@@ -402,10 +434,21 @@ class DataPortsTestCollection : public rrlib::util::tUnitTestSuite
 
   void PortPack()
   {
-    auto parent = new core::tFrameworkElement(&core::tRuntimeEnvironment::GetInstance(), "TestPortPack");
+    auto parent = new mTestModule(&core::tRuntimeEnvironment::GetInstance(), "TestModule");
+
+    PortPackTestHelper<int, double, std::string, bool>(parent, {"foo", "bar", "baz", "fnord"});
+
+    std::array<std::string, 0> empty_names;
+    RRLIB_UNIT_TESTS_EQUALITY(size_t(0), data_ports::tPortPack<mTestModule::tInput>(parent, "X").NumberOfPorts());
+    RRLIB_UNIT_TESTS_EQUALITY(size_t(0), data_ports::tPortPack<mTestModule::tInput>(parent, empty_names.begin(), empty_names.end()).NumberOfPorts());
+  }
+
+  void PortPackLegacy()
+  {
+    auto parent = new mTestModule(&core::tRuntimeEnvironment::GetInstance(), "TestModule");
 
     using tTypeList = rrlib::util::tTypeList<int, double, std::string, bool>;
-    data_ports::tPortPack<tInputPort, tTypeList> ports(parent, "X");
+    data_ports::tPortPack<mTestModule::tInput, tTypeList> ports(parent, "X");
 
     RRLIB_UNIT_TESTS_EQUALITY(tTypeList::cSIZE, ports.NumberOfPorts());
 
@@ -415,7 +458,7 @@ class DataPortsTestCollection : public rrlib::util::tUnitTestSuite
     }
 
     std::array<std::string, tTypeList::cSIZE> names {"foo", "bar", "baz", "fnord"};
-    data_ports::tPortPack<tInputPort, tTypeList> named_ports(parent, names.begin(), names.end());
+    data_ports::tPortPack<mTestModule::tInput, tTypeList> named_ports(parent, names.begin(), names.end());
 
     for (size_t i = 0; i < tTypeList::cSIZE; ++i)
     {
