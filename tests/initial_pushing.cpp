@@ -96,7 +96,7 @@ void TestInitialPushing(const std::array<T, 9>& test_values)
   // Create initial set of ports
   tOutputPort<T> output_port("Output Port", parent);
   tInputPort<T> input_port("Input Port", parent);
-  tOutputPort<T> output_port_reverse("Output Port with reverse pushing", core::tFrameworkElement::tFlag::PUSH_STRATEGY_REVERSE, parent);
+  tOutputPort<T> output_port_2("Another output port", parent);
   core::tFrameworkElement::InitAll();
 
   // Fill output port with something
@@ -104,21 +104,15 @@ void TestInitialPushing(const std::array<T, 9>& test_values)
 
   // Connect to other ports and check their values
   output_port.ConnectTo(input_port);
-  output_port_reverse.ConnectTo(input_port);
+  output_port_2.ConnectTo(input_port);
   CheckPortValue(input_port, test_values[0]);
-  CheckPortValue(output_port_reverse, test_values[0]);
 
   // Change strategy and see if everything behaves as expected
   input_port.SetPushStrategy(false);
   output_port.Publish(test_values[1]);
   input_port.SetPushStrategy(true);
   CheckPortValue(input_port, test_values[0]); // expects old value because we have two sources => no push
-  CheckPortValue(output_port_reverse, test_values[0]);
-  output_port_reverse.SetReversePushStrategy(false);
   output_port.Publish(test_values[2]);
-  CheckPortValue(output_port_reverse, test_values[0]);
-  output_port_reverse.SetReversePushStrategy(true);
-  CheckPortValue(output_port_reverse, test_values[2]);
 
   // now for a complex net
   FINROC_LOG_PRINT(DEBUG_VERBOSE_1, "\nNow for a complex net...");

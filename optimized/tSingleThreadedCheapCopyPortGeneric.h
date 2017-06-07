@@ -293,7 +293,7 @@ private:
   }
 
   virtual int GetMaxQueueLengthImplementation() const override;
-  virtual void InitialPushTo(tAbstractPort& target, bool reverse) override;
+  virtual void InitialPushTo(core::tConnector& connector) override;
 
   /*!
    * Notify any port listeners of data change

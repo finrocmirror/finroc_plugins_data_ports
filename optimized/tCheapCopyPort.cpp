@@ -169,22 +169,22 @@ std::string tCheapCopyPort::BrowserPublishRaw(tUnusedManagerPointer& buffer, boo
     {
       if (change_constant == tChangeStatus::CHANGED_INITIAL)
       {
-        data.Execute<false, tChangeStatus::CHANGED_INITIAL, true, true>(*this);
+        data.Execute<tChangeStatus::CHANGED_INITIAL, true, true>(*this);
       }
       else
       {
-        data.Execute<false, tChangeStatus::CHANGED, true, true>(*this);
+        data.Execute<tChangeStatus::CHANGED, true, true>(*this);
       }
     }
     else
     {
       if (change_constant == tChangeStatus::CHANGED_INITIAL)
       {
-        data.Execute<false, tChangeStatus::CHANGED_INITIAL, true, false>(*this);
+        data.Execute<tChangeStatus::CHANGED_INITIAL, true, false>(*this);
       }
       else
       {
-        data.Execute<false, tChangeStatus::CHANGED, true, false>(*this);
+        data.Execute<tChangeStatus::CHANGED, true, false>(*this);
       }
     }
   }
@@ -195,22 +195,22 @@ std::string tCheapCopyPort::BrowserPublishRaw(tUnusedManagerPointer& buffer, boo
     {
       if (change_constant == tChangeStatus::CHANGED_INITIAL)
       {
-        data.Execute<false, tChangeStatus::CHANGED_INITIAL, true, true>(*this);
+        data.Execute<tChangeStatus::CHANGED_INITIAL, true, true>(*this);
       }
       else
       {
-        data.Execute<false, tChangeStatus::CHANGED, true, true>(*this);
+        data.Execute<tChangeStatus::CHANGED, true, true>(*this);
       }
     }
     else
     {
       if (change_constant == tChangeStatus::CHANGED_INITIAL)
       {
-        data.Execute<false, tChangeStatus::CHANGED_INITIAL, true, false>(*this);
+        data.Execute<tChangeStatus::CHANGED_INITIAL, true, false>(*this);
       }
       else
       {
-        data.Execute<false, tChangeStatus::CHANGED, true, false>(*this);
+        data.Execute<tChangeStatus::CHANGED, true, false>(*this);
       }
     }
   }
@@ -277,7 +277,7 @@ void tCheapCopyPort::ForwardData(tAbstractDataPort& other)
     if (tThreadLocalBufferPools::Get() == current_buffer->GetThreadLocalOrigin()) // Is current thread the owner thread?
     {
       common::tPublishOperation<tCheapCopyPort, tPublishingDataThreadLocalBuffer> data(static_cast<tThreadLocalBufferManager*>(current_buffer.GetPointer()), false);
-      data.Execute<false, tChangeStatus::CHANGED, false, false>(static_cast<tCheapCopyPort&>(other));
+      data.Execute<tChangeStatus::CHANGED, false, false>(static_cast<tCheapCopyPort&>(other));
       return;
     }
 
@@ -293,7 +293,7 @@ void tCheapCopyPort::ForwardData(tAbstractDataPort& other)
       if (current_raw == current_raw_2)    // still valid??
       {
         common::tPublishOperation<tCheapCopyPort, tPublishingDataThreadLocalBuffer> data(static_cast<tThreadLocalBufferManager*>(current_buffer.GetPointer()), true);
-        data.Execute<false, tChangeStatus::CHANGED, false, false>(static_cast<tCheapCopyPort&>(other));
+        data.Execute<tChangeStatus::CHANGED, false, false>(static_cast<tCheapCopyPort&>(other));
         return;
       }
       current_buffer = current_raw_2;
@@ -304,7 +304,7 @@ void tCheapCopyPort::ForwardData(tAbstractDataPort& other)
     tUnusedManagerPointer unused_manager = tUnusedManagerPointer(tGlobalBufferPools::Instance().GetUnusedBuffer(cheaply_copyable_type_index).release());
     CopyCurrentValueToManager(*unused_manager, tStrategy::NEVER_PULL);
     common::tPublishOperation<tCheapCopyPort, tPublishingDataGlobalBuffer> data(unused_manager);
-    data.Execute<false, tChangeStatus::CHANGED, false, false>(static_cast<tCheapCopyPort&>(other));
+    data.Execute<tChangeStatus::CHANGED, false, false>(static_cast<tCheapCopyPort&>(other));
   }
 }
 
@@ -378,21 +378,14 @@ int tCheapCopyPort::GetMaxQueueLengthImplementation() const
 //}
 //
 
-void tCheapCopyPort::InitialPushTo(tAbstractPort& target, bool reverse)
+void tCheapCopyPort::InitialPushTo(core::tConnector& connector)
 {
   // this is a one-time event => use global buffer
   tUnusedManagerPointer unused_manager(tGlobalBufferPools::Instance().GetUnusedBuffer(cheaply_copyable_type_index).release());
   CopyCurrentValueToManager(*unused_manager, tStrategy::NEVER_PULL);
   common::tPublishOperation<tCheapCopyPort, tPublishingDataGlobalBuffer> data(unused_manager);
-  tCheapCopyPort& target_port = static_cast<tCheapCopyPort&>(target);
-  if (reverse)
-  {
-    common::tPublishOperation<tCheapCopyPort, tPublishingDataGlobalBuffer>::Receive<true, tChangeStatus::CHANGED_INITIAL>(data, target_port, *this);
-  }
-  else
-  {
-    common::tPublishOperation<tCheapCopyPort, tPublishingDataGlobalBuffer>::Receive<false, tChangeStatus::CHANGED_INITIAL>(data, target_port, *this);
-  }
+  tCheapCopyPort& target_port = static_cast<tCheapCopyPort&>(connector.Destination());
+  common::tPublishOperation<tCheapCopyPort, tPublishingDataGlobalBuffer>::Receive<tChangeStatus::CHANGED_INITIAL>(data, target_port, *this);
 }
 
 void tCheapCopyPort::LockCurrentValueForPublishing(tPublishingDataGlobalBuffer& publishing_data)

@@ -178,22 +178,22 @@ void tStandardPort::BrowserPublish(tUnusedManagerPointer& data, bool notify_list
   {
     if (change_constant == tChangeStatus::CHANGED_INITIAL)
     {
-      PublishImplementation<false, tChangeStatus::CHANGED_INITIAL, true, true>(data);
+      PublishImplementation<tChangeStatus::CHANGED_INITIAL, true, true>(data);
     }
     else
     {
-      PublishImplementation<false, tChangeStatus::CHANGED, true, true>(data);
+      PublishImplementation<tChangeStatus::CHANGED, true, true>(data);
     }
   }
   else
   {
     if (change_constant == tChangeStatus::CHANGED_INITIAL)
     {
-      PublishImplementation<false, tChangeStatus::CHANGED_INITIAL, true, false>(data);
+      PublishImplementation<tChangeStatus::CHANGED_INITIAL, true, false>(data);
     }
     else
     {
-      PublishImplementation<false, tChangeStatus::CHANGED, true, false>(data);
+      PublishImplementation<tChangeStatus::CHANGED, true, false>(data);
     }
   }
 }
@@ -266,21 +266,14 @@ tStandardPort::tUnusedManagerPointer tStandardPort::GetUnusedBufferRaw(const rrl
   return buffer;
 }
 
-void tStandardPort::InitialPushTo(tAbstractPort& target, bool reverse)
+void tStandardPort::InitialPushTo(core::tConnector& connector)
 {
   tLockingManagerPointer manager = GetCurrentValueRaw(tStrategy::NEVER_PULL);
   assert(IsReady());
 
   common::tPublishOperation<tStandardPort, tPublishingData> data(manager, 1000);
-  tStandardPort& target_port = static_cast<tStandardPort&>(target);
-  if (reverse)
-  {
-    common::tPublishOperation<tStandardPort, tPublishingData>::Receive<true, tChangeStatus::CHANGED_INITIAL>(data, target_port, *this);
-  }
-  else
-  {
-    common::tPublishOperation<tStandardPort, tPublishingData>::Receive<false, tChangeStatus::CHANGED_INITIAL>(data, target_port, *this);
-  }
+  tStandardPort& target_port = static_cast<tStandardPort&>(connector.Destination());
+  common::tPublishOperation<tStandardPort, tPublishingData>::Receive<tChangeStatus::CHANGED_INITIAL>(data, target_port, *this);
 }
 
 void tStandardPort::LockCurrentValueForPublishing(tPublishingData& publishing_data)

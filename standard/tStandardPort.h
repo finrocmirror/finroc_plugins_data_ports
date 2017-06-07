@@ -255,11 +255,11 @@ public:
    */
   inline void Publish(tUnusedManagerPointer& data)
   {
-    PublishImplementation<false, tChangeStatus::CHANGED, false, false>(data);
+    PublishImplementation<tChangeStatus::CHANGED, false, false>(data);
   }
   inline void Publish(tLockingManagerPointer& data)
   {
-    PublishImplementation<false, tChangeStatus::CHANGED, false, false>(data);
+    PublishImplementation<tChangeStatus::CHANGED, false, false>(data);
   }
 
   /*!
@@ -489,8 +489,7 @@ private:
 
   virtual int GetMaxQueueLengthImplementation() const override;
 
-  // quite similar to publish
-  virtual void InitialPushTo(tAbstractPort& target, bool reverse) override;
+  virtual void InitialPushTo(core::tConnector& connector) override;
 
   /*!
    * \param publishing_data Info on current publish/pull operation
@@ -537,32 +536,17 @@ private:
    * Publish data
    *
    * \param data Data to publish
-   * \param reverse Value received in reverse direction?
    * \param changed_constant changedConstant to use
    */
-  inline void Publish(tUnusedManagerPointer& data, bool reverse, tChangeStatus changed_constant)
+  inline void Publish(tUnusedManagerPointer& data, tChangeStatus changed_constant)
   {
-    if (!reverse)
+    if (changed_constant == tChangeStatus::CHANGED)
     {
-      if (changed_constant == tChangeStatus::CHANGED)
-      {
-        PublishImplementation<false, tChangeStatus::CHANGED, false, false>(data);
-      }
-      else
-      {
-        PublishImplementation<false, tChangeStatus::CHANGED_INITIAL, false, false>(data);
-      }
+      PublishImplementation<tChangeStatus::CHANGED, false, false>(data);
     }
     else
     {
-      if (changed_constant == tChangeStatus::CHANGED)
-      {
-        PublishImplementation<true, tChangeStatus::CHANGED, false, false>(data);
-      }
-      else
-      {
-        PublishImplementation<true, tChangeStatus::CHANGED_INITIAL, false, false>(data);
-      }
+      PublishImplementation<tChangeStatus::CHANGED_INITIAL, false, false>(data);
     }
   }
 
@@ -574,11 +558,10 @@ private:
    * Should only be called on output ports
    *
    * \param data Data buffer
-   * \tparam REVERSE Publish in reverse direction? (typical is forward)
    * \tparam CHANGE_CONSTANT changedConstant to use
    * \tparam BROWSER_PUBLISH Inform this port's listeners on change and also publish in reverse direction? (only set from BrowserPublish())
    */
-  template <bool REVERSE, tChangeStatus CHANGE_CONSTANT, bool BROWSER_PUBLISH, bool NOTIFY_LISTENER_ON_THIS_PORT, typename TDeleter>
+  template <tChangeStatus CHANGE_CONSTANT, bool BROWSER_PUBLISH, bool NOTIFY_LISTENER_ON_THIS_PORT, typename TDeleter>
   inline void PublishImplementation(std::unique_ptr<tPortBufferManager, TDeleter>& data)
   {
     if (!(IsReady() || BROWSER_PUBLISH))
@@ -588,7 +571,7 @@ private:
     }
 
     common::tPublishOperation<tStandardPort, tPublishingData> publish_operation(data, 1000);
-    publish_operation.Execute<REVERSE, CHANGE_CONSTANT, BROWSER_PUBLISH, NOTIFY_LISTENER_ON_THIS_PORT>(*this);
+    publish_operation.Execute<CHANGE_CONSTANT, BROWSER_PUBLISH, NOTIFY_LISTENER_ON_THIS_PORT>(*this);
   }
 
   /*!

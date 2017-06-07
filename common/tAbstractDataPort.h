@@ -167,14 +167,6 @@ public:
   }
 
   /*!
-   * \return Is data to this port pushed or pulled (in reverse direction)?
-   */
-  inline bool ReversePushStrategy() const
-  {
-    return GetFlag(tFlag::PUSH_STRATEGY_REVERSE);
-  }
-
-  /*!
    * \param new_value New value for custom changed flag (for use by custom API - not used/accessed by core port classes.)
    */
   void SetCustomChangedFlag(tChangeStatus new_value)
@@ -207,13 +199,6 @@ public:
    * \param push Push data?
    */
   void SetPushStrategy(bool push);
-
-  /*!
-   * Set whether data should be pushed or pulled in reverse direction
-   *
-   * \param push Push data?
-   */
-  void SetReversePushStrategy(bool push);
 
 //----------------------------------------------------------------------
 // Protected methods
@@ -256,29 +241,16 @@ protected:
   /*!
    * Does this port "want" to receive a value via push strategy?
    *
-   * \param cReverse direction? (typically we push forward)
-   * \param change_constant If this is about an initial push, this should be CHANGED_INITIAL - otherwise CHANGED
+   * \tparam cCHANGE_CONSTANT change_constant If this is about an initial push, this should be CHANGED_INITIAL - otherwise CHANGED
    * \return Answer
    *
    * Typically it does, unless it has multiple sources or no push strategy itself.
    * (Standard implementation for this)
    */
-  template <bool cREVERSE, tChangeStatus cCHANGE_CONSTANT>
+  template <tChangeStatus cCHANGE_CONSTANT>
   inline bool WantsPush() const
   {
-    // The compiler should optimize branches away
-    if (cREVERSE)
-    {
-      if (cCHANGE_CONSTANT == tChangeStatus::CHANGED_INITIAL)
-      {
-        return GetFlag(tFlag::PUSH_STRATEGY_REVERSE) && CountOutgoingConnections() <= 1;
-      }
-      else
-      {
-        return GetFlag(tFlag::PUSH_STRATEGY_REVERSE);
-      }
-    }
-    else if (cCHANGE_CONSTANT == tChangeStatus::CHANGED_INITIAL)
+    if (cCHANGE_CONSTANT == tChangeStatus::CHANGED_INITIAL)
     {
       // We don't want initial pushes to ports with multiple inputs
       return strategy > 0 && CountIncomingConnections() <= 1;
@@ -332,14 +304,6 @@ private:
   static core::tAbstractPortCreationInfo AdjustPortCreationInfo(const tAbstractDataPortCreationInfo& create_info);
 
   /*!
-   * Should be called in situations where there might need to be an initial push
-   * (e.g. connecting or strategy change)
-   *
-   * \param target Potential Target port
-   */
-  void ConsiderInitialReversePush(tAbstractDataPort& target);
-
-  /*!
    * Forward current strategy to source ports (helper for above - and possibly variations of above)
    *
    * \param strategy New Strategy of this port
@@ -359,13 +323,12 @@ private:
   virtual int16_t GetStrategyRequirement() const;
 
   /*!
-   * Push initial value to the specified port
-   * (checks etc. have been done by AbstractDataPort class)
+   * Push initial value to destination port
+   * (checks etc. have been done by tAbstractDataPort class)
    *
-   * \param target Port to push data to
-   * \param reverse Is this a reverse push?
+   * \param connector Connector connecting both ports
    */
-  virtual void InitialPushTo(tAbstractPort& target, bool reverse) = 0;
+  virtual void InitialPushTo(core::tConnector& connector) = 0;
 
   virtual void OnConnect(tAbstractPort& partner, bool partner_is_destination) override;
 

@@ -125,22 +125,22 @@ std::string tSingleThreadedCheapCopyPortGeneric::BrowserPublishRaw(const rrlib::
   {
     if (change_constant == tChangeStatus::CHANGED_INITIAL)
     {
-      publish_operation.Execute<false, tChangeStatus::CHANGED_INITIAL, true, true>(*this);
+      publish_operation.Execute<tChangeStatus::CHANGED_INITIAL, true, true>(*this);
     }
     else
     {
-      publish_operation.Execute<false, tChangeStatus::CHANGED, true, true>(*this);
+      publish_operation.Execute<tChangeStatus::CHANGED, true, true>(*this);
     }
   }
   else
   {
     if (change_constant == tChangeStatus::CHANGED_INITIAL)
     {
-      publish_operation.Execute<false, tChangeStatus::CHANGED_INITIAL, true, false>(*this);
+      publish_operation.Execute<tChangeStatus::CHANGED_INITIAL, true, false>(*this);
     }
     else
     {
-      publish_operation.Execute<false, tChangeStatus::CHANGED, true, false>(*this);
+      publish_operation.Execute<tChangeStatus::CHANGED, true, false>(*this);
     }
   }
   return "";
@@ -151,7 +151,7 @@ void tSingleThreadedCheapCopyPortGeneric::ForwardData(tAbstractDataPort& other)
   assert(IsDataFlowType(other.GetDataType()) && (IsCheaplyCopiedType(other.GetDataType())));
 
   common::tPublishOperation<tSingleThreadedCheapCopyPortGeneric, tPublishingData> publish_operation(current_value);
-  publish_operation.Execute<false, tChangeStatus::CHANGED, false, false>(static_cast<tSingleThreadedCheapCopyPortGeneric&>(other));
+  publish_operation.Execute<tChangeStatus::CHANGED, false, false>(static_cast<tSingleThreadedCheapCopyPortGeneric&>(other));
 }
 
 int tSingleThreadedCheapCopyPortGeneric::GetMaxQueueLengthImplementation() const
@@ -159,18 +159,11 @@ int tSingleThreadedCheapCopyPortGeneric::GetMaxQueueLengthImplementation() const
   return max_queue_length;
 }
 
-void tSingleThreadedCheapCopyPortGeneric::InitialPushTo(tAbstractPort& target, bool reverse)
+void tSingleThreadedCheapCopyPortGeneric::InitialPushTo(core::tConnector& connector)
 {
   common::tPublishOperation<tSingleThreadedCheapCopyPortGeneric, tPublishingData> data(current_value);
-  tSingleThreadedCheapCopyPortGeneric& target_port = static_cast<tSingleThreadedCheapCopyPortGeneric&>(target);
-  if (reverse)
-  {
-    common::tPublishOperation<tSingleThreadedCheapCopyPortGeneric, tPublishingData>::Receive<true, tChangeStatus::CHANGED_INITIAL>(data, target_port, *this);
-  }
-  else
-  {
-    common::tPublishOperation<tSingleThreadedCheapCopyPortGeneric, tPublishingData>::Receive<false, tChangeStatus::CHANGED_INITIAL>(data, target_port, *this);
-  }
+  tSingleThreadedCheapCopyPortGeneric& target_port = static_cast<tSingleThreadedCheapCopyPortGeneric&>(connector.Destination());
+  common::tPublishOperation<tSingleThreadedCheapCopyPortGeneric, tPublishingData>::Receive<tChangeStatus::CHANGED_INITIAL>(data, target_port, *this);
 }
 
 bool tSingleThreadedCheapCopyPortGeneric::NonStandardAssign(tPublishingData& publishing_data, tChangeStatus change_constant)
@@ -185,7 +178,7 @@ void tSingleThreadedCheapCopyPortGeneric::Publish(const rrlib::rtti::tGenericObj
     current_value.data->DeepCopyFrom(data);
     current_value.timestamp = timestamp;
     common::tPublishOperation<tSingleThreadedCheapCopyPortGeneric, tPublishingData> publish_operation(current_value);
-    publish_operation.Execute<false, tChangeStatus::CHANGED, false, false>(*this);
+    publish_operation.Execute<tChangeStatus::CHANGED, false, false>(*this);
   }
 }
 

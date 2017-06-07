@@ -818,7 +818,7 @@ private:
 //    return tc->GetUnusedBuffer(cc_type_index);
 //  }
 
-  virtual void InitialPushTo(tAbstractPort& target, bool reverse) override;
+  virtual void InitialPushTo(core::tConnector& connector) override;
 
   /*!
    * Notify any port listeners of data change

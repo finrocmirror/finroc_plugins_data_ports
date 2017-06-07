@@ -101,18 +101,6 @@ core::tAbstractPortCreationInfo tAbstractDataPort::AdjustPortCreationInfo(const 
   return result;
 }
 
-void tAbstractDataPort::ConsiderInitialReversePush(tAbstractDataPort& target)
-{
-  if (IsReady() && target.IsReady())
-  {
-    if (ReversePushStrategy() && CountOutgoingConnections() == 1)
-    {
-      FINROC_LOG_PRINT(DEBUG_VERBOSE_1, "Performing initial reverse push from ", target, " to ", (*this));
-      target.InitialPushTo(*this, true);
-    }
-  }
-}
-
 core::tConnector* tAbstractDataPort::CreateConnector(tAbstractPort& destination, const core::tConnectOptions& connect_options)
 {
   if (connect_options.conversion_operations.Size() == 0 && this->GetDataType() == destination.GetDataType())
@@ -164,9 +152,6 @@ void tAbstractDataPort::OnConnect(tAbstractPort& partner, bool partner_is_destin
   if (partner_is_destination)
   {
     (static_cast<tAbstractDataPort&>(partner)).PropagateStrategy(nullptr, this);
-
-    // check whether we need an initial reverse push
-    this->ConsiderInitialReversePush(static_cast<tAbstractDataPort&>(partner));
   }
 }
 
@@ -223,34 +208,36 @@ bool tAbstractDataPort::PropagateStrategy(tAbstractDataPort* push_wanter, tAbstr
   if (push_wanter)
   {
     bool source_port = (strategy >= 1 && max >= 1) || (!HasIncomingConnections());
-    if (!source_port)
-    {
-      bool all_sources_reverse_pushers = true;
-      for (auto it = IncomingConnectionsBegin(); it != IncomingConnectionsEnd(); ++it)
-      {
-        tAbstractDataPort& port = static_cast<tAbstractDataPort&>(it->Source());
-        if (port.IsReady() && (!port.ReversePushStrategy()))
-        {
-          all_sources_reverse_pushers = false;
-          break;
-        }
-      }
-      source_port = all_sources_reverse_pushers;
-    }
     if (source_port)
     {
       if (IsReady() && push_wanter->IsReady() && (!GetFlag(tFlag::NO_INITIAL_PUSHING)) && (!push_wanter->GetFlag(tFlag::NO_INITIAL_PUSHING)))
       {
         FINROC_LOG_PRINT(DEBUG_VERBOSE_1, "Performing initial push from ", (*this), " to ", (*push_wanter));
-        InitialPushTo(*push_wanter, false);
+
+        // find connector
+        bool pushed = false;
+        for (auto it = OutgoingConnectionsBegin(); it != OutgoingConnectionsEnd(); ++it)
+        {
+          if (&it->Destination() == push_wanter)
+          {
+            InitialPushTo(*it);
+            pushed = true;
+            break;
+          }
+        }
+        if (!pushed)
+        {
+          FINROC_LOG_PRINT(DEBUG_WARNING, "Connector not found -> not initial pushing (programming error)");
+        }
+
       }
-      push_wanter = NULL;
+      push_wanter = nullptr;
     }
   }
 
   // okay... do we wish to receive a push?
   // yes if...
-  //  1) we are target of a new connection, have a push strategy, no other sources, and partner is no reverse push source
+  //  1) we are target of a new connection, have a push strategy, and no other sources
   //  2) our strategy changed to push, and exactly one source
   int other_sources = 0;
   for (auto it = IncomingConnectionsBegin(); it != IncomingConnectionsEnd(); ++it)
@@ -260,7 +247,7 @@ bool tAbstractDataPort::PropagateStrategy(tAbstractDataPort* push_wanter, tAbstr
       other_sources++;
     }
   }
-  bool request_push = (new_connection_partner && (max >= 1) && (other_sources == 0) && (!new_connection_partner->ReversePushStrategy())) || ((max >= 1 && strategy < 1) && (other_sources == 1));
+  bool request_push = (new_connection_partner && (max >= 1) && (other_sources == 0)) || ((max >= 1 && strategy < 1) && (other_sources == 1));
 
   // register strategy change
   if (change)
@@ -298,31 +285,6 @@ void tAbstractDataPort::SetPushStrategy(bool push)
   }
   SetFlag(tFlag::PUSH_STRATEGY, push);
   PropagateStrategy(nullptr, nullptr);
-}
-
-void tAbstractDataPort::SetReversePushStrategy(bool push)
-{
-  if (push == GetFlag(tFlag::PUSH_STRATEGY_REVERSE))
-  {
-    return;
-  }
-
-  tLock lock(GetStructureMutex());
-  SetFlag(tFlag::PUSH_STRATEGY_REVERSE, push);
-  if (push && IsReady())    // strategy change
-  {
-    for (auto it = OutgoingConnectionsBegin(); it != OutgoingConnectionsEnd(); ++it)
-    {
-      tAbstractDataPort& port = static_cast<tAbstractDataPort&>(it->Destination());
-      if (port.IsReady())
-      {
-        FINROC_LOG_PRINT(DEBUG_VERBOSE_1, "Performing initial reverse push from ", port, " to ", (*this));
-        port.InitialPushTo(*this, true);
-        break;
-      }
-    }
-  }
-  this->PublishUpdatedInfo(core::tRuntimeListener::tEvent::CHANGE);
 }
 
 void tAbstractDataPort::UpdateEdgeStatistics(tAbstractPort& source, tAbstractPort& target, rrlib::rtti::tGenericObject& data)

@@ -91,11 +91,10 @@ public:
    * Performs publishing operation
    *
    * \param port (Output) port to perform publishing operation on
-   * \tparam REVERSE Publish in reverse direction? (typical is forward)
    * \tparam CHANGE_CONSTANT changedConstant to use
-   * \tparam BROWSER_PUBLISH Inform this port's listeners on change and also publish in reverse direction? (only set from BrowserPublish())
+   * \tparam BROWSER_PUBLISH Inform this port's listeners on change? (only set from BrowserPublish())
    */
-  template <bool REVERSE, tChangeStatus CHANGE_CONSTANT, bool BROWSER_PUBLISH, bool NOTIFY_LISTENER_ON_THIS_PORT>
+  template <tChangeStatus CHANGE_CONSTANT, bool BROWSER_PUBLISH, bool NOTIFY_LISTENER_ON_THIS_PORT>
   inline void Execute(TPort& port)
   {
     uint flag_query = port.GetAllFlags().Raw() & cRAW_FLAGS_READY_AND_HIJACKED;
@@ -127,34 +126,18 @@ public:
     port.template NotifyListeners<CHANGE_CONSTANT>(*this);
 #endif
 
-    if (!REVERSE)
+    for (auto it = port.OutgoingConnectionsBegin(); it != port.OutgoingConnectionsEnd(); ++it)
     {
-      for (auto it = port.OutgoingConnectionsBegin(); it != port.OutgoingConnectionsEnd(); ++it)
+      if (static_cast<const common::tAbstractDataPort&>(it->Destination()).template WantsPush<CHANGE_CONSTANT>())
       {
-        if (static_cast<const common::tAbstractDataPort&>(it->Destination()).template WantsPush<REVERSE, CHANGE_CONSTANT>())
+        if (it->Flags().Get(core::tConnectionFlag::CONVERSION))
         {
-          if (it->Flags().Get(core::tConnectionFlag::CONVERSION))
-          {
-            static_cast<const tConversionConnector&>(*it).Publish(this->GetObject(), CHANGE_CONSTANT);
-          }
-          else
-          {
-            TPort& destination_port = static_cast<TPort&>(it->Destination());
-            Receive<REVERSE, CHANGE_CONSTANT>(*this, destination_port, port);
-          }
+          static_cast<const tConversionConnector&>(*it).Publish(this->GetObject(), CHANGE_CONSTANT);
         }
-      }
-    }
-
-    if (REVERSE || BROWSER_PUBLISH)
-    {
-      // reverse
-      for (auto it = port.IncomingConnectionsBegin(); it != port.IncomingConnectionsEnd(); ++it)
-      {
-        if (static_cast<const common::tAbstractDataPort&>(it->Source()).template WantsPush<true, CHANGE_CONSTANT>() && (!it->Flags().Get(core::tConnectionFlag::CONVERSION)))
+        else
         {
-          TPort& destination_port = static_cast<TPort&>(it->Source());
-          Receive<true, CHANGE_CONSTANT>(*this, destination_port, port);
+          TPort& destination_port = static_cast<TPort&>(it->Destination());
+          Receive<CHANGE_CONSTANT>(*this, destination_port, port);
         }
       }
     }
@@ -164,10 +147,9 @@ public:
    * \param publishing_data Custom data on publishing operation
    * \param port Port that receives data
    * \param origin Port that value was received from
-   * \tparam REVERSE Publish in reverse direction? (typical is forward)
    * \tparam CHANGE_CONSTANT changedConstant to use
    */
-  template <bool REVERSE, tChangeStatus CHANGE_CONSTANT>
+  template <tChangeStatus CHANGE_CONSTANT>
   static inline void Receive(typename std::conditional<TPublishingData::cCOPY_ON_RECEIVE, TPublishingData, TPublishingData&>::type publishing_data, TPort& port, TPort& origin)
   {
     if (!port.template Assign<CHANGE_CONSTANT>(publishing_data))
@@ -178,32 +160,19 @@ public:
     port.template NotifyListeners<CHANGE_CONSTANT>(publishing_data);
     port.UpdateStatistics(publishing_data, origin, port);
 
-    if (!REVERSE)
+    // forward
+    for (auto it = port.OutgoingConnectionsBegin(); it != port.OutgoingConnectionsEnd(); ++it)
     {
-      // forward
-      for (auto it = port.OutgoingConnectionsBegin(); it != port.OutgoingConnectionsEnd(); ++it)
+      if (static_cast<const common::tAbstractDataPort&>(it->Destination()).template WantsPush<CHANGE_CONSTANT>())
       {
-        if (static_cast<const common::tAbstractDataPort&>(it->Destination()).template WantsPush<REVERSE, CHANGE_CONSTANT>())
+        if (it->Flags().Get(core::tConnectionFlag::CONVERSION))
         {
-          if (it->Flags().Get(core::tConnectionFlag::CONVERSION))
-          {
-            static_cast<const tConversionConnector&>(*it).Publish(publishing_data.GetObject(), CHANGE_CONSTANT);
-          }
-          else
-          {
-            TPort& destination_port = static_cast<TPort&>(it->Destination());
-            Receive<false, CHANGE_CONSTANT>(publishing_data, destination_port, port);
-          }
+          static_cast<const tConversionConnector&>(*it).Publish(publishing_data.GetObject(), CHANGE_CONSTANT);
         }
-      }
-
-      // reverse
-      for (auto it = port.IncomingConnectionsBegin(); it != port.IncomingConnectionsEnd(); ++it)
-      {
-        if (&it->Source() != &origin && static_cast<const common::tAbstractDataPort&>(it->Source()).template WantsPush<true, CHANGE_CONSTANT>() && (!it->Flags().Get(core::tConnectionFlag::CONVERSION)))
+        else
         {
-          TPort& destination_port = static_cast<TPort&>(it->Source());
-          Receive<true, CHANGE_CONSTANT>(publishing_data, destination_port, port);
+          TPort& destination_port = static_cast<TPort&>(it->Destination());
+          Receive<CHANGE_CONSTANT>(publishing_data, destination_port, port);
         }
       }
     }

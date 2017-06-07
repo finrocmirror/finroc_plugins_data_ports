@@ -192,13 +192,13 @@ public:
       if (optimized::tThreadLocalBufferPools::Get())
       {
         common::tPublishOperation<optimized::tCheapCopyPort, typename optimized::tCheapCopyPort::tPublishingDataThreadLocalBuffer> publish_operation(static_cast<optimized::tThreadLocalBufferManager*>(data_buffer.implementation.Release()), true);
-        publish_operation.Execute<false, tChangeStatus::CHANGED, false, false>(cc_port);
+        publish_operation.Execute<tChangeStatus::CHANGED, false, false>(cc_port);
       }
       else
       {
         optimized::tCheapCopyPort::tUnusedManagerPointer pointer(static_cast<optimized::tCheaplyCopiedBufferManager*>(data_buffer.implementation.Release()));
         common::tPublishOperation<optimized::tCheapCopyPort, typename optimized::tCheapCopyPort::tPublishingDataGlobalBuffer> publish_operation(pointer);
-        publish_operation.Execute<false, tChangeStatus::CHANGED, false, false>(cc_port);
+        publish_operation.Execute<tChangeStatus::CHANGED, false, false>(cc_port);
       }
 #else
       cc_port.Publish(*data_buffer, data_buffer.GetTimestamp());

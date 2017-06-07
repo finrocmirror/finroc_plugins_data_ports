@@ -199,7 +199,7 @@ public:
       buffer->SetTimestamp(timestamp);
       buffer->GetObject().DeepCopyFrom(data);
       common::tPublishOperation<optimized::tCheapCopyPort, typename optimized::tCheapCopyPort::tPublishingDataThreadLocalBuffer> publish_operation(buffer.release(), true);
-      publish_operation.Execute<false, tChangeStatus::CHANGED, false, false>(static_cast<tPortBase&>(port));
+      publish_operation.Execute<tChangeStatus::CHANGED, false, false>(static_cast<tPortBase&>(port));
     }
     else
     {
@@ -207,7 +207,7 @@ public:
       buffer->SetTimestamp(timestamp);
       buffer->GetObject().DeepCopyFrom(data);
       common::tPublishOperation<optimized::tCheapCopyPort, typename optimized::tCheapCopyPort::tPublishingDataGlobalBuffer> publish_operation(buffer);
-      publish_operation.Execute<false, tChangeStatus::CHANGED, false, false>(static_cast<tPortBase&>(port));
+      publish_operation.Execute<tChangeStatus::CHANGED, false, false>(static_cast<tPortBase&>(port));
     }
 #else
     static_cast<tPortBase&>(port).Publish(data, timestamp);
