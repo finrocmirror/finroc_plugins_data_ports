@@ -161,9 +161,16 @@ int tSingleThreadedCheapCopyPortGeneric::GetMaxQueueLengthImplementation() const
 
 void tSingleThreadedCheapCopyPortGeneric::InitialPushTo(core::tConnector& connector)
 {
-  common::tPublishOperation<tSingleThreadedCheapCopyPortGeneric, tPublishingData> data(current_value);
-  tSingleThreadedCheapCopyPortGeneric& target_port = static_cast<tSingleThreadedCheapCopyPortGeneric&>(connector.Destination());
-  common::tPublishOperation<tSingleThreadedCheapCopyPortGeneric, tPublishingData>::Receive<tChangeStatus::CHANGED_INITIAL>(data, target_port, *this);
+  if (typeid(connector) == typeid(common::tConversionConnector))
+  {
+    static_cast<common::tConversionConnector&>(connector).Publish(*current_value.data, tChangeStatus::CHANGED_INITIAL);
+  }
+  else
+  {
+    common::tPublishOperation<tSingleThreadedCheapCopyPortGeneric, tPublishingData> data(current_value);
+    tSingleThreadedCheapCopyPortGeneric& target_port = static_cast<tSingleThreadedCheapCopyPortGeneric&>(connector.Destination());
+    common::tPublishOperation<tSingleThreadedCheapCopyPortGeneric, tPublishingData>::Receive<tChangeStatus::CHANGED_INITIAL>(data, target_port, *this);
+  }
 }
 
 bool tSingleThreadedCheapCopyPortGeneric::NonStandardAssign(tPublishingData& publishing_data, tChangeStatus change_constant)

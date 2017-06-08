@@ -383,9 +383,16 @@ void tCheapCopyPort::InitialPushTo(core::tConnector& connector)
   // this is a one-time event => use global buffer
   tUnusedManagerPointer unused_manager(tGlobalBufferPools::Instance().GetUnusedBuffer(cheaply_copyable_type_index).release());
   CopyCurrentValueToManager(*unused_manager, tStrategy::NEVER_PULL);
-  common::tPublishOperation<tCheapCopyPort, tPublishingDataGlobalBuffer> data(unused_manager);
-  tCheapCopyPort& target_port = static_cast<tCheapCopyPort&>(connector.Destination());
-  common::tPublishOperation<tCheapCopyPort, tPublishingDataGlobalBuffer>::Receive<tChangeStatus::CHANGED_INITIAL>(data, target_port, *this);
+  if (typeid(connector) == typeid(common::tConversionConnector))
+  {
+    static_cast<common::tConversionConnector&>(connector).Publish(unused_manager->GetObject(), tChangeStatus::CHANGED_INITIAL);
+  }
+  else
+  {
+    common::tPublishOperation<tCheapCopyPort, tPublishingDataGlobalBuffer> data(unused_manager);
+    tCheapCopyPort& target_port = static_cast<tCheapCopyPort&>(connector.Destination());
+    common::tPublishOperation<tCheapCopyPort, tPublishingDataGlobalBuffer>::Receive<tChangeStatus::CHANGED_INITIAL>(data, target_port, *this);
+  }
 }
 
 void tCheapCopyPort::LockCurrentValueForPublishing(tPublishingDataGlobalBuffer& publishing_data)

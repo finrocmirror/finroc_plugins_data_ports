@@ -271,9 +271,16 @@ void tStandardPort::InitialPushTo(core::tConnector& connector)
   tLockingManagerPointer manager = GetCurrentValueRaw(tStrategy::NEVER_PULL);
   assert(IsReady());
 
-  common::tPublishOperation<tStandardPort, tPublishingData> data(manager, 1000);
-  tStandardPort& target_port = static_cast<tStandardPort&>(connector.Destination());
-  common::tPublishOperation<tStandardPort, tPublishingData>::Receive<tChangeStatus::CHANGED_INITIAL>(data, target_port, *this);
+  if (typeid(connector) == typeid(common::tConversionConnector))
+  {
+    static_cast<common::tConversionConnector&>(connector).Publish(manager->GetObject(), tChangeStatus::CHANGED_INITIAL);
+  }
+  else
+  {
+    common::tPublishOperation<tStandardPort, tPublishingData> data(manager, 1000);
+    tStandardPort& target_port = static_cast<tStandardPort&>(connector.Destination());
+    common::tPublishOperation<tStandardPort, tPublishingData>::Receive<tChangeStatus::CHANGED_INITIAL>(data, target_port, *this);
+  }
 }
 
 void tStandardPort::LockCurrentValueForPublishing(tPublishingData& publishing_data)
