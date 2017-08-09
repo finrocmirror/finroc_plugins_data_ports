@@ -175,6 +175,14 @@ public:
   }
 
   /*!
+   * \param value Whether DEFAULT_ON_DISCONNECT flag should be set
+   */
+  void SetDefaultOnDisconnect(bool value)
+  {
+    SetFlag(tFlag::DEFAULT_ON_DISCONNECT, value);
+  }
+
+  /*!
    * \param listener New ports Listener
    *
    * (warning: this will not delete the old listener)

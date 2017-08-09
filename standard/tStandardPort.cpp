@@ -217,7 +217,7 @@ void tStandardPort::CallPullRequestHandler(tPublishingData& publishing_data)
 
 tPortBufferManager* tStandardPort::CreateDefaultValue(const common::tAbstractDataPortCreationInfo& creation_info, tBufferPool& buffer_pool)
 {
-  if (creation_info.DefaultValueSet() || creation_info.flags.Get(tFlag::DEFAULT_ON_DISCONNECT))
+  if (creation_info.DefaultValueSet() || creation_info.flags.Get(tFlag::DEFAULT_ON_DISCONNECT) || creation_info.flags.Get(tFlag::VOLATILE) || creation_info.flags.Get(tFlag::NETWORK_ELEMENT))
   {
     tPortBufferManager* pdm = buffer_pool.GetUnusedBuffer(creation_info.data_type).release();
     pdm->InitReferenceCounter(1);

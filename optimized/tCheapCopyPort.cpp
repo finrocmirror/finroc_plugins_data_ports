@@ -77,7 +77,7 @@ namespace internal
 /*! Creates default value */
 static rrlib::rtti::tGenericObject* CreateDefaultValue(const common::tAbstractDataPortCreationInfo& creation_info)
 {
-  if (creation_info.DefaultValueSet() || creation_info.flags.Get(core::tFrameworkElement::tFlag::DEFAULT_ON_DISCONNECT))
+  if (creation_info.DefaultValueSet() || creation_info.flags.Get(core::tFrameworkElement::tFlag::DEFAULT_ON_DISCONNECT) || creation_info.flags.Get(core::tFrameworkElement::tFlag::VOLATILE) || creation_info.flags.Get(core::tFrameworkElement::tFlag::NETWORK_ELEMENT))
   {
     rrlib::rtti::tGenericObject* result = creation_info.data_type.CreateGenericObject();
     if (creation_info.DefaultValueSet())
