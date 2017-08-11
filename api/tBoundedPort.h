@@ -73,9 +73,6 @@ struct tPortImplementation;
 template <typename T, tPortImplementationType TYPE>
 class tBoundedPort : public std::conditional<definitions::cSINGLE_THREADED, api::tSingleThreadedCheapCopyPort<T>, optimized::tCheapCopyPort>::type
 {
-  static_assert((!std::is_integral<T>::value) || TYPE == tPortImplementationType::NUMERIC || definitions::cSINGLE_THREADED, "Type must be numeric for numeric type");
-
-  typedef typename std::conditional<TYPE == tPortImplementationType::NUMERIC, numeric::tNumber, T>::type tBufferType;
   typedef tPortImplementation<T, TYPE> tImplementationVariation;
   typedef typename std::conditional<definitions::cSINGLE_THREADED, api::tSingleThreadedCheapCopyPort<T>, optimized::tCheapCopyPort>::type tPortBase;
 
@@ -113,13 +110,12 @@ public:
     }
     bounds = new_bounds;
 #ifndef RRLIB_SINGLE_THREADED
-    tBufferType value_buffer = tBufferType();
-    this->CopyCurrentValue(value_buffer, tStrategy::NEVER_PULL);
-    T value = tImplementationVariation::ToValue(value_buffer);
+    T value = T();
+    this->CopyCurrentValue(value, tStrategy::NEVER_PULL);
     if (!bounds.InBounds(value))
     {
       typename tPortBase::tUnusedManagerPointer new_buffer(optimized::tGlobalBufferPools::Instance().GetUnusedBuffer(this->GetCheaplyCopyableTypeIndex()).release());
-      tImplementationVariation::Assign(new_buffer->GetObject().template GetData<tBufferType>(), bounds.GetOutOfBoundsDefault());
+      tImplementationVariation::Assign(new_buffer->GetObject().template GetData<T>(), bounds.GetOutOfBoundsDefault());
       this->BrowserPublishRaw(new_buffer); // If port is already connected, could this have undesirable side-effects? (I do not think so - otherwise we need to do something more sophisticated here)
     }
 #else
@@ -157,8 +153,7 @@ private:
     {
       return "Buffer has wrong type";
     }
-    const tBufferType& value_buffer = buffer->GetObject().template GetData<tBufferType>();
-    T value = tImplementationVariation::ToValue(value_buffer);
+    const T& value = buffer->GetObject().template GetData<T>();
     if (!bounds.InBounds(value))
     {
       return GenerateErrorMessage(value);
@@ -217,8 +212,7 @@ private:
   template <typename TPublishingData>
   bool NonStandardAssignImplementation(TPublishingData& publishing_data, tChangeStatus change_constant)
   {
-    const tBufferType& value_buffer = publishing_data.published_buffer->GetObject().template GetData<tBufferType>();
-    T value = tImplementationVariation::ToValue(value_buffer);
+    const T& value = publishing_data.published_buffer->GetObject().template GetData<T>();
     if (!bounds.InBounds(value))
     {
       if (bounds.GetOutOfBoundsAction() == tOutOfBoundsAction::DISCARD)
@@ -228,8 +222,7 @@ private:
       rrlib::time::tTimestamp timestamp = publishing_data.published_buffer->GetTimestamp();
       typename tPortBase::tUnusedManagerPointer buffer = this->GetUnusedBuffer(publishing_data);
       publishing_data.Init(buffer);
-      tImplementationVariation::Assign(publishing_data.published_buffer->GetObject().template GetData<tBufferType>(),
-                                       bounds.GetOutOfBoundsAction() == tOutOfBoundsAction::ADJUST_TO_RANGE ? bounds.ToBounds(value) : bounds.GetOutOfBoundsDefault());
+      publishing_data.published_buffer->GetObject().template GetData<T>() = bounds.GetOutOfBoundsAction() == tOutOfBoundsAction::ADJUST_TO_RANGE ? bounds.ToBounds(value) : bounds.GetOutOfBoundsDefault();
       publishing_data.published_buffer->SetTimestamp(timestamp);
     }
     return tPortBase::NonStandardAssign(publishing_data, change_constant);

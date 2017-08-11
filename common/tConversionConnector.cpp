@@ -74,7 +74,7 @@ tConversionConnector::tConversionConnector(core::tAbstractPort& source_port, cor
   conversion_operation(connect_options.conversion_operations.Compile(false, source_port.GetDataType(), destination_port.GetDataType()))
 {
   static_assert(sizeof(destination_port_generic_memory) == sizeof(tGenericPort), "Adjust array size");
-  tGenericPort destination_port_generic = tGenericPort::Wrap(destination_port, true);
+  tGenericPort destination_port_generic = tGenericPort::Wrap(destination_port);
   memcpy(destination_port_generic_memory, &destination_port_generic, sizeof(tGenericPort));
 }
 

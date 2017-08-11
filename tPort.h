@@ -139,7 +139,6 @@ public:
     if (!(creation_info.flags.Raw() & core::tFrameworkElementFlags(core::tFrameworkElementFlag::DELETED).Raw())) // do not create port, if deleted flag is set
     {
       SetWrapped(tImplementation::CreatePort(creation_info));
-      GetWrapped()->SetWrapperDataType(rrlib::rtti::tDataType<T>());
       if (creation_info.DefaultValueSet())
       {
         T t(rrlib::serialization::DefaultInstantiation<T>::Create());

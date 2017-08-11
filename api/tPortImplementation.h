@@ -137,42 +137,6 @@ struct tCheapCopyPortImplementation :
   }
 };
 
-// numeric cheap-copy implementation
-template <typename T>
-struct tCheapCopyPortImplementation<T, tPortImplementationType::NUMERIC> :
-  public tCheapCopyPortBaseImplementation<T, numeric::tNumber, tPortImplementationType::NUMERIC, true>
-{
-  typedef numeric::tNumber tPortBuffer;
-
-  static inline void Assign(numeric::tNumber& buffer, T value)
-  {
-    buffer.SetValue(value);
-  }
-
-  static inline T ToValue(const numeric::tNumber& value)
-  {
-    return value.Value<T>();
-  }
-};
-
-// tNumber cheap-copy implementation
-template <>
-struct tCheapCopyPortImplementation<numeric::tNumber, tPortImplementationType::NUMERIC> :
-  public tCheapCopyPortBaseImplementation<numeric::tNumber, numeric::tNumber, tPortImplementationType::CHEAP_COPY, true>
-{
-  typedef numeric::tNumber tPortBuffer;
-
-  static inline void Assign(numeric::tNumber& buffer, const numeric::tNumber value)
-  {
-    buffer = value;
-  }
-
-  static inline numeric::tNumber ToValue(const numeric::tNumber& value)
-  {
-    return value;
-  }
-};
-
 // implementation for all type handled by tCheapCopyPort port implementation
 template <typename T, tPortImplementationType TYPE>
 struct tPortImplementation : public tCheapCopyPortImplementation<T, TYPE>

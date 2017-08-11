@@ -123,7 +123,6 @@ public:
    * void OnPortChange(const rrlib::rtti::tGenericObject& value, tChangeContext& change_context)
    *
    * (It's preferred to add listeners before port is initialized)
-   * (Note: Buffer in 'value' always has data type of port backend (e.g. tNumber instead of double)
    */
   template <typename TListener>
   void AddPortListener(TListener& listener);
@@ -135,7 +134,6 @@ public:
    * void OnPortChange(tPortDataPointer<const rrlib::rtti::tGenericObject>& value, tChangeContext& change_context)
    *
    * (It's preferred to add listeners before port is initialized)
-   * (Note: Buffer in 'value' always has data type of port backend (e.g. tNumber instead of double)
    */
   template <typename TListener>
   void AddPortListenerForPointer(TListener& listener);
@@ -223,7 +221,6 @@ public:
    * \param strategy Strategy to use for get operation
    * \return Buffer with port's current value with read lock.
    *
-   * Note: Buffer always has data type of port backend (e.g. tNumber instead of double)
    * If this is not desired, use pass-by-value-Get Operation above.
    */
   inline tPortDataPointer<const rrlib::rtti::tGenericObject> GetPointer(tStrategy strategy = tStrategy::DEFAULT)
@@ -240,7 +237,6 @@ public:
   }
 
   /*!
-   * Note: Buffer always has data type of port backend (e.g. tNumber instead of double)
    * If this is not desired, use pass-by-value-Publish Operation below.
    *
    * \return Unused buffer.
@@ -316,9 +312,8 @@ public:
    * Throws std::runtime_error if port to wrap has invalid type.
    *
    * \param wrap Type-less tAbstractPort to wrap as tGenericPort
-   * \param use_backend_type_only Use only the internal data type that used in the port backend? (e.g. tNumber instead of double; relevant e.g. for Get() and Publish() methods)
    */
-  static tGenericPort Wrap(core::tAbstractPort& wrap, bool use_backend_type_only = false)
+  static tGenericPort Wrap(core::tAbstractPort& wrap)
   {
     if (!IsDataFlowType(wrap.GetDataType()))
     {
@@ -326,10 +321,15 @@ public:
     }
     tGenericPort port;
     port.SetWrapped(&wrap);
-    port.implementation = api::tGenericPortImplementation::GetImplementation(
-                            ((!use_backend_type_only) && wrap.GetWrapperDataType()) ? wrap.GetWrapperDataType() : wrap.GetDataType());
+    port.implementation = api::tGenericPortImplementation::GetImplementation(wrap.GetDataType());
     return port;
   }
+
+  static tGenericPort Wrap(core::tAbstractPort& wrap, bool unused) __attribute__((deprecated))
+  {
+    return Wrap(wrap);
+  }
+
 
 //----------------------------------------------------------------------
 // Private fields and methods
