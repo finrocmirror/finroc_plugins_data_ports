@@ -145,6 +145,10 @@ public:
         creation_info.GetDefault(t);
         SetDefault(t);
       }
+      if (IsNumeric<T>::value)
+      {
+        common::tAbstractDataPort::AddNumericTypeToLegacyImplicitConversion(creation_info.data_type);
+      }
     }
   }
 

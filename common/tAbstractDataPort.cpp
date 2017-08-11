@@ -39,6 +39,7 @@
 //----------------------------------------------------------------------
 #include "plugins/data_ports/type_traits.h"
 #include "plugins/data_ports/common/tConversionConnector.h"
+#include "plugins/data_ports/numeric/tNumber.h"
 
 //----------------------------------------------------------------------
 // Debugging
@@ -79,6 +80,7 @@ tAbstractDataPort::tAbstractDataPort(const tAbstractDataPortCreationInfo& create
   strategy(-1),
   port_listener(nullptr)
 {
+  AddNumericTypeToLegacyImplicitConversion(rrlib::rtti::tDataType<numeric::tNumber>());
 }
 
 tAbstractDataPort::~tAbstractDataPort()
