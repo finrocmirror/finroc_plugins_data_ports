@@ -161,6 +161,12 @@ public:
 
   bool operator<(const tNumber& other) const;
 
+  template <typename T>
+  explicit operator T() const
+  {
+    return Value<T>();
+  }
+
 //----------------------------------------------------------------------
 // Private fields and methods
 //----------------------------------------------------------------------

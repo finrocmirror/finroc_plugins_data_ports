@@ -33,6 +33,7 @@
 // External includes (system with <>, local with "")
 //----------------------------------------------------------------------
 #include "rrlib/rtti/rtti.h"
+#include "rrlib/rtti_conversion/tStaticCastOperation.h"
 #include "core/definitions.h"
 #include "core/log_messages.h"
 
@@ -72,6 +73,18 @@ static const int8_t cINT64 = -64, cINT32 = -63, cINT16 = -62, cFLOAT64 = -61, cF
 
 /*! Initializes tNumber data type */
 static rrlib::rtti::tDataType<tNumber> cINIT_DATA_TYPE("Number");
+
+auto& cNUMBER_TYPE_CASTS = rrlib::rtti::conversion::tStaticCastOperation::
+                           Register<tNumber, int8_t, true>()
+                           .Register<tNumber, int16_t, true>()
+                           .Register<tNumber, int32_t, true>()
+                           .Register<tNumber, int64_t, true>()
+                           .Register<tNumber, uint8_t, true>()
+                           .Register<tNumber, uint16_t, true>()
+                           .Register<tNumber, uint32_t, true>()
+                           .Register<tNumber, uint64_t, true>()
+                           .Register<tNumber, float, true>()
+                           .Register<tNumber, double, true>();
 
 //----------------------------------------------------------------------
 // Implementation
