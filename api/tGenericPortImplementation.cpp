@@ -69,88 +69,8 @@ namespace api
 //----------------------------------------------------------------------
 // Implementation
 //----------------------------------------------------------------------
-namespace internal
+namespace
 {
-
-template <typename T>
-struct tBoundsSetter
-{
-  static void SetBounds(core::tAbstractPort& port, const rrlib::rtti::tGenericObject& min, const rrlib::rtti::tGenericObject& max)
-  {
-    typedef api::tBoundedPort<T, api::tPortImplementationTypeTrait<T>::type> tBoundedPort;
-    if (typeid(port) != typeid(tBoundedPort))
-    {
-      FINROC_LOG_PRINT_STATIC(ERROR, "Cannot set bounds for port ", rrlib::rtti::tDataType<T>().GetName(), ". It is not a bounded port.");
-      return;
-    }
-    static_cast<tBoundedPort&>(port).SetBounds(tBounds<T>(min.GetData<T>(), max.GetData<T>()));
-  }
-};
-
-struct tNoBoundsSetter
-{
-  static void SetBounds(core::tAbstractPort& port, const rrlib::rtti::tGenericObject& min, const rrlib::rtti::tGenericObject& max)
-  {
-    FINROC_LOG_PRINT_STATIC(ERROR, "Cannot set bounds for type ", port.GetDataType().GetName());
-  }
-};
-
-
-template <typename T>
-class tGenericPortImplementationTyped : public tGenericPortImplementation
-{
-public:
-
-  /*! Should methods dealing with bounds be available? */
-  enum { cBOUNDABLE = IsBoundable<T>::value };
-
-  /*! Class that contains actual implementation of most functionality */
-  typedef api::tPortImplementation<T, api::tPortImplementationTypeTrait<T>::type> tImplementation;
-
-  typedef typename tImplementation::tPortBase tPortBase;
-
-  virtual core::tAbstractPort* CreatePort(const common::tAbstractDataPortCreationInfo& creation_info) override
-  {
-    tPort<T> port(creation_info);
-    return port.GetWrapped();
-  }
-
-  virtual void Get(core::tAbstractPort& port, rrlib::rtti::tGenericObject& result, rrlib::time::tTimestamp& timestamp) override
-  {
-    tImplementation::CopyCurrentPortValue(static_cast<tPortBase&>(port), result.GetData<T>(), timestamp);
-  }
-
-  virtual tPortDataPointer<const rrlib::rtti::tGenericObject> GetPointer(core::tAbstractPort& abstract_port, tStrategy strategy) override
-  {
-    tPortBase& port = static_cast<tPortBase&>(abstract_port);
-    if ((strategy == tStrategy::DEFAULT && port.PushStrategy()) || strategy == tStrategy::NEVER_PULL || definitions::cSINGLE_THREADED)
-    {
-      tPortDataPointer<rrlib::rtti::tGenericObject> buffer = this->GetUnusedBuffer(port);
-      rrlib::time::tTimestamp timestamp;
-      port.CopyCurrentValueToGenericObject(*buffer.Get(), timestamp, strategy);
-      buffer.SetTimestamp(timestamp);
-      return std::move(buffer);
-    }
-#ifndef RRLIB_SINGLE_THREADED
-    else
-    {
-      auto buffer_pointer = port.GetPullRaw(strategy == tStrategy::PULL_IGNORING_HANDLER_ON_THIS_PORT);
-      return tPortDataPointerImplementation<rrlib::rtti::tGenericObject, false>(buffer_pointer.release(), false);
-    }
-#endif
-  }
-
-  virtual void Publish(core::tAbstractPort& port, const rrlib::rtti::tGenericObject& data, const rrlib::time::tTimestamp& timestamp) override
-  {
-    tImplementation::CopyAndPublish(static_cast<tPortBase&>(port), data.GetData<T>(), timestamp);
-  }
-
-  virtual void SetBounds(core::tAbstractPort& port, const rrlib::rtti::tGenericObject& min, const rrlib::rtti::tGenericObject& max) override
-  {
-    std::conditional<cBOUNDABLE, tBoundsSetter<T>, tNoBoundsSetter>::type::SetBounds(port, min, max);
-  }
-};
-
 
 class tGenericPortImplementationCheapCopy : public tGenericPortImplementation
 {
@@ -259,61 +179,15 @@ public:
   }
 };
 
-template <typename T>
-static void CheckCreateImplementationForType(rrlib::rtti::tType type)
-{
-  if (type.GetRttiName() == typeid(T).name())
-  {
-    static internal::tGenericPortImplementationTyped<T> cINSTANCE;
-    type.AddAnnotation<tGenericPortImplementation*>(&cINSTANCE);
-  }
-}
 
 tGenericPortImplementationCheapCopy cINSTANCE_CHEAP_COPY;
 tGenericPortImplementationStandard cINSTANCE_STANDARD;
 
-} // namespace internal
+} // anonymous namespace
 
-void tGenericPortImplementation::CreateImplementations()
-{
-  static rrlib::thread::tMutex mutex;
-  static size_t initialized_types = 0;
-  rrlib::thread::tLock lock(mutex);
+tGenericPortImplementation* tGenericPortImplementation::cIMPLEMENTATION_STANDARD = &cINSTANCE_STANDARD;
+tGenericPortImplementation* tGenericPortImplementation::cIMPLEMENTATION_CHEAP_COPY = &cINSTANCE_CHEAP_COPY;
 
-  for (; initialized_types < rrlib::rtti::tType::GetTypeCount(); initialized_types++)
-  {
-    rrlib::rtti::tType type = rrlib::rtti::tType::GetType(initialized_types);
-    if (IsDataFlowType(type))
-    {
-      // typed implementations for certain types
-      internal::CheckCreateImplementationForType<int8_t>(type);
-      internal::CheckCreateImplementationForType<int16_t>(type);
-      internal::CheckCreateImplementationForType<int>(type);
-      internal::CheckCreateImplementationForType<long long int>(type);
-      internal::CheckCreateImplementationForType<uint8_t>(type);
-      internal::CheckCreateImplementationForType<uint16_t>(type);
-      internal::CheckCreateImplementationForType<unsigned int>(type);
-      internal::CheckCreateImplementationForType<unsigned long long int>(type);
-      internal::CheckCreateImplementationForType<double>(type);
-      internal::CheckCreateImplementationForType<float>(type);
-      internal::CheckCreateImplementationForType<char>(type);  // is neither int8_t nor uint8_t
-      internal::CheckCreateImplementationForType<numeric::tNumber>(type);
-
-      if (!type.GetAnnotation<tGenericPortImplementation*>())
-      {
-        assert((type.GetTypeTraits() & rrlib::rtti::trait_flags::cIS_INTEGRAL) == 0 || type.GetRttiName() == typeid(bool).name());
-        if (IsCheaplyCopiedType(type))
-        {
-          type.AddAnnotation<tGenericPortImplementation*>(&internal::cINSTANCE_CHEAP_COPY);
-        }
-        else
-        {
-          type.AddAnnotation<tGenericPortImplementation*>(&internal::cINSTANCE_STANDARD);
-        }
-      }
-    }
-  }
-}
 
 void tGenericPortImplementation::SetPullRequestHandler(core::tAbstractPort& port, tPullRequestHandler<rrlib::rtti::tGenericObject>* pull_request_handler)
 {

@@ -124,13 +124,7 @@ public:
    */
   static tGenericPortImplementation* GetImplementation(const rrlib::rtti::tType& type)
   {
-    tGenericPortImplementation* annotation = type.GetAnnotation<tGenericPortImplementation*>();
-    if (!annotation)
-    {
-      CreateImplementations();
-      annotation = type.GetAnnotation<tGenericPortImplementation*>();
-    }
-    return annotation;
+    return IsCheaplyCopiedType(type) ? cIMPLEMENTATION_CHEAP_COPY : cIMPLEMENTATION_STANDARD;
   }
 
   /*!
@@ -228,8 +222,8 @@ public:
 
 private:
 
-  /*! Creates implementation for data types that weren't annotated yet */
-  static void CreateImplementations();
+  /*! The two available implementations */
+  static tGenericPortImplementation* cIMPLEMENTATION_STANDARD, *cIMPLEMENTATION_CHEAP_COPY;
 
 };
 
