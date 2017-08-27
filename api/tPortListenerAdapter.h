@@ -272,7 +272,7 @@ private:
       if (definitions::cSINGLE_THREADED)
       {
         optimized::tSingleThreadedCheapCopyPortGeneric::tCurrentValueBuffer& buffer = static_cast<optimized::tSingleThreadedCheapCopyPortGeneric::tCurrentValueBuffer&>(value);
-        auto buffer_manager = optimized::tGlobalBufferPools::Instance().GetUnusedBuffer(buffer.cheaply_copyable_type_index);
+        auto buffer_manager = optimized::tGlobalBufferPools::Instance().GetUnusedBuffer(buffer.cheaply_copied_type_buffer_pool_index, change_context.Origin().GetDataType());
         buffer_manager->GetObject().DeepCopyFrom(*buffer.data);
         tPortDataPointer<const rrlib::rtti::tGenericObject> pointer(
           api::tPortDataPointerImplementation<rrlib::rtti::tGenericObject, false>(buffer_manager.release(), false));

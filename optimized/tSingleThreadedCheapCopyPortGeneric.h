@@ -88,7 +88,7 @@ public:
     std::unique_ptr<rrlib::rtti::tGenericObject> data;
 
     /*! 'cheaply copyable type index' of type used in this port */
-    uint32_t cheaply_copyable_type_index;
+    uint32_t cheaply_copied_type_buffer_pool_index;
 
     /*! Pointer to data buffer with current value (optimization - avoids one indirection) */
     void* data_pointer;
@@ -186,9 +186,9 @@ public:
   /*!
    * \return Returns data type's 'cheaply copyable type index'
    */
-  inline uint32_t GetCheaplyCopyableTypeIndex() const
+  inline uint32_t GetCheaplyCopiedTypeBufferPoolIndex() const
   {
-    return current_value.cheaply_copyable_type_index;
+    return current_value.cheaply_copied_type_buffer_pool_index;
   }
 
   /*!

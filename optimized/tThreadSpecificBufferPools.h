@@ -45,6 +45,7 @@
 //----------------------------------------------------------------------
 // Internal includes with ""
 //----------------------------------------------------------------------
+#include "plugins/data_ports/definitions.h"
 #include "plugins/data_ports/common/tPortBufferPool.h"
 #include "plugins/data_ports/optimized/cheaply_copied_types.h"
 #include "plugins/data_ports/optimized/tCheaplyCopiedBufferManager.h"
@@ -73,6 +74,8 @@ namespace optimized
  * These pools can be thread-local.
  * There is also a global instance of this class shared by the remaining threads.
  *
+ * There separate pools for different buffer sizes.
+ *
  * \tparam SHARED True if this pool is shared by multiple threads
  */
 template <bool SHARED>
@@ -94,6 +97,9 @@ public:
   /*! Auto-recycling buffer pointer */
   typedef typename tBufferPool::tPointer tBufferPointer;
 
+  /*! Step size for buffer pool size increase (8 means there is of buffer pool with buffers of 8 byte in size, 16 byte in size, etc.) */
+  enum { cPOOL_BUFFER_SIZE_STEP = 8 };
+
 
   tThreadSpecificBufferPools() :
     pools()
@@ -105,12 +111,15 @@ public:
   }
 
   /*!
-   * \param cheaply_copied_type_index 'Cheaply copied type index' of buffer to obtain
+   * \param buffer_pool_index Pool index of buffer to obtain
+   * \param type Desired data type of buffer
    * \return Unused buffer of specified type
    */
-  tBufferPointer GetUnusedBuffer(uint32_t cheaply_copied_type_index)
+  tBufferPointer GetUnusedBuffer(uint32_t buffer_pool_index, const rrlib::rtti::tType& type)
   {
-    return pools[cheaply_copied_type_index].GetUnusedBuffer(cheaply_copied_type_index);
+    tBufferPointer result = pools[buffer_pool_index].GetUnusedBuffer((buffer_pool_index + 1) * cPOOL_BUFFER_SIZE_STEP, type);
+    result->SetType(type);
+    return std::move(result);
   }
 
 //----------------------------------------------------------------------
@@ -118,19 +127,18 @@ public:
 //----------------------------------------------------------------------
 protected:
 
-  /*! The set of pools (index is index in CheaplyCopiedTypeRegister) */
-  std::array<tBufferPool, cMAX_CHEAPLY_COPYABLE_TYPES> pools;
+  /*! The set of pools (index is buffer size / cPOOL_BUFFER_SIZE_STEP) */
+  std::array < tBufferPool, cMAX_SIZE_CHEAPLY_COPIED_TYPES / cPOOL_BUFFER_SIZE_STEP > pools;
 
   /*!
    * Adds/Initialized buffer pools for existing types
    */
   void AddMissingPools()
   {
-    uint32_t type_count = GetRegisteredTypeCount();
-    for (uint32_t i = 0; i < type_count; i++)
+    for (uint32_t i = 0; i < pools.size(); i++)
     {
       size_t initial_size = (i == 0) ? 50 : std::min<size_t>(GetPortCount(i), 10); // TODO: add proper heuristics/mechanisms for initial buffer allocation
-      pools[i].AllocateAdditionalBuffers(GetType(i), initial_size);
+      pools[i].AllocateAdditionalBuffers((i + 1) * cPOOL_BUFFER_SIZE_STEP, initial_size);
     }
   }
 };

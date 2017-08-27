@@ -57,12 +57,17 @@ namespace finroc
 {
 namespace data_ports
 {
-namespace common
-{
 
 //----------------------------------------------------------------------
 // Forward declarations / typedefs / enums
 //----------------------------------------------------------------------
+namespace standard
+{
+class tPortBufferManager;
+}
+
+namespace common
+{
 
 //----------------------------------------------------------------------
 // Class declaration
@@ -108,6 +113,12 @@ class tPortBufferPool : private rrlib::util::tNoncopyable
   typedef typename std::conditional < CONCURRENCY == rrlib::concurrent_containers::tConcurrency::NONE,
           tBufferPoolSingleThreaded, tBufferPoolConcurrent >::type tBufferPool;
 
+  /*! Whether this is a buffer pool for a standard port */
+  enum { cSTANDARD_PORT = std::is_same<TBufferManager, standard::tPortBufferManager>::value };
+
+  /*! Information what kind of content buffers contain (either data type - or buffer size) */
+  typedef typename std::conditional<cSTANDARD_PORT, rrlib::rtti::tType, uint32_t>::type tContentId;
+
 //----------------------------------------------------------------------
 // Public methods and typedefs
 //----------------------------------------------------------------------
@@ -117,13 +128,13 @@ public:
   typedef typename tBufferPool::tPointer tPointer;
 
   /*!
-   * \param data_type Type of buffers in pool
-   * \param intial_size Number of buffer to allocate initially
+   * \param buffer_content Buffer content
+   * \param intial_size Number of buffers to allocate initially
    */
-  tPortBufferPool(const rrlib::rtti::tType& data_type, int initial_size) :
+  tPortBufferPool(const tContentId& buffer_content, int initial_size) :
     buffer_pool()
   {
-    AllocateAdditionalBuffers(data_type, initial_size);
+    AllocateAdditionalBuffers(buffer_content, initial_size);
   }
 
   tPortBufferPool() : buffer_pool()
@@ -132,52 +143,46 @@ public:
   /*!
    * Allocates the specified number of additional buffers and adds them to pool
    *
-   * \param data_type Data type of buffers to add
+   * \param buffer_content Buffer content
    * \param count Number of buffers to allocate and add
    */
-  inline void AllocateAdditionalBuffers(const rrlib::rtti::tType& data_type, size_t count)
+  inline void AllocateAdditionalBuffers(const tContentId& buffer_content, size_t count)
   {
     for (size_t i = 0; i < count; i++)
     {
-      CreateBuffer(data_type);
+      CreateBuffer(buffer_content);
     }
   }
 
-//  /*!
-//   * \return Data Type of buffers in pool
-//   */
-//  inline rrlib::rtti::tType GetDataType() const
-//  {
-//    return data_type;
-//  }
-
   /*!
-   * \param cheaply_copyable_type_index Index of 'cheaply copied' data type of pool
+   * \param data_type Data type of desired buffer
    * \return Returns unused buffer. If there are no buffers that can be reused, a new buffer is allocated.
    */
-  inline tPointer GetUnusedBuffer(uint32_t cheaply_copyable_type_index)
+  template <bool Tstandard_port = cSTANDARD_PORT>
+  inline tPointer GetUnusedBuffer(const typename std::enable_if<Tstandard_port, rrlib::rtti::tType>::type& data_type)
   {
     tPointer buffer = buffer_pool.GetUnusedBuffer();
     if (buffer)
     {
       return std::move(buffer);
     }
-    return CreateBuffer(optimized::GetType(cheaply_copyable_type_index));
+    return CreateBuffer(data_type);
   }
 
   /*!
-   * \param data_type Data type of buffers in this pool
-   * \param possibly_create_buffer Create new buffer if there is none in pool at the moment?
-   * \return Returns unused buffer. If there are no buffers that can be reused, a new buffer is possibly allocated.
+   * \param buffer_size Size of buffer
+   * \param data_type Data type of desired buffer
+   * \return Returns unused buffer. If there are no buffers that can be reused, a new buffer is allocated.
    */
-  inline tPointer GetUnusedBuffer(const rrlib::rtti::tType& data_type, bool possibly_create_buffer = true)
+  template <bool Tstandard_port = cSTANDARD_PORT>
+  inline tPointer GetUnusedBuffer(typename std::enable_if < !Tstandard_port, uint32_t >::type buffer_size, const rrlib::rtti::tType& data_type)
   {
     tPointer buffer = buffer_pool.GetUnusedBuffer();
     if (buffer)
     {
       return std::move(buffer);
     }
-    return possibly_create_buffer ? CreateBuffer(data_type) : tPointer();
+    return CreateBuffer(buffer_size);
   }
 
   /*!
@@ -193,30 +198,26 @@ public:
 //----------------------------------------------------------------------
 private:
 
-  /*! Data Type of buffers in pool */
-  //const rrlib::rtti::tType data_type;  This information would be redundant
-
   /*! Wrapped buffer pool */
   tBufferPool buffer_pool;
 
 
   /*
-   * \param data_type Data type of buffers in this pool
+   * \param buffer_content Buffer content
    * \return Create new buffer/instance of port data and add to pool
    */
-  tPointer CreateBuffer(const rrlib::rtti::tType& data_type)
+  tPointer CreateBuffer(const tContentId& buffer_content)
   {
-    std::unique_ptr<TBufferManager> new_buffer(TBufferManager::CreateInstance(data_type));
+    std::unique_ptr<TBufferManager> new_buffer(TBufferManager::CreateInstance(buffer_content));
 
     // In case we have a string: allocate a certain buffer size (for RT capabilities with smaller payload) -
     // We do not need this check for 'cheaply copied' types - therefore the concurrency condition
-    if (CONCURRENCY != rrlib::concurrent_containers::tConcurrency::NONE && new_buffer->GetObject().GetType().GetRttiName() == typeid(tString).name())
+    if (cSTANDARD_PORT && new_buffer->GetObject().GetType().GetRttiName() == typeid(tString).name())
     {
       static_cast<rrlib::rtti::tGenericObject&>(new_buffer->GetObject()).GetData<tString>().reserve(512);  // TODO: move to parameter in some config.h
     }
     return buffer_pool.AddBuffer(std::move(new_buffer));
   }
-
 };
 
 //----------------------------------------------------------------------

@@ -59,49 +59,36 @@ namespace optimized
 // Forward declarations / typedefs / enums
 //----------------------------------------------------------------------
 
-/*! Maximum number of cheaply copyable types used in ports */
-enum { cMAX_CHEAPLY_COPYABLE_TYPES = 150 };
-
 //----------------------------------------------------------------------
 // Function declarations
 //----------------------------------------------------------------------
 
 /*!
  * \param type Data type
- * \return 'Cheaply copied type index' of this type
+ * \return Buffer pool index for this type
  */
-uint32_t GetCheaplyCopiedTypeIndex(const rrlib::rtti::tType& type);
+uint32_t GetCheaplyCopiedBufferPoolIndex(const rrlib::rtti::tType& type);
 
 /*!
- * \param cheaply_copied_type_index 'cheaply copied type index'
- * \return Number of ports that use this type
+ * \param cheaply_copied_type_buffer_pool_index Buffer pool index for this type
+ * \return Number of ports that use this buffer pool
  */
-size_t GetPortCount(uint32_t cheaply_copied_type_index);
-
-/*!
- * \return Number of registered 'cheaply copied' types
- */
-size_t GetRegisteredTypeCount();
-
-/*!
- * Looks up data type from 'cheaply copied type index'
- */
-rrlib::rtti::tType GetType(uint32_t cheaply_copied_type_index);
+size_t GetPortCount(uint32_t cheaply_copied_type_buffer_pool_index);
 
 /*!
  * Register port for use of specified 'cheaply copied' type
  *
  * \param type Type that port uses
- * \return 'Cheaply copied type index' of this type
+ * \return Buffer pool index for this type
  */
 uint32_t RegisterPort(const rrlib::rtti::tType& type);
 
 /*!
  * Unregister port for use of specified 'cheaply copied' type
  *
- * \param cheaply_copied_type_index 'Cheaply copied type index' of type that port used
+ * \param type Type that port uses
  */
-void UnregisterPort(uint32_t cheaply_copied_type_index);
+void UnregisterPort(const rrlib::rtti::tType& type);
 
 //----------------------------------------------------------------------
 // End of namespace declaration

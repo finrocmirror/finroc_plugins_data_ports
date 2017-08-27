@@ -79,14 +79,14 @@ tPortDataPointerImplementation<rrlib::rtti::tGenericObject, false> tDeserializat
   }
   if (IsCheaplyCopiedType(type))
   {
-    uint32_t index = optimized::GetCheaplyCopiedTypeIndex(type);
+    uint32_t index = optimized::GetCheaplyCopiedBufferPoolIndex(type);
     if (optimized::tThreadLocalBufferPools::Get())
     {
-      return tPortDataPointerImplementation<rrlib::rtti::tGenericObject, false>(optimized::tThreadLocalBufferPools::Get()->GetUnusedBuffer(index).release(), true);
+      return tPortDataPointerImplementation<rrlib::rtti::tGenericObject, false>(optimized::tThreadLocalBufferPools::Get()->GetUnusedBuffer(index, type).release(), true);
     }
     else
     {
-      return tPortDataPointerImplementation<rrlib::rtti::tGenericObject, false>(optimized::tGlobalBufferPools::Instance().GetUnusedBuffer(index).release(), true);
+      return tPortDataPointerImplementation<rrlib::rtti::tGenericObject, false>(optimized::tGlobalBufferPools::Instance().GetUnusedBuffer(index, type).release(), true);
     }
   }
   else

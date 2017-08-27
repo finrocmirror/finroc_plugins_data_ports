@@ -146,7 +146,7 @@ struct tPortImplementation : public tCheapCopyPortImplementation<T, TYPE>
 
   static inline void BrowserPublish(optimized::tCheapCopyPort& port, const T& data, const rrlib::time::tTimestamp& timestamp)
   {
-    typename optimized::tCheapCopyPort::tUnusedManagerPointer buffer(optimized::tGlobalBufferPools::Instance().GetUnusedBuffer(port.GetCheaplyCopyableTypeIndex()).release());
+    typename optimized::tCheapCopyPort::tUnusedManagerPointer buffer(optimized::tGlobalBufferPools::Instance().GetUnusedBuffer(port.GetCheaplyCopiedTypeBufferPoolIndex(), port.GetDataType()).release());
     buffer->SetTimestamp(timestamp);
     tBase::Assign(buffer->GetObject().GetData<typename tBase::tPortBuffer>(), data);
     port.BrowserPublishRaw(buffer);
@@ -157,7 +157,7 @@ struct tPortImplementation : public tCheapCopyPortImplementation<T, TYPE>
     optimized::tThreadLocalBufferPools* thread_local_pools = optimized::tThreadLocalBufferPools::Get();
     if (thread_local_pools)
     {
-      typename optimized::tThreadLocalBufferPools::tBufferPointer buffer = thread_local_pools->GetUnusedBuffer(port.GetCheaplyCopyableTypeIndex());
+      typename optimized::tThreadLocalBufferPools::tBufferPointer buffer = thread_local_pools->GetUnusedBuffer(port.GetCheaplyCopiedTypeBufferPoolIndex(), port.GetDataType());
       buffer->SetTimestamp(timestamp);
       tBase::Assign(buffer->GetObject().GetData<typename tBase::tPortBuffer>(), data);
       common::tPublishOperation<optimized::tCheapCopyPort, typename optimized::tCheapCopyPort::tPublishingDataThreadLocalBuffer> publish_operation(buffer.release(), true);
@@ -165,7 +165,7 @@ struct tPortImplementation : public tCheapCopyPortImplementation<T, TYPE>
     }
     else
     {
-      typename optimized::tCheapCopyPort::tUnusedManagerPointer buffer(optimized::tGlobalBufferPools::Instance().GetUnusedBuffer(port.GetCheaplyCopyableTypeIndex()).release());
+      typename optimized::tCheapCopyPort::tUnusedManagerPointer buffer(optimized::tGlobalBufferPools::Instance().GetUnusedBuffer(port.GetCheaplyCopiedTypeBufferPoolIndex(), port.GetDataType()).release());
       buffer->SetTimestamp(timestamp);
       tBase::Assign(buffer->GetObject().GetData<typename tBase::tPortBuffer>(), data);
       common::tPublishOperation<optimized::tCheapCopyPort, typename optimized::tCheapCopyPort::tPublishingDataGlobalBuffer> publish_operation(buffer);

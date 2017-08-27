@@ -76,17 +76,15 @@ tCheaplyCopiedBufferManager::tCheaplyCopiedBufferManager(tThreadLocalBufferPools
 
 tCheaplyCopiedBufferManager::~tCheaplyCopiedBufferManager()
 {
-  if (!GetThreadLocalOrigin())
-  {
-    GetObject().~tGenericObject();
-  }
 }
 
-tCheaplyCopiedBufferManager* tCheaplyCopiedBufferManager::CreateInstance(const rrlib::rtti::tType& type)
+tCheaplyCopiedBufferManager* tCheaplyCopiedBufferManager::CreateInstance(uint32_t buffer_size)
 {
   static_assert(sizeof(tCheaplyCopiedBufferManager) % 8 == 0, "Port Data manager must be aligned to 8 byte boundary");
-  char* placement = (char*)operator new(sizeof(tCheaplyCopiedBufferManager) + type.GetSize(true));
-  type.EmplaceGenericObject(placement + sizeof(tCheaplyCopiedBufferManager)).release();
+  assert(buffer_size % 8 == 0);
+  char* placement = (char*)operator new(sizeof(tCheaplyCopiedBufferManager) + sizeof(rrlib::rtti::tGenericObject) + buffer_size);
+  memset(placement + sizeof(tCheaplyCopiedBufferManager), 0, buffer_size);
+  rrlib::rtti::tDataType<int>().EmplaceGenericObject(placement + sizeof(tCheaplyCopiedBufferManager)).release();  // Type is adjusted later
   return new(placement) tCheaplyCopiedBufferManager();
 }
 

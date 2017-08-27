@@ -39,7 +39,7 @@
 // Internal includes with ""
 //----------------------------------------------------------------------
 #include "plugins/data_ports/type_traits.h"
-#include "plugins/data_ports/numeric/tNumber.h"
+#include "plugins/data_ports/optimized/tThreadSpecificBufferPools.h"
 
 //----------------------------------------------------------------------
 // Debugging
@@ -71,122 +71,57 @@ namespace optimized
 //----------------------------------------------------------------------
 // Implementation
 //----------------------------------------------------------------------
-namespace internal
+namespace
 {
 
-class tIndexAnnotation
-{
-public:
-
-  tIndexAnnotation(uint32_t index = 0) : index(index) {}
-
-  /*! Cheaply copied typed index */
-  uint32_t index;
-};
+enum { cPOOL_BUFFER_SIZE_STEP = tThreadSpecificBufferPools<true>::cPOOL_BUFFER_SIZE_STEP };
 
 /*! Register with types */
 struct tRegister
 {
-  struct tEntry
-  {
-    rrlib::rtti::tType type;
-    std::atomic<size_t> port_count;
-
-    tEntry() : type(), port_count(0)
-    {}
-  };
-
   /*! Cheaply copied types used in ports */
-  std::array<tEntry, cMAX_CHEAPLY_COPYABLE_TYPES> used_types;
-
-  /*! Number of registered types */
-  size_t registered_types;
+  std::array < uint32_t, cMAX_SIZE_CHEAPLY_COPIED_TYPES / cPOOL_BUFFER_SIZE_STEP > used_pools;
 
   tRegister() :
-    used_types(),
-    registered_types(1)
+    used_pools()
   {
-    // Put number at position zero - as this is the most frequently used type
-    used_types[0].type = rrlib::rtti::tDataType<numeric::tNumber>("Number");
+    used_pools.fill(0);
   }
 };
-
-}
 
 /*!
  * \return Register singleton
  */
-static internal::tRegister& GetRegister()
+tRegister& GetRegister()
 {
-  static internal::tRegister the_register;
+  static tRegister the_register;
   return the_register;
 }
 
+}
 
-uint32_t GetCheaplyCopiedTypeIndex(const rrlib::rtti::tType& type)
+uint32_t GetCheaplyCopiedBufferPoolIndex(const rrlib::rtti::tType& type)
 {
-  internal::tIndexAnnotation annotation = type.GetAnnotation<internal::tIndexAnnotation>();
-  if (annotation.index)
-  {
-    return annotation.index - 1;
-  }
-
-  static rrlib::thread::tMutex mutex;
-  rrlib::thread::tLock lock(mutex);
-  if (!IsCheaplyCopiedType(type))
-  {
-    FINROC_LOG_PRINT_STATIC(ERROR, "Invalid type registered");
-    abort();
-  }
-
-  // check again - now synchronized - as type could have been added
-  internal::tRegister& reg = GetRegister();
-  for (size_t i = 0; i < reg.registered_types; i++)
-  {
-    if (reg.used_types[i].type == type)
-    {
-      return i;
-    }
-  }
-
-  uint32_t result = reg.registered_types;
-  reg.used_types[result].type = type;
-  reg.registered_types++;
-  rrlib::rtti::tType type_copy = type;
-  type_copy.AddAnnotation(internal::tIndexAnnotation(result + 1)); // +1 so that index zero is different from Null-memory
-  if (result >= cMAX_CHEAPLY_COPYABLE_TYPES)
-  {
-    FINROC_LOG_PRINT_STATIC(ERROR, "Maximum number of cheaply copyable types exceeded");
-    abort();
-  }
+  uint32_t result = (type.GetSize() <= cPOOL_BUFFER_SIZE_STEP) ? 0 : ((type.GetSize() - 1) / cPOOL_BUFFER_SIZE_STEP);
+  assert(result >= 0 && result < cMAX_SIZE_CHEAPLY_COPIED_TYPES / cPOOL_BUFFER_SIZE_STEP);
   return result;
 }
 
-size_t GetPortCount(uint32_t cheaply_copied_type_index)
+size_t GetPortCount(uint32_t cheaply_copied_type_buffer_pool_index)
 {
-  return GetRegister().used_types[cheaply_copied_type_index].port_count;
-}
-
-size_t GetRegisteredTypeCount()
-{
-  return GetRegister().registered_types;
-}
-
-rrlib::rtti::tType GetType(uint32_t cheaply_copied_type_index)
-{
-  return GetRegister().used_types[cheaply_copied_type_index].type;
+  return GetRegister().used_pools[cheaply_copied_type_buffer_pool_index];
 }
 
 uint32_t RegisterPort(const rrlib::rtti::tType& type)
 {
-  uint32_t result = GetCheaplyCopiedTypeIndex(type);
-  GetRegister().used_types[result].port_count++;
+  uint32_t result = GetCheaplyCopiedBufferPoolIndex(type);
+  GetRegister().used_pools[result]++;
   return result;
 }
 
-void UnregisterPort(uint32_t cheaply_copied_type_index)
+void UnregisterPort(const rrlib::rtti::tType& type)
 {
-  GetRegister().used_types[cheaply_copied_type_index].port_count--;
+  GetRegister().used_pools[GetCheaplyCopiedBufferPoolIndex(type)]--;
 }
 
 //----------------------------------------------------------------------

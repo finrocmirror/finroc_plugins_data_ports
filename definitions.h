@@ -81,6 +81,8 @@ constexpr rrlib::time::tDuration cPULL_TIMEOUT = std::chrono::seconds(1);
 constexpr core::tFrameworkElement::tFlags cDEFAULT_INPUT_PORT_FLAGS = core::tFrameworkElement::tFlag::ACCEPTS_DATA | core::tFrameworkElement::tFlag::PUSH_STRATEGY;
 constexpr core::tFrameworkElement::tFlags cDEFAULT_OUTPUT_PORT_FLAGS = core::tFrameworkElement::tFlag::EMITS_DATA | core::tFrameworkElement::tFlag::OUTPUT_PORT;
 
+enum { cMAX_SIZE_CHEAPLY_COPIED_TYPES = 256 };  //!< Types bigger than this value (in bytes) are never considered cheaply-copied types
+
 //----------------------------------------------------------------------
 // Function declarations
 //----------------------------------------------------------------------

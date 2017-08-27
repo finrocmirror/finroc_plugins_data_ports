@@ -100,12 +100,12 @@ public:
 
   /*!
    * Creates instance of tThreadLocalBufferManager containing a buffer
-   * of the specified type
+   * of the specified size
    *
-   * \param Type of buffer
+   * \param buffer_size Size of buffer
    * \return Created instance (can be deleted like any other objects using delete operator)
    */
-  static tThreadLocalBufferManager* CreateInstance(const rrlib::rtti::tType& type);
+  static tThreadLocalBufferManager* CreateInstance(uint32_t buffer_size);
 
   /*!
    * \return Pointer tag to use for current buffer publishing operation
@@ -177,6 +177,16 @@ public:
       TDeleterType deleter;
       deleter(this);
     }
+  }
+
+  /*!
+   * Sets data type of managed object
+   *
+   * \param type Type of object
+   */
+  void SetType(const rrlib::rtti::tType& type)
+  {
+    const_cast<rrlib::rtti::tType&>(GetObject().GetType()) = type;
   }
 
   /*!

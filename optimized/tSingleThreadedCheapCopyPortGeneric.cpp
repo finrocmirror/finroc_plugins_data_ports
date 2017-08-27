@@ -78,7 +78,7 @@ tSingleThreadedCheapCopyPortGeneric::tSingleThreadedCheapCopyPortGeneric(common:
 {
   current_value.data.reset(creation_info.data_type.CreateGenericObject());
   current_value.data_pointer = current_value.data->GetRawDataPointer();
-  current_value.cheaply_copyable_type_index = RegisterPort(creation_info.data_type);
+  current_value.cheaply_copied_type_buffer_pool_index = RegisterPort(creation_info.data_type);
   current_value.timestamp = rrlib::time::cNO_TIME;
 
   if ((!IsDataFlowType(GetDataType())) || (!IsCheaplyCopiedType(GetDataType())))
@@ -103,7 +103,9 @@ tSingleThreadedCheapCopyPortGeneric::tSingleThreadedCheapCopyPortGeneric(common:
 }
 
 tSingleThreadedCheapCopyPortGeneric::~tSingleThreadedCheapCopyPortGeneric()
-{}
+{
+  UnregisterPort(GetDataType());
+}
 
 void tSingleThreadedCheapCopyPortGeneric::ApplyDefaultValue()
 {

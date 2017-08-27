@@ -301,9 +301,9 @@ public:
   /*!
    * \return Returns data type's 'cheaply copyable type index'
    */
-  inline uint32_t GetCheaplyCopyableTypeIndex() const
+  inline uint32_t GetCheaplyCopiedTypeBufferPoolIndex() const
   {
-    return cheaply_copyable_type_index;
+    return cheaply_copied_type_buffer_pool_index;
   }
 
   /*!
@@ -615,11 +615,11 @@ protected:
    */
   tUnusedManagerPointer GetUnusedBuffer(tPublishingDataGlobalBuffer& publishing_data)
   {
-    return tUnusedManagerPointer(tGlobalBufferPools::Instance().GetUnusedBuffer(cheaply_copyable_type_index).release());
+    return tUnusedManagerPointer(tGlobalBufferPools::Instance().GetUnusedBuffer(cheaply_copied_type_buffer_pool_index, GetDataType()).release());
   }
   tUnusedManagerPointer GetUnusedBuffer(tPublishingDataThreadLocalBuffer& publishing_data)
   {
-    return tUnusedManagerPointer(tThreadLocalBufferPools::Get()->GetUnusedBuffer(cheaply_copyable_type_index).release());
+    return tUnusedManagerPointer(tThreadLocalBufferPools::Get()->GetUnusedBuffer(cheaply_copied_type_buffer_pool_index, GetDataType()).release());
   }
 
   /*!
@@ -650,8 +650,8 @@ private:
   template <typename TPort, typename TPublishingData, typename TManager>
   friend class common::tPullOperation;
 
-  /*! 'cheaply copyable type index' of type used in this port */
-  uint32_t cheaply_copyable_type_index;
+  /*! Index of buffer pool to use */
+  uint32_t cheaply_copied_type_buffer_pool_index;
 
   /*! default value - invariant: must never be null if used (must always be copied, too) */
   std::unique_ptr<rrlib::rtti::tGenericObject> default_value;
@@ -791,7 +791,7 @@ private:
 //      return static_cast<tThreadLocalBufferManager*>(manager);
 //    }
 //
-//    tThreadLocalBufferManager* unused_manager = tThreadLocalBufferPools::Get()->GetUnusedBuffer(cheaply_copyable_type_index);
+//    tThreadLocalBufferManager* unused_manager = tThreadLocalBufferPools::Get()->GetUnusedBuffer(cheaply_copied_type_buffer_pool_index);
 //    for (; ;)
 //    {
 //      buffer.DeepCopyFrom(current_buffer->GetObject());

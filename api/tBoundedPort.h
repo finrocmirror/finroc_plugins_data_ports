@@ -114,7 +114,7 @@ public:
     this->CopyCurrentValue(value, tStrategy::NEVER_PULL);
     if (!bounds.InBounds(value))
     {
-      typename tPortBase::tUnusedManagerPointer new_buffer(optimized::tGlobalBufferPools::Instance().GetUnusedBuffer(this->GetCheaplyCopyableTypeIndex()).release());
+      typename tPortBase::tUnusedManagerPointer new_buffer(optimized::tGlobalBufferPools::Instance().GetUnusedBuffer(this->GetCheaplyCopiedTypeBufferPoolIndex()).release());
       tImplementationVariation::Assign(new_buffer->GetObject().template GetData<T>(), bounds.GetOutOfBoundsDefault());
       this->BrowserPublishRaw(new_buffer); // If port is already connected, could this have undesirable side-effects? (I do not think so - otherwise we need to do something more sophisticated here)
     }

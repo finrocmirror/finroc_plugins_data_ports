@@ -77,14 +77,14 @@ tThreadLocalBufferManager::tThreadLocalBufferManager() :
 
 tThreadLocalBufferManager::~tThreadLocalBufferManager()
 {
-  GetObject().~tGenericObject();
 }
 
-tThreadLocalBufferManager* tThreadLocalBufferManager::CreateInstance(const rrlib::rtti::tType& type)
+tThreadLocalBufferManager* tThreadLocalBufferManager::CreateInstance(uint32_t buffer_size)
 {
   static_assert(sizeof(tThreadLocalBufferManager) % 8 == 0, "Port Data manager must be aligned to 8 byte boundary");
-  char* placement = (char*)operator new(sizeof(tThreadLocalBufferManager) + type.GetSize(true));
-  type.EmplaceGenericObject(placement + sizeof(tThreadLocalBufferManager)).release();
+  char* placement = (char*)operator new(sizeof(tThreadLocalBufferManager) + sizeof(rrlib::rtti::tGenericObject) + buffer_size);
+  memset(placement + sizeof(tThreadLocalBufferManager), 0, buffer_size);
+  rrlib::rtti::tDataType<int>().EmplaceGenericObject(placement + sizeof(tCheaplyCopiedBufferManager)).release();  // Type is adjusted later
   return new(placement) tThreadLocalBufferManager();
 }
 

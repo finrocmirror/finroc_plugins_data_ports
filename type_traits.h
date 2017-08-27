@@ -42,6 +42,7 @@
 //----------------------------------------------------------------------
 // Internal includes with ""
 //----------------------------------------------------------------------
+#include "plugins/data_ports/definitions.h"
 
 //----------------------------------------------------------------------
 // Namespace declaration
@@ -77,7 +78,7 @@ class tNumber;
 template <typename T>
 struct tIsCheaplyCopiedType
 {
-  enum { value = std::is_trivially_destructible<T>::value && (sizeof(T) <= 256) };
+  enum { value = std::is_trivially_destructible<T>::value && (sizeof(T) <= cMAX_SIZE_CHEAPLY_COPIED_TYPES) };
 };
 
 /*!
@@ -85,7 +86,7 @@ struct tIsCheaplyCopiedType
  */
 inline bool IsCheaplyCopiedType(const rrlib::rtti::tType& dt)
 {
-  return dt.GetSize() <= 256 && ((dt.GetTypeTraits() & rrlib::rtti::trait_flags::cHAS_TRIVIAL_DESTRUCTOR) != 0);
+  return dt.GetSize() <= cMAX_SIZE_CHEAPLY_COPIED_TYPES && ((dt.GetTypeTraits() & rrlib::rtti::trait_flags::cHAS_TRIVIAL_DESTRUCTOR) != 0);
 }
 
 /*!

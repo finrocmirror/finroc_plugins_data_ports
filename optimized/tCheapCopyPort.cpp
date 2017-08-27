@@ -94,7 +94,7 @@ static rrlib::rtti::tGenericObject* CreateDefaultValue(const common::tAbstractDa
 
 tCheapCopyPort::tCheapCopyPort(common::tAbstractDataPortCreationInfo creation_info) :
   common::tAbstractDataPort(creation_info),
-  cheaply_copyable_type_index(RegisterPort(creation_info.data_type)),
+  cheaply_copied_type_buffer_pool_index(RegisterPort(creation_info.data_type)),
   default_value(internal::CreateDefaultValue(creation_info)),
   current_value(0),
   standard_assign(!GetFlag(tFlag::NON_STANDARD_ASSIGN) && (!GetFlag(tFlag::HAS_QUEUE))),
@@ -108,7 +108,7 @@ tCheapCopyPort::tCheapCopyPort(common::tAbstractDataPortCreationInfo creation_in
   }
 
   // Initialize value
-  tCheaplyCopiedBufferManager* initial = tGlobalBufferPools::Instance().GetUnusedBuffer(cheaply_copyable_type_index).release();
+  tCheaplyCopiedBufferManager* initial = tGlobalBufferPools::Instance().GetUnusedBuffer(cheaply_copied_type_buffer_pool_index, GetDataType()).release();
   assert(initial->GetObject().GetType() == GetDataType());
   initial->InitReferenceCounter(1);
   int pointer_tag = initial->GetPointerTag();
@@ -140,6 +140,7 @@ tCheapCopyPort::tCheapCopyPort(common::tAbstractDataPortCreationInfo creation_in
 
 tCheapCopyPort::~tCheapCopyPort()
 {
+  UnregisterPort(GetDataType());
   tTaggedBufferPointer cur_pointer = current_value.exchange(0);
   tPortBufferUnlocker unlocker;
   unlocker(cur_pointer.GetPointer());
@@ -153,7 +154,7 @@ void tCheapCopyPort::ApplyDefaultValue()
     return;
   }
 
-  tUnusedManagerPointer buffer(tGlobalBufferPools::Instance().GetUnusedBuffer(GetCheaplyCopyableTypeIndex()).release());
+  tUnusedManagerPointer buffer(tGlobalBufferPools::Instance().GetUnusedBuffer(GetCheaplyCopiedTypeBufferPoolIndex(), GetDataType()).release());
   buffer->GetObject().DeepCopyFrom(*default_value);
   buffer->SetTimestamp(rrlib::time::cNO_TIME);
   BrowserPublishRaw(buffer, true);
@@ -219,7 +220,7 @@ std::string tCheapCopyPort::BrowserPublishRaw(tUnusedManagerPointer& buffer, boo
 
 void tCheapCopyPort::CallPullRequestHandler(tPublishingDataGlobalBuffer& publishing_data)
 {
-  tUnusedManagerPointer result = tUnusedManagerPointer(tGlobalBufferPools::Instance().GetUnusedBuffer(cheaply_copyable_type_index).release());
+  tUnusedManagerPointer result = tUnusedManagerPointer(tGlobalBufferPools::Instance().GetUnusedBuffer(cheaply_copied_type_buffer_pool_index, GetDataType()).release());
   if (pull_request_handler->RawPullRequest(*this, *result))
   {
     publishing_data.Init(result);
@@ -228,7 +229,7 @@ void tCheapCopyPort::CallPullRequestHandler(tPublishingDataGlobalBuffer& publish
 
 void tCheapCopyPort::CallPullRequestHandler(tPublishingDataThreadLocalBuffer& publishing_data)
 {
-  tUnusedManagerPointer result = tUnusedManagerPointer(tThreadLocalBufferPools::Get()->GetUnusedBuffer(cheaply_copyable_type_index).release());
+  tUnusedManagerPointer result = tUnusedManagerPointer(tThreadLocalBufferPools::Get()->GetUnusedBuffer(cheaply_copied_type_buffer_pool_index, GetDataType()).release());
   if (pull_request_handler->RawPullRequest(*this, *result))
   {
     publishing_data.Init(result);
@@ -283,7 +284,7 @@ void tCheapCopyPort::ForwardData(tAbstractDataPort& other)
 
     // there obviously will not arrive any buffer from current thread in the meantime
 
-    auto unused_manager = tThreadLocalBufferPools::Get()->GetUnusedBuffer(cheaply_copyable_type_index);
+    auto unused_manager = tThreadLocalBufferPools::Get()->GetUnusedBuffer(cheaply_copied_type_buffer_pool_index, GetDataType());
     for (; ;)
     {
       unused_manager->GetObject().DeepCopyFrom(current_buffer->GetObject());
@@ -301,7 +302,7 @@ void tCheapCopyPort::ForwardData(tAbstractDataPort& other)
   }
   else
   {
-    tUnusedManagerPointer unused_manager = tUnusedManagerPointer(tGlobalBufferPools::Instance().GetUnusedBuffer(cheaply_copyable_type_index).release());
+    tUnusedManagerPointer unused_manager = tUnusedManagerPointer(tGlobalBufferPools::Instance().GetUnusedBuffer(cheaply_copied_type_buffer_pool_index, GetDataType()).release());
     CopyCurrentValueToManager(*unused_manager, tStrategy::NEVER_PULL);
     common::tPublishOperation<tCheapCopyPort, tPublishingDataGlobalBuffer> data(unused_manager);
     data.Execute<tChangeStatus::CHANGED, false, false>(static_cast<tCheapCopyPort&>(other));
@@ -381,7 +382,7 @@ int tCheapCopyPort::GetMaxQueueLengthImplementation() const
 void tCheapCopyPort::InitialPushTo(core::tConnector& connector)
 {
   // this is a one-time event => use global buffer
-  tUnusedManagerPointer unused_manager(tGlobalBufferPools::Instance().GetUnusedBuffer(cheaply_copyable_type_index).release());
+  tUnusedManagerPointer unused_manager(tGlobalBufferPools::Instance().GetUnusedBuffer(cheaply_copied_type_buffer_pool_index, GetDataType()).release());
   CopyCurrentValueToManager(*unused_manager, tStrategy::NEVER_PULL);
   if (typeid(connector) == typeid(common::tConversionConnector))
   {
@@ -402,7 +403,7 @@ void tCheapCopyPort::LockCurrentValueForPublishing(tPublishingDataGlobalBuffer& 
     tTaggedBufferPointer current_buffer = current_value.load();
     if (current_buffer->GetThreadLocalOrigin())
     {
-      tUnusedManagerPointer unused_manager = tUnusedManagerPointer(tGlobalBufferPools::Instance().GetUnusedBuffer(cheaply_copyable_type_index).release());
+      tUnusedManagerPointer unused_manager = tUnusedManagerPointer(tGlobalBufferPools::Instance().GetUnusedBuffer(cheaply_copied_type_buffer_pool_index, GetDataType()).release());
       CopyCurrentValueToManager(*unused_manager, tStrategy::NEVER_PULL);
       publishing_data.Init(unused_manager);
       return;
@@ -431,7 +432,7 @@ void tCheapCopyPort::LockCurrentValueForPublishing(tPublishingDataThreadLocalBuf
 
   // there obviously will not arrive any buffer from current thread in the meantime
 
-  auto unused_manager = tThreadLocalBufferPools::Get()->GetUnusedBuffer(cheaply_copyable_type_index);
+  auto unused_manager = tThreadLocalBufferPools::Get()->GetUnusedBuffer(cheaply_copied_type_buffer_pool_index, GetDataType());
   for (; ;)
   {
     unused_manager->GetObject().DeepCopyFrom(current_buffer->GetObject());

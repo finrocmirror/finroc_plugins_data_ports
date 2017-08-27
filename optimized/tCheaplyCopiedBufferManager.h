@@ -84,12 +84,12 @@ public:
 
   /*!
    * Creates instance of tCheaplyCopiedBufferManager containing a buffer
-   * of the specified type
+   * of the specified size
    *
-   * \param Type of buffer
+   * \param buffer_size Size of buffer
    * \return Created instance (can be deleted like any other objects using delete operator)
    */
-  static tCheaplyCopiedBufferManager* CreateInstance(const rrlib::rtti::tType& type);
+  static tCheaplyCopiedBufferManager* CreateInstance(uint32_t buffer_size);
 
   /*!
    * \return Managed Buffer as generic object
@@ -106,6 +106,16 @@ public:
   tThreadLocalBufferPools* GetThreadLocalOrigin() const
   {
     return origin;
+  }
+
+  /*!
+   * Sets data type of managed object
+   *
+   * \param type Type of object
+   */
+  void SetType(const rrlib::rtti::tType& type)
+  {
+    const_cast<rrlib::rtti::tType&>(GetObject().GetType()) = type;
   }
 
 //----------------------------------------------------------------------

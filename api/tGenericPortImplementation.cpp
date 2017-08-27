@@ -115,7 +115,7 @@ public:
     optimized::tThreadLocalBufferPools* thread_local_pools = optimized::tThreadLocalBufferPools::Get();
     if (thread_local_pools)
     {
-      typename optimized::tThreadLocalBufferPools::tBufferPointer buffer = thread_local_pools->GetUnusedBuffer(static_cast<tPortBase&>(port).GetCheaplyCopyableTypeIndex());
+      typename optimized::tThreadLocalBufferPools::tBufferPointer buffer = thread_local_pools->GetUnusedBuffer(static_cast<tPortBase&>(port).GetCheaplyCopiedTypeBufferPoolIndex(), port.GetDataType());
       buffer->SetTimestamp(timestamp);
       buffer->GetObject().DeepCopyFrom(data);
       common::tPublishOperation<optimized::tCheapCopyPort, typename optimized::tCheapCopyPort::tPublishingDataThreadLocalBuffer> publish_operation(buffer.release(), true);
@@ -123,7 +123,7 @@ public:
     }
     else
     {
-      typename optimized::tCheapCopyPort::tUnusedManagerPointer buffer(optimized::tGlobalBufferPools::Instance().GetUnusedBuffer(static_cast<tPortBase&>(port).GetCheaplyCopyableTypeIndex()).release());
+      typename optimized::tCheapCopyPort::tUnusedManagerPointer buffer(optimized::tGlobalBufferPools::Instance().GetUnusedBuffer(static_cast<tPortBase&>(port).GetCheaplyCopiedTypeBufferPoolIndex(), port.GetDataType()).release());
       buffer->SetTimestamp(timestamp);
       buffer->GetObject().DeepCopyFrom(data);
       common::tPublishOperation<optimized::tCheapCopyPort, typename optimized::tCheapCopyPort::tPublishingDataGlobalBuffer> publish_operation(buffer);

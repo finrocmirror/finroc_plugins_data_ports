@@ -141,11 +141,11 @@ public:
       tCheapCopyPort& cc_port = static_cast<tCheapCopyPort&>(port);
       if (optimized::tThreadLocalBufferPools::Get())
       {
-        return tPortDataPointerImplementation<rrlib::rtti::tGenericObject, false>(optimized::tThreadLocalBufferPools::Get()->GetUnusedBuffer(cc_port.GetCheaplyCopyableTypeIndex()).release(), true);
+        return tPortDataPointerImplementation<rrlib::rtti::tGenericObject, false>(optimized::tThreadLocalBufferPools::Get()->GetUnusedBuffer(cc_port.GetCheaplyCopiedTypeBufferPoolIndex(), port.GetDataType()).release(), true);
       }
       else
       {
-        return tPortDataPointerImplementation<rrlib::rtti::tGenericObject, false>(optimized::tGlobalBufferPools::Instance().GetUnusedBuffer(cc_port.GetCheaplyCopyableTypeIndex()).release(), true);
+        return tPortDataPointerImplementation<rrlib::rtti::tGenericObject, false>(optimized::tGlobalBufferPools::Instance().GetUnusedBuffer(cc_port.GetCheaplyCopiedTypeBufferPoolIndex(), port.GetDataType()).release(), true);
       }
     }
     else
