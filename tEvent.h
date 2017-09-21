@@ -44,6 +44,8 @@
 //----------------------------------------------------------------------
 // External includes (system with <>, local with "")
 //----------------------------------------------------------------------
+#include "rrlib/serialization/serialization.h"
+#include "rrlib/rtti_conversion/tRegisteredConversionOperation.h"
 
 //----------------------------------------------------------------------
 // Internal includes with ""
@@ -90,15 +92,18 @@ private:
 
 };
 
-inline rrlib::serialization::tOutputStream& operator << (rrlib::serialization::tOutputStream& stream, const tEvent& number)
+inline rrlib::serialization::tOutputStream& operator << (rrlib::serialization::tOutputStream& stream, const tEvent& event)
 {
   return stream;
 }
 
-inline rrlib::serialization::tInputStream& operator >> (rrlib::serialization::tInputStream& stream, tEvent& number)
+inline rrlib::serialization::tInputStream& operator >> (rrlib::serialization::tInputStream& stream, tEvent& event)
 {
   return stream;
 }
+
+extern const rrlib::rtti::conversion::tRegisteredConversionOperation& cANY_TO_EVENT_OPERATION;         //!< Converts any data to an (empty) event
+extern const rrlib::rtti::conversion::tRegisteredConversionOperation& cEVENT_TO_DEFAULT_OPERATION;     //!< Converts any event to data type default
 
 //----------------------------------------------------------------------
 // End of namespace declaration

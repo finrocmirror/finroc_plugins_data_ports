@@ -7,7 +7,7 @@
       definitions.h
       tBounds.h
       tChangeContext.h
-      tEvent.h
+      tEvent.cpp
       tQueueSettings.h
       type_traits.h
       common/*
