@@ -83,10 +83,17 @@ tConversionConnector::~tConversionConnector()
 
 void tConversionConnector::Publish(const rrlib::rtti::tGenericObject& input_data, tChangeStatus change_constant) const
 {
-  tGenericPort& generic_port = const_cast<tGenericPort&>(reinterpret_cast<const tGenericPort&>(destination_port_generic_memory[0]));
-  tPortDataPointer<rrlib::rtti::tGenericObject> buffer = generic_port.GetUnusedBuffer();
-  conversion_operation.Convert(input_data, *buffer);
-  generic_port.BrowserPublish(buffer, true, change_constant);
+  try
+  {
+    tGenericPort& generic_port = const_cast<tGenericPort&>(reinterpret_cast<const tGenericPort&>(destination_port_generic_memory[0]));
+    tPortDataPointer<rrlib::rtti::tGenericObject> buffer = generic_port.GetUnusedBuffer();
+    conversion_operation.Convert(input_data, *buffer);
+    generic_port.BrowserPublish(buffer, true, change_constant);
+  }
+  catch (const std::exception& e)
+  {
+    FINROC_LOG_PRINT_STATIC(WARNING, "Converting data failed between ports '", Source(), "' and '", Destination(), "': ", e);
+  }
 }
 
 
