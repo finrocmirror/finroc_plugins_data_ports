@@ -159,7 +159,7 @@ public:
       *static_cast<T*>(current_value.data_pointer) = data;
       current_value.timestamp = timestamp;
       common::tPublishOperation<tSingleThreadedCheapCopyPort<T>, tPublishingData> publish_operation(current_value);
-      publish_operation.template Execute<false, tChangeStatus::CHANGED, false, false>(*this);
+      publish_operation.template Execute<tChangeStatus::CHANGED, false, false>(*this);
     }
   }
 
