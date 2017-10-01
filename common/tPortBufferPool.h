@@ -156,17 +156,18 @@ public:
 
   /*!
    * \param data_type Data type of desired buffer
+   * \param possibly_create_buffer Create new buffer if there is none in pool at the moment?
    * \return Returns unused buffer. If there are no buffers that can be reused, a new buffer is allocated.
    */
   template <bool Tstandard_port = cSTANDARD_PORT>
-  inline tPointer GetUnusedBuffer(const typename std::enable_if<Tstandard_port, rrlib::rtti::tType>::type& data_type)
+  inline tPointer GetUnusedBuffer(const typename std::enable_if<Tstandard_port, rrlib::rtti::tType>::type& data_type, bool possibly_create_buffer = true)
   {
     tPointer buffer = buffer_pool.GetUnusedBuffer();
     if (buffer)
     {
       return std::move(buffer);
     }
-    return CreateBuffer(data_type);
+    return possibly_create_buffer ? CreateBuffer(data_type) : tPointer();
   }
 
   /*!
