@@ -97,7 +97,7 @@ public:
   /*!
    * \return Timestamp for currently managed data
    */
-  inline rrlib::time::tTimestamp GetTimestamp() const
+  inline const rrlib::time::tTimestamp& GetTimestamp() const
   {
     return timestamp;
   }

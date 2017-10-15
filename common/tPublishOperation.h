@@ -132,7 +132,7 @@ public:
       {
         if (it->Flags().Get(core::tConnectionFlag::CONVERSION))
         {
-          static_cast<const tConversionConnector&>(*it).Publish(this->GetObject(), CHANGE_CONSTANT);
+          static_cast<const tConversionConnector&>(*it).Publish(this->GetObject(), this->GetTimestamp(), CHANGE_CONSTANT);
         }
         else
         {
@@ -167,7 +167,7 @@ public:
       {
         if (it->Flags().Get(core::tConnectionFlag::CONVERSION))
         {
-          static_cast<const tConversionConnector&>(*it).Publish(publishing_data.GetObject(), CHANGE_CONSTANT);
+          static_cast<const tConversionConnector&>(*it).Publish(publishing_data.GetObject(), publishing_data.GetTimestamp(), CHANGE_CONSTANT);
         }
         else
         {

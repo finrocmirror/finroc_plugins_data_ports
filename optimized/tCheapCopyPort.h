@@ -478,6 +478,10 @@ public:
     {
       return published_buffer->GetObject();
     }
+    const rrlib::time::tTimestamp& GetTimestamp()
+    {
+      return published_buffer->GetTimestamp();
+    }
 
     /*!
      * Reinitializes publishing data with adjusted buffer
@@ -575,6 +579,10 @@ public:
     const rrlib::rtti::tGenericObject& GetObject()
     {
       return published_buffer->GetObject();
+    }
+    const rrlib::time::tTimestamp& GetTimestamp()
+    {
+      return published_buffer->GetTimestamp();
     }
 
     /*!

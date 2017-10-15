@@ -81,12 +81,13 @@ tConversionConnector::tConversionConnector(core::tAbstractPort& source_port, cor
 tConversionConnector::~tConversionConnector()
 {}
 
-void tConversionConnector::Publish(const rrlib::rtti::tGenericObject& input_data, tChangeStatus change_constant) const
+void tConversionConnector::Publish(const rrlib::rtti::tGenericObject& input_data, const rrlib::time::tTimestamp& timestamp, tChangeStatus change_constant) const
 {
   try
   {
     tGenericPort& generic_port = const_cast<tGenericPort&>(reinterpret_cast<const tGenericPort&>(destination_port_generic_memory[0]));
     tPortDataPointer<rrlib::rtti::tGenericObject> buffer = generic_port.GetUnusedBuffer();
+    buffer.SetTimestamp(timestamp);
     conversion_operation.Convert(input_data, *buffer);
     generic_port.BrowserPublish(buffer, true, change_constant);
   }

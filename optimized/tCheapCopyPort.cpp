@@ -386,7 +386,7 @@ void tCheapCopyPort::InitialPushTo(core::tConnector& connector)
   CopyCurrentValueToManager(*unused_manager, tStrategy::NEVER_PULL);
   if (typeid(connector) == typeid(common::tConversionConnector))
   {
-    static_cast<common::tConversionConnector&>(connector).Publish(unused_manager->GetObject(), tChangeStatus::CHANGED_INITIAL);
+    static_cast<common::tConversionConnector&>(connector).Publish(unused_manager->GetObject(), unused_manager->GetTimestamp(), tChangeStatus::CHANGED_INITIAL);
   }
   else
   {

@@ -366,6 +366,10 @@ protected:
     {
       return published_buffer->GetObject();
     }
+    const rrlib::time::tTimestamp& GetTimestamp()
+    {
+      return published_buffer->GetTimestamp();
+    }
 
     void Init(tPortBufferManager* published)
     {

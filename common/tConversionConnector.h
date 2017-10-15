@@ -89,9 +89,10 @@ public:
    * Convert and publish data via this connector
    *
    * \param input_data Input data (to convert and publish)
+   * \param timestamp Timestamp of data
    * \param change_constant Change constant to use
    */
-  void Publish(const rrlib::rtti::tGenericObject& input_data, tChangeStatus change_constant) const;
+  void Publish(const rrlib::rtti::tGenericObject& input_data, const rrlib::time::tTimestamp& timestamp, tChangeStatus change_constant) const;
 
 //----------------------------------------------------------------------
 // Private fields and methods

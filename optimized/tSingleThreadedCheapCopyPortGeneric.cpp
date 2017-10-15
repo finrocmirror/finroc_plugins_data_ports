@@ -165,7 +165,7 @@ void tSingleThreadedCheapCopyPortGeneric::InitialPushTo(core::tConnector& connec
 {
   if (typeid(connector) == typeid(common::tConversionConnector))
   {
-    static_cast<common::tConversionConnector&>(connector).Publish(*current_value.data, tChangeStatus::CHANGED_INITIAL);
+    static_cast<common::tConversionConnector&>(connector).Publish(*current_value.data, current_value.timestamp, tChangeStatus::CHANGED_INITIAL);
   }
   else
   {

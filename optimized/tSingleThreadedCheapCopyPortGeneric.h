@@ -110,6 +110,10 @@ public:
     {
       return *value->data;
     }
+    const rrlib::time::tTimestamp& GetTimestamp()
+    {
+      return value->timestamp;
+    }
 
     template <typename T>
     T Value()

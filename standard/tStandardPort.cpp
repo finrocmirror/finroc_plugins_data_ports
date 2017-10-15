@@ -273,7 +273,7 @@ void tStandardPort::InitialPushTo(core::tConnector& connector)
 
   if (typeid(connector) == typeid(common::tConversionConnector))
   {
-    static_cast<common::tConversionConnector&>(connector).Publish(manager->GetObject(), tChangeStatus::CHANGED_INITIAL);
+    static_cast<common::tConversionConnector&>(connector).Publish(manager->GetObject(), manager->GetTimestamp(), tChangeStatus::CHANGED_INITIAL);
   }
   else
   {
